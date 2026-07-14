@@ -214,8 +214,13 @@ def test_booted_rpc_descriptor_attests_runtime_model_and_defaults(monkeypatch):
     assert descriptor.metadata == {
         "bundle": "grounding-dino",
         "model": "IDEA-Research/grounding-dino-base",
+        "model_kind": "vision_detector",
         "parameters": {
             "box_threshold": 0.20,
+            "cache_policy": None,
+            "max_tokens": None,
+            "reasoning_effort": None,
+            "temperature": None,
             "text_threshold": 0.20,
         },
         "provider": "huggingface",
@@ -226,7 +231,7 @@ def test_booted_rpc_descriptor_attests_runtime_model_and_defaults(monkeypatch):
     assert descriptor.schema.inputs["text_threshold"].default == pytest.approx(0.20)
     assert snapshot["metadata"] == descriptor.metadata
     assert snapshot["descriptor_hash"] == (
-        "sha256:bbe7eb97818855c49f8475a695cc33c9856d7a6b18ad97756d4405b687549ccc"
+        "sha256:51329cb5280d2ca074bf2ea2b6b94c5815def365b1d638bd80b3f792710f2e06"
     )
 
 

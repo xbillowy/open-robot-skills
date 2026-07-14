@@ -159,10 +159,15 @@ def _get_model() -> tuple[Any, Any]:
     metadata={
         "provider": MODEL_PROVIDER,
         "model": MODEL_NAME,
+        "model_kind": "vision_detector",
         "revision": MODEL_REVISION,
         "snapshot": MODEL_REVISION,
         "parameters": {
             "box_threshold": DEFAULT_BOX_THRESHOLD,
+            "cache_policy": None,
+            "max_tokens": None,
+            "reasoning_effort": None,
+            "temperature": None,
             "text_threshold": DEFAULT_TEXT_THRESHOLD,
         },
     },
