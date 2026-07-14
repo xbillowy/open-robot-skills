@@ -38,9 +38,13 @@ uv sync --extra grounding-dino   # torch + transformers
 # (pip: pip install -e ".[grounding-dino]")
 ```
 
-Weights download from HuggingFace on first call. Env knobs:
-`GAP_DINO_DEVICE` (default `cuda`; CPU works but is slow) and
-`GAP_DINO_MODEL` (default `IDEA-Research/grounding-dino-base`).
+Weights download from Hugging Face on first call. The runtime pins
+`IDEA-Research/grounding-dino-base` at revision
+`12bdfa3120f3e7ec7b434d90674b3396eccf88eb`; `GAP_DINO_DEVICE` selects the
+device (default `cuda`; CPU works but is slow) without changing model identity.
+For compatibility with older deployments, `GAP_DINO_MODEL` may still be set
+to that exact model name. Any other value is rejected before cache checks or
+model loading; unset the variable instead of using it to override the pin.
 
 ## Gotchas (carried over from the servicer)
 

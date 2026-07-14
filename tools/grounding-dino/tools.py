@@ -9,8 +9,9 @@ The model loads lazily on first call (module-level singleton); importing
 this module never pulls torch/transformers. Knobs via env:
 
 - ``GAP_DINO_DEVICE`` — torch device (default ``cuda``).
-- ``GAP_DINO_MODEL``  — HuggingFace model name
-  (default ``IDEA-Research/grounding-dino-base``).
+
+The public model identity is immutable so runtime provenance always names
+the exact snapshot that was loaded.
 """
 
 from __future__ import annotations
@@ -27,12 +28,20 @@ from gap_core.types import BoundingBox2D
 
 logger = logging.getLogger(__name__)
 
-_DEFAULT_MODEL_NAME = "IDEA-Research/grounding-dino-base"
-_DEFAULT_BOX_THRESHOLD = 0.20
-_DEFAULT_TEXT_THRESHOLD = 0.20
+MODEL_PROVIDER = "huggingface"
+MODEL_NAME = "IDEA-Research/grounding-dino-base"
+MODEL_REVISION = "12bdfa3120f3e7ec7b434d90674b3396eccf88eb"
+DEFAULT_BOX_THRESHOLD = 0.20
+DEFAULT_TEXT_THRESHOLD = 0.20
+REQUIRED_OFFLINE_FILES = (
+    "config.json",
+    "model.safetensors",
+    "preprocessor_config.json",
+    "tokenizer.json",
+    "tokenizer_config.json",
+)
 
 _DEVICE = os.environ.get("GAP_DINO_DEVICE", "cuda")
-_MODEL_NAME = os.environ.get("GAP_DINO_MODEL", _DEFAULT_MODEL_NAME)
 
 _load_lock = threading.Lock()
 _model: Any = None
@@ -49,22 +58,40 @@ class DetectResult(TypedDict):
     detections: list[Detection]
 
 
+def _validate_model_override() -> None:
+    configured = os.environ.get("GAP_DINO_MODEL")
+    if configured is not None and configured != MODEL_NAME:
+        raise RuntimeError(
+            "GAP_DINO_MODEL must name the exact pinned model "
+            f"{MODEL_NAME!r}; unset it or set it to that value"
+        )
+
+
 def weights_cached() -> bool | None:
     """Filesystem-only weight-cache probe for ``gap check``.
 
-    Checks the Hugging Face cache for the configured model's config.json
-    (the canonical presence marker) — never downloads, never imports
-    torch. ``None`` when huggingface_hub is unavailable ("unknown").
+    Checks the pinned Hugging Face revision for the complete declared
+    offline load set: model config and safetensors, image preprocessor
+    config, tokenizer config, and tokenizer JSON. Never downloads or
+    imports torch. ``None`` when huggingface_hub is unavailable ("unknown").
     """
+    _validate_model_override()
     try:
         from huggingface_hub import try_to_load_from_cache
     except ImportError:
         return None
-    try:
-        result = try_to_load_from_cache(_MODEL_NAME, "config.json")
-    except Exception:
-        return None
-    return isinstance(result, str)
+    for filename in REQUIRED_OFFLINE_FILES:
+        try:
+            result = try_to_load_from_cache(
+                MODEL_NAME,
+                filename,
+                revision=MODEL_REVISION,
+            )
+        except Exception:
+            return None
+        if not isinstance(result, str):
+            return False
+    return True
 
 
 def prefetch() -> None:
@@ -80,25 +107,44 @@ def prefetch() -> None:
     so we never load torch / instantiate the model at prefetch time —
     important for CI lanes and for the bare-engine venv.
     """
+    _validate_model_override()
     from huggingface_hub import snapshot_download
 
-    logger.info("[grounding-dino] prefetching weights for %s ...", _MODEL_NAME)
-    snapshot_download(repo_id=_MODEL_NAME, repo_type="model")
+    logger.info(
+        "[grounding-dino] prefetching weights for %s@%s ...",
+        MODEL_NAME,
+        MODEL_REVISION,
+    )
+    snapshot_download(
+        repo_id=MODEL_NAME,
+        repo_type="model",
+        revision=MODEL_REVISION,
+    )
     logger.info("[grounding-dino] prefetch complete (cached at HF default)")
 
 
 def _get_model() -> tuple[Any, Any]:
     """Load the Grounding DINO model + processor once (lazy singleton)."""
     global _model, _processor
+    _validate_model_override()
     with _load_lock:
         if _model is None:
             from transformers import AutoModelForZeroShotObjectDetection, AutoProcessor
 
             logger.info(
-                "Loading Grounding DINO model: %s on %s ...", _MODEL_NAME, _DEVICE
+                "Loading Grounding DINO model: %s@%s on %s ...",
+                MODEL_NAME,
+                MODEL_REVISION,
+                _DEVICE,
             )
-            _processor = AutoProcessor.from_pretrained(_MODEL_NAME)
-            model = AutoModelForZeroShotObjectDetection.from_pretrained(_MODEL_NAME)
+            _processor = AutoProcessor.from_pretrained(
+                MODEL_NAME,
+                revision=MODEL_REVISION,
+            )
+            model = AutoModelForZeroShotObjectDetection.from_pretrained(
+                MODEL_NAME,
+                revision=MODEL_REVISION,
+            )
             model = model.to(_DEVICE)
             model.eval()
             _model = model
@@ -110,12 +156,22 @@ def _get_model() -> tuple[Any, Any]:
     name="grounding-dino.detect",
     summary="Zero-shot object detection from a text prompt; returns labeled boxes with confidence scores.",
     tags=("perception",),
+    metadata={
+        "provider": MODEL_PROVIDER,
+        "model": MODEL_NAME,
+        "revision": MODEL_REVISION,
+        "snapshot": MODEL_REVISION,
+        "parameters": {
+            "box_threshold": DEFAULT_BOX_THRESHOLD,
+            "text_threshold": DEFAULT_TEXT_THRESHOLD,
+        },
+    },
 )
 def detect(
     image: np.ndarray,
     query: str,
-    box_threshold: float = _DEFAULT_BOX_THRESHOLD,
-    text_threshold: float = _DEFAULT_TEXT_THRESHOLD,
+    box_threshold: float = DEFAULT_BOX_THRESHOLD,
+    text_threshold: float = DEFAULT_TEXT_THRESHOLD,
 ) -> DetectResult:
     """Detect objects matching ``query`` in an RGB uint8 [H, W, 3] image.
 
@@ -144,8 +200,8 @@ def detect(
         text_prompt = text_prompt + "."
 
     # Defaults if zero/unset (mirrors the servicer's proto-default handling)
-    box_threshold = box_threshold if box_threshold > 0 else _DEFAULT_BOX_THRESHOLD
-    text_threshold = text_threshold if text_threshold > 0 else _DEFAULT_TEXT_THRESHOLD
+    box_threshold = box_threshold if box_threshold > 0 else DEFAULT_BOX_THRESHOLD
+    text_threshold = text_threshold if text_threshold > 0 else DEFAULT_TEXT_THRESHOLD
 
     try:
         inputs = processor(
