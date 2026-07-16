@@ -28,6 +28,8 @@ gap:
     - geometry.build_world_config
     - curobo.plan_with_grasped_object
     - curobo.plan_directed_linear
+    - curobo.validate_joint_trajectory_robot
+    - curobo.validate_joint_trajectory_grasped
     - grounding-dino.detect
     - vlm.query
     - sam3.segment_box
@@ -41,6 +43,15 @@ gap:
     target_obb: OrientedBoundingBox
     target_mask: Mask
     ee_pose_at_grasp: Se3Pose
+    held_grasp_json: str
+    target_lineage_json: str
+    destination_obb: OrientedBoundingBox
+    destination_lineage_json: str
+    world_config: WorldConfig
+    target_name: str
+    preset_json: str
+  produces_outputs:
+    terminal_result_json: str
   canonical_scripts:
     - transport_descend_linear: scripts/transport_descend_linear.py
     - place_release: scripts/place_release.py
@@ -53,6 +64,7 @@ gap:
     - waypoint_move: scripts/waypoint_move.py
     - waypoint_move_carve: scripts/waypoint_move_carve.py
     - perceive_placement_zone: scripts/perceive_placement_zone.py
+    - plan_validate_transport: scripts/plan_validate_transport.py
   prompts:
     vlm_select_zone: prompts/vlm_select_zone.md
   references:
@@ -67,6 +79,27 @@ gap:
 ---
 
 # transporting-objects
+
+## Paper-replication v1 contract
+
+`skills/transporting-objects/scripts/plan_validate_transport.py` is the only
+paper-admitted transport path. It requires a verified held target lineage and
+a separate destination-role perception lineage whose OBB hash directly enters
+drop-position and transport planning. Reusing the target lineage as the
+destination is rejected before any tool call.
+
+The sealed preset supplies IK seeds, approach distance, and exact trajectory
+waypoint count. The script plans transport with the held object, validates the
+robot and attachment trajectories, executes, plans and revalidates a linear
+placement descent, releases, then plans and revalidates the retreat. There is
+no fixed height, Cartesian shortcut, native state, or fallback. Its final
+output is a structured terminal release record; it never calls the task
+success evaluator, which remains runner-only. Stable error codes cover
+lineage, placement geometry, transport planning/collision, placement,
+release-path, retreat, preset, and missing evidence failures.
+All paper record bindings are strict canonical-JSON `str` envelopes and are
+validated before any tool call; `terminal_result_json` is the canonical wire
+record after release and retreat.
 
 The pick has happened; the gripper is holding the target. This subgraph
 moves the held object above the destination container and releases it.

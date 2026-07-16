@@ -29,10 +29,17 @@ gap:
   exit_conditions:
     found: Target detected; OBB and mask bound in subgraph outputs.
     not_found: Target not visible in any view. In clean-all-items loops route to done; in normal pick-and-place, route to abort.
+  required_inputs:
+    query: str
+    semantic_role: str
+    preset_json: str
   produces_outputs:
     "<name>_obb": OrientedBoundingBox
     "<name>_mask": Mask
     "<name>_cloud": PointCloud
+    target_obb: OrientedBoundingBox
+    destination_obb: OrientedBoundingBox
+    lineage_json: str
   errors:
     - "NOT_FOUND: Object not detected in any camera view."
   hard_rules:
@@ -40,6 +47,7 @@ gap:
     - geometry_calling_conventions.md#obb-field-binding
   canonical_scripts:
     - perceive_dino_vlm: scripts/perceive_dino_vlm.py
+    - perceive_disambiguate_segment: scripts/perceive_disambiguate_segment.py
   prompts:
     vlm_pairwise: prompts/vlm_pairwise.md
   references:
@@ -54,6 +62,26 @@ gap:
 ---
 
 # perceiving-objects
+
+## Paper-replication v1 contract
+
+`skills/perceiving-objects/scripts/perceive_disambiguate_segment.py` is the
+only paper-admitted perception path. Invoke it separately with the required
+`semantic_role` literal `target` and `destination`; the two role-bound lineage
+hashes are not interchangeable. It performs one exterior RGB-D observation,
+broad Grounding-DINO candidates, a VLM crop tournament, SAM3 box segmentation,
+depth back-projection, and evidenced OBB fitting. Every stage rejects missing
+or fallback evidence. It never uses a top-1 detector shortcut, wrist view,
+native state, fixed geometry, or fallback path.
+
+The required sealed `recast.paper_manipulation.v1` preset is the sole source of
+all five manipulation parameters. Results carry `success`, stable
+`error_code`, the preset hash, and per-parameter runtime value, mapping,
+evidence level, and paper locator. Perception error codes cover preset/schema,
+RGB-D observation, detection/candidate count, VLM selection, segmentation,
+depth, and OBB failures.
+`preset_json` and `lineage_json` are strict canonical-JSON UTF-8 strings; the
+script rejects noncanonical or non-object envelopes at its boundary.
 
 Single-path perception: detect → disambiguate (pairwise crop tournament)
 → segment → fuse to 3D → extract OBB. Each DINO detection is cropped and

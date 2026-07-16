@@ -21,6 +21,10 @@ gap:
     - robot.go_to_pose_cartesian
     - curobo.plan_directed_linear
     - curobo.plan_to_grasp_poses
+    - curobo.batch_grasp_feasibility
+    - curobo.validate_joint_trajectory_robot
+    - curobo.validate_joint_trajectory_grasped
+    - vlm.query
     - robot.execute_trajectory
     - robot.open_gripper
     - robot.close_gripper
@@ -29,9 +33,15 @@ gap:
     failed: Any failure during the grasp attempt — the cartesian descend AND the collision-aware planner fallback both failed (a raise propagating to `on_error`). Coordinator routes to abort.
   required_inputs:
     target_obb: OrientedBoundingBox
+    target_lineage_json: str
+    world_config: WorldConfig
+    target_name: str
+    preset_json: str
   produces_outputs:
     ee_pose_at_grasp: Se3Pose
     grasp_pose: Se3Pose
+    validated_grasp_json: str
+    held_grasp_json: str
   hard_rules:
     - >
       ALWAYS begin with `robot.open_gripper` (settle_steps=40). Skipping this
@@ -61,6 +71,8 @@ gap:
   canonical_scripts:
     - grasp_descend_linear: scripts/grasp_descend_linear.py
     - select_short_axis: scripts/select_short_axis.py
+    - plan_validate_grasp: scripts/plan_validate_grasp.py
+    - execute_verify_grasp: scripts/execute_verify_grasp.py
   references:
     - title: Why a Z-locked linear descend (fingertip-frame, orientation LOCK)
       path: references/design_grasp_curobo.md
@@ -73,6 +85,29 @@ gap:
 ---
 
 # grasping-with-planner
+
+## Paper-replication v1 contract
+
+The paper path is exactly
+`skills/grasping-with-planner/scripts/plan_validate_grasp.py` followed by
+`skills/grasping-with-planner/scripts/execute_verify_grasp.py`. It does not use
+the fixed-height Cartesian or best-effort flows documented below. The planner
+requires a target-role lineage, at least the sealed candidate count, one batch
+IK/corridor result using the sealed IK seed count, an evidenced motion plan,
+robot-world validation, held-object validation, and an exact sealed waypoint
+count after resampling and revalidation. A candidate executes only when every
+gate passes; all candidate rejection reasons are stable codes.
+
+Execution is plan → close → fresh RGB visual VLM hold verification → evidenced
+linear lift by the sealed lift distance → robot and held-object revalidation →
+execute → fresh post-lift visual VLM verification. Gripper fraction,
+checkpoints, simulator-native state, and privileged state are not hold proof.
+Both scripts require the sealed preset and return structured `success` and
+`error_code` fields covering candidate, IK, planning, trajectory validation,
+grasp, hold, and lift failures. Missing service evidence always fails closed.
+The preset, lineage, validated-grasp, and held-grasp bindings use strict
+canonical-JSON `str` envelopes because the current GAP registry has no generic
+mapping type; every receiving script parses and canonicality-checks the object.
 
 Top-down grasping with a fast **axis-locked linear descend** and a
 **collision-aware cuRobo fallback**. The primary path rises to a hover height,

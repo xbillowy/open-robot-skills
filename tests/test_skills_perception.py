@@ -16,7 +16,6 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
-from gap_core.errors import PerceptionFailed, ToolError
 from gap.testing import FakeContext, make_test_observation
 
 # ---------------------------------------------------------------------------
@@ -24,7 +23,7 @@ from gap.testing import FakeContext, make_test_observation
 # ---------------------------------------------------------------------------
 
 PERCEPTION_BUNDLES: dict[str, set[str]] = {
-    "perceiving-objects": {"perceive_dino_vlm"},
+    "perceiving-objects": {"perceive_dino_vlm", "perceive_disambiguate_segment"},
     "perceiving-objects-oneshot": {"perceive_simple"},
     "perceiving-object-parts": {"perceive_subpart"},
 }
@@ -32,10 +31,29 @@ PERCEPTION_BUNDLES: dict[str, set[str]] = {
 #: Output-field contracts downstream graphs bind ``$ref``s against.
 EXPECTED_SCRIPT_OUTPUTS: dict[tuple[str, str], set[str]] = {
     ("perceiving-objects", "perceive_dino_vlm"): {"found", "cloud", "mask", "score"},
+    ("perceiving-objects", "perceive_disambiguate_segment"): {
+        "success",
+        "error_code",
+        "semantic_role",
+        "obb",
+        "target_obb",
+        "destination_obb",
+        "lineage_json",
+        "lineage_record",
+        "decision_path",
+        "fallback_used",
+        "preset_trace",
+    },
     ("perceiving-objects-oneshot", "perceive_simple"): {"found", "cloud", "mask", "score"},
     ("perceiving-object-parts", "perceive_subpart"): {
-        "found", "obb", "mask", "cloud", "subpart_mask", "score",
-        "parent_obb", "parent_cloud",
+        "found",
+        "obb",
+        "mask",
+        "cloud",
+        "subpart_mask",
+        "score",
+        "parent_obb",
+        "parent_cloud",
     },
 }
 
@@ -63,8 +81,10 @@ def _mask_u8(mask_bool: np.ndarray) -> np.ndarray:
 def _bbox_of(mask_bool: np.ndarray) -> dict:
     ys, xs = np.nonzero(mask_bool)
     return {
-        "x1": float(xs.min()), "y1": float(ys.min()),
-        "x2": float(xs.max() + 1), "y2": float(ys.max() + 1),
+        "x1": float(xs.min()),
+        "y1": float(ys.min()),
+        "x2": float(xs.max() + 1),
+        "y2": float(ys.max() + 1),
     }
 
 
@@ -86,10 +106,7 @@ def _geometry_delegates(tool_registry) -> dict:
         "geometry.filter_noise",
         "geometry.compute_obb",
     )
-    return {
-        name: (lambda _n: (lambda **kw: tool_registry.invoke(_n, **kw)))(name)
-        for name in names
-    }
+    return {name: (lambda _n: lambda **kw: tool_registry.invoke(_n, **kw))(name) for name in names}
 
 
 def _script(skills_registry, bundle: str, name: str):
@@ -98,9 +115,7 @@ def _script(skills_registry, bundle: str, name: str):
 
 @pytest.fixture(scope="module")
 def scene():
-    obs, gt = make_test_observation(
-        [("cube", _CUBE_CENTER, _CUBE_SIZE)], image_hw=_IMAGE_HW
-    )
+    obs, gt = make_test_observation([("cube", _CUBE_CENTER, _CUBE_SIZE)], image_hw=_IMAGE_HW)
     return obs, gt
 
 
@@ -142,22 +157,18 @@ def test_perception_bundles_discover_with_valid_frontmatter(skills_registry):
         # produces_outputs use gap.types schema names, never proto-era names.
         assert info.meta.produces_outputs
         for type_name in info.meta.produces_outputs.values():
-            assert type_name in {"OrientedBoundingBox", "Mask", "PointCloud"}
+            assert type_name in {"OrientedBoundingBox", "Mask", "PointCloud", "str"}
 
 
 def test_perception_allowed_tools_all_exist(skills_registry):
     from gap.skills.validate import known_tool_names
 
-    landed_tool_names = known_tool_names(
-        [info.meta for info in skills_registry.list_skills()]
-    )
+    landed_tool_names = known_tool_names([info.meta for info in skills_registry.list_skills()])
     for bundle in PERCEPTION_BUNDLES:
         info = skills_registry.get(bundle)
         assert info.meta.allowed_tools, f"{bundle}: no allowed_tools declared"
         missing = set(info.meta.allowed_tools) - landed_tool_names
-        assert not missing, (
-            f"{bundle}: allowed_tools reference unknown tools {sorted(missing)}"
-        )
+        assert not missing, f"{bundle}: allowed_tools reference unknown tools {sorted(missing)}"
 
 
 def test_perception_declared_resources_exist_on_disk(skills_registry):
@@ -177,9 +188,7 @@ def test_perception_script_output_contracts(skills_registry):
     graphs bind ``$ref``s against (same names as the legacy sources)."""
     for (bundle, script), expected in EXPECTED_SCRIPT_OUTPUTS.items():
         sinfo = skills_registry.get(bundle).canonical_scripts[script]
-        assert set(sinfo.schema.outputs) == expected, (
-            f"{bundle}::{script} output contract drifted"
-        )
+        assert set(sinfo.schema.outputs) == expected, f"{bundle}::{script} output contract drifted"
 
 
 # ---------------------------------------------------------------------------
@@ -190,13 +199,15 @@ def test_perception_script_output_contracts(skills_registry):
 def test_perceiving_objects_happy_path(po_module, tool_registry, scene):
     obs, gt = scene
     cube = gt["cube"]["mask"]
-    ctx = FakeContext({
-        "grounding-dino.detect": {
-            "detections": [{"box": _bbox_of(cube), "label": "object", "score": 0.9}],
-        },
-        "sam3.segment_box": {"masks": [_mask_u8(cube)], "scores": [0.95]},
-        **_geometry_delegates(tool_registry),
-    })
+    ctx = FakeContext(
+        {
+            "grounding-dino.detect": {
+                "detections": [{"box": _bbox_of(cube), "label": "object", "score": 0.9}],
+            },
+            "sam3.segment_box": {"masks": [_mask_u8(cube)], "scores": [0.95]},
+            **_geometry_delegates(tool_registry),
+        }
+    )
 
     out = po_module.run(ctx, cameras=obs["cameras"], object_name="red cube")
 
@@ -212,22 +223,26 @@ def test_perceiving_objects_happy_path(po_module, tool_registry, scene):
 
 
 def test_perceiving_objects_pairwise_tournament_picks_vlm_winner(
-    po_module, tool_registry, scene,
+    po_module,
+    tool_registry,
+    scene,
 ):
     obs, gt = scene
     cube = gt["cube"]["mask"]
     cube_box = _bbox_of(cube)
-    ctx = FakeContext({
-        "grounding-dino.detect": {
-            "detections": [
-                {"box": _DECOY_BOX, "label": "object", "score": 0.8},
-                {"box": cube_box, "label": "object", "score": 0.7},
-            ],
-        },
-        "vlm.query": {"text": "B"},  # the pairwise prompt: A=decoy, B=cube
-        "sam3.segment_box": {"masks": [_mask_u8(cube)], "scores": [0.92]},
-        **_geometry_delegates(tool_registry),
-    })
+    ctx = FakeContext(
+        {
+            "grounding-dino.detect": {
+                "detections": [
+                    {"box": _DECOY_BOX, "label": "object", "score": 0.8},
+                    {"box": cube_box, "label": "object", "score": 0.7},
+                ],
+            },
+            "vlm.query": {"text": "B"},  # the pairwise prompt: A=decoy, B=cube
+            "sam3.segment_box": {"masks": [_mask_u8(cube)], "scores": [0.92]},
+            **_geometry_delegates(tool_registry),
+        }
+    )
 
     out = po_module.run(ctx, cameras=obs["cameras"], object_name="red cube")
 
@@ -243,10 +258,12 @@ def test_perceiving_objects_pairwise_tournament_picks_vlm_winner(
 
 def test_perceiving_objects_not_found_returns_found_false(po_module, scene):
     obs, _ = scene
-    ctx = FakeContext({
-        "grounding-dino.detect": {"detections": []},
-        "sam3.segment_text": {"masks": [], "scores": [], "boxes": []},
-    })
+    ctx = FakeContext(
+        {
+            "grounding-dino.detect": {"detections": []},
+            "sam3.segment_text": {"masks": [], "scores": [], "boxes": []},
+        }
+    )
 
     out = po_module.run(ctx, cameras=obs["cameras"], object_name="unicorn")
 
@@ -259,7 +276,11 @@ def test_perceiving_objects_not_found_returns_found_false(po_module, scene):
 
 
 def test_perceiving_objects_cache_roundtrip(
-    skills_registry, tool_registry, scene, monkeypatch, tmp_path,
+    skills_registry,
+    tool_registry,
+    scene,
+    monkeypatch,
+    tmp_path,
 ):
     """Second identical call must short-circuit on the pickle cache."""
     mod = _script(skills_registry, "perceiving-objects", "perceive_dino_vlm")
@@ -299,9 +320,7 @@ def dual_cam_scene():
     """Exterior + wrist camera pair (the wrist is a renamed copy of the
     exterior frame) so run() takes the `safe` gate path instead of the
     single-camera legacy path."""
-    obs, gt = make_test_observation(
-        [("cube", _CUBE_CENTER, _CUBE_SIZE)], image_hw=_IMAGE_HW
-    )
+    obs, gt = make_test_observation([("cube", _CUBE_CENTER, _CUBE_SIZE)], image_hw=_IMAGE_HW)
     ext = obs["cameras"][0]
     wrist = dict(ext)
     wrist["name"] = "robot0_eye_in_hand"
@@ -326,20 +345,26 @@ def _dual_cam_responses(tool_registry, cube_mask) -> dict:
 
 
 def test_safe_gate_verified_exterior_pick_skips_wrist(
-    po_module, tool_registry, dual_cam_scene,
+    po_module,
+    tool_registry,
+    dual_cam_scene,
 ):
     """Verify YES on the exterior pick -> exterior result, wrist never
     identified; object_description must reach BOTH the pairwise tournament
     prompt and the close-up verify prompt."""
     obs, gt = dual_cam_scene
     cube = gt["cube"]["mask"]
-    ctx = FakeContext({
-        **_dual_cam_responses(tool_registry, cube),
-        "vlm.query_yes_no": {"answer": True, "text": "Yes, it matches."},
-    })
+    ctx = FakeContext(
+        {
+            **_dual_cam_responses(tool_registry, cube),
+            "vlm.query_yes_no": {"answer": True, "text": "Yes, it matches."},
+        }
+    )
 
     out = po_module.run(
-        ctx, cameras=obs["cameras"], object_name="red cube",
+        ctx,
+        cameras=obs["cameras"],
+        object_name="red cube",
         object_description=_DESC,
     )
 
@@ -363,19 +388,23 @@ def test_safe_gate_verified_exterior_pick_skips_wrist(
 
 
 def test_safe_gate_rejected_exterior_falls_to_verified_wrist(
-    po_module, tool_registry, dual_cam_scene,
+    po_module,
+    tool_registry,
+    dual_cam_scene,
 ):
     """Verify NO on the exterior pick -> wrist identified; wrist verify YES
     -> the wrist result is used (single-view cloud)."""
     obs, gt = dual_cam_scene
     cube = gt["cube"]["mask"]
-    ctx = FakeContext({
-        **_dual_cam_responses(tool_registry, cube),
-        "vlm.query_yes_no": [
-            {"answer": False, "text": "No, it looks like a small book."},
-            {"answer": True, "text": "Yes, that is the cube."},
-        ],
-    })
+    ctx = FakeContext(
+        {
+            **_dual_cam_responses(tool_registry, cube),
+            "vlm.query_yes_no": [
+                {"answer": False, "text": "No, it looks like a small book."},
+                {"answer": True, "text": "Yes, that is the cube."},
+            ],
+        }
+    )
 
     out = po_module.run(ctx, cameras=obs["cameras"], object_name="red cube")
 
@@ -387,16 +416,20 @@ def test_safe_gate_rejected_exterior_falls_to_verified_wrist(
 
 
 def test_safe_gate_nothing_verified_keeps_conservative_exterior(
-    po_module, tool_registry, dual_cam_scene,
+    po_module,
+    tool_registry,
+    dual_cam_scene,
 ):
     """Verify NO on both picks -> never fuse the unverified wrist; the
     exterior result is kept (the dev study's zero-regression policy)."""
     obs, gt = dual_cam_scene
     cube = gt["cube"]["mask"]
-    ctx = FakeContext({
-        **_dual_cam_responses(tool_registry, cube),
-        "vlm.query_yes_no": {"answer": False, "text": "No."},
-    })
+    ctx = FakeContext(
+        {
+            **_dual_cam_responses(tool_registry, cube),
+            "vlm.query_yes_no": {"answer": False, "text": "No."},
+        }
+    )
 
     out = po_module.run(ctx, cameras=obs["cameras"], object_name="red cube")
 
@@ -410,21 +443,23 @@ def test_safe_gate_nothing_verified_keeps_conservative_exterior(
 
 
 def test_verify_prompt_without_description_is_bare_question(
-    po_module, tool_registry, dual_cam_scene,
+    po_module,
+    tool_registry,
+    dual_cam_scene,
 ):
     obs, gt = dual_cam_scene
     cube = gt["cube"]["mask"]
-    ctx = FakeContext({
-        **_dual_cam_responses(tool_registry, cube),
-        "vlm.query_yes_no": {"answer": True, "text": "Yes."},
-    })
+    ctx = FakeContext(
+        {
+            **_dual_cam_responses(tool_registry, cube),
+            "vlm.query_yes_no": {"answer": True, "text": "Yes."},
+        }
+    )
 
     po_module.run(ctx, cameras=obs["cameras"], object_name="red cube")
 
     (verify_call,) = ctx.calls_to("vlm.query_yes_no")
-    assert verify_call.kwargs["prompt"] == (
-        'Is the main object in this close-up a "red cube"?'
-    )
+    assert verify_call.kwargs["prompt"] == ('Is the main object in this close-up a "red cube"?')
 
 
 # ---------------------------------------------------------------------------
@@ -467,7 +502,9 @@ def _ext_cloud_size(tool_registry, scene_obs, mask_bool) -> int:
 
 
 def test_wrist_support_fuses_intersecting_segment_text_cloud(
-    po_module, tool_registry, dual_cam_two_obj_scene,
+    po_module,
+    tool_registry,
+    dual_cam_two_obj_scene,
 ):
     """Wrist segment_text finds the same object -> its cloud is FUSED into
     the output; the exterior pick's mask/score stay authoritative even when
@@ -475,15 +512,17 @@ def test_wrist_support_fuses_intersecting_segment_text_cloud(
     obs, gt = dual_cam_two_obj_scene
     cube = gt["cube"]["mask"]
     ext_mask = _mask_u8(cube)
-    ctx = FakeContext({
-        "grounding-dino.detect": {
-            "detections": [{"box": _bbox_of(cube), "label": "object", "score": 0.9}],
-        },
-        "sam3.segment_box": {"masks": [ext_mask], "scores": [0.92]},
-        "sam3.segment_text": {"masks": [_mask_u8(cube)], "scores": [0.99]},
-        "vlm.query_yes_no": {"answer": True, "text": "Yes."},
-        **_geometry_delegates(tool_registry),
-    })
+    ctx = FakeContext(
+        {
+            "grounding-dino.detect": {
+                "detections": [{"box": _bbox_of(cube), "label": "object", "score": 0.9}],
+            },
+            "sam3.segment_box": {"masks": [ext_mask], "scores": [0.92]},
+            "sam3.segment_text": {"masks": [_mask_u8(cube)], "scores": [0.99]},
+            "vlm.query_yes_no": {"answer": True, "text": "Yes."},
+            **_geometry_delegates(tool_registry),
+        }
+    )
 
     out = po_module.run(ctx, cameras=obs["cameras"], object_name="red cube")
 
@@ -501,7 +540,9 @@ def test_wrist_support_fuses_intersecting_segment_text_cloud(
 
 
 def test_wrist_support_projection_fallback_seeds_segment_box(
-    po_module, tool_registry, dual_cam_two_obj_scene,
+    po_module,
+    tool_registry,
+    dual_cam_two_obj_scene,
 ):
     """Wrist segment_text finds nothing -> the exterior cloud is projected
     into the wrist frame and seeds sam3.segment_box there; the resulting
@@ -509,19 +550,21 @@ def test_wrist_support_projection_fallback_seeds_segment_box(
     obs, gt = dual_cam_two_obj_scene
     cube = gt["cube"]["mask"]
     ext_mask = _mask_u8(cube)
-    ctx = FakeContext({
-        "grounding-dino.detect": {
-            "detections": [{"box": _bbox_of(cube), "label": "object", "score": 0.9}],
-        },
-        # 1st: exterior identify; 2nd: wrist projection-seeded fallback.
-        "sam3.segment_box": [
-            {"masks": [ext_mask], "scores": [0.92]},
-            {"masks": [_mask_u8(cube)], "scores": [0.88]},
-        ],
-        "sam3.segment_text": {"masks": [], "scores": [], "boxes": []},
-        "vlm.query_yes_no": {"answer": True, "text": "Yes."},
-        **_geometry_delegates(tool_registry),
-    })
+    ctx = FakeContext(
+        {
+            "grounding-dino.detect": {
+                "detections": [{"box": _bbox_of(cube), "label": "object", "score": 0.9}],
+            },
+            # 1st: exterior identify; 2nd: wrist projection-seeded fallback.
+            "sam3.segment_box": [
+                {"masks": [ext_mask], "scores": [0.92]},
+                {"masks": [_mask_u8(cube)], "scores": [0.88]},
+            ],
+            "sam3.segment_text": {"masks": [], "scores": [], "boxes": []},
+            "vlm.query_yes_no": {"answer": True, "text": "Yes."},
+            **_geometry_delegates(tool_registry),
+        }
+    )
 
     out = po_module.run(ctx, cameras=obs["cameras"], object_name="red cube")
 
@@ -541,7 +584,9 @@ def test_wrist_support_projection_fallback_seeds_segment_box(
 
 
 def test_wrist_support_rejects_non_intersecting_cloud(
-    po_module, tool_registry, dual_cam_two_obj_scene,
+    po_module,
+    tool_registry,
+    dual_cam_two_obj_scene,
 ):
     """A wrist segment of a DIFFERENT object (cloud does not intersect the
     verified exterior cloud) must never fuse — the dev-era multiview guard.
@@ -550,22 +595,24 @@ def test_wrist_support_rejects_non_intersecting_cloud(
     cube = gt["cube"]["mask"]
     decoy = gt["decoy"]["mask"]
     ext_mask = _mask_u8(cube)
-    ctx = FakeContext({
-        "grounding-dino.detect": {
-            "detections": [{"box": _bbox_of(cube), "label": "object", "score": 0.9}],
-        },
-        # 1st: exterior identify (cube); 2nd: wrist projection fallback
-        # whose SAM grab lands on the decoy.
-        "sam3.segment_box": [
-            {"masks": [ext_mask], "scores": [0.92]},
-            {"masks": [_mask_u8(decoy)], "scores": [0.95]},
-        ],
-        # Wrist segment_text also lands on the decoy: intersection guard
-        # must reject it and try the projection fallback next.
-        "sam3.segment_text": {"masks": [_mask_u8(decoy)], "scores": [0.9]},
-        "vlm.query_yes_no": {"answer": True, "text": "Yes."},
-        **_geometry_delegates(tool_registry),
-    })
+    ctx = FakeContext(
+        {
+            "grounding-dino.detect": {
+                "detections": [{"box": _bbox_of(cube), "label": "object", "score": 0.9}],
+            },
+            # 1st: exterior identify (cube); 2nd: wrist projection fallback
+            # whose SAM grab lands on the decoy.
+            "sam3.segment_box": [
+                {"masks": [ext_mask], "scores": [0.92]},
+                {"masks": [_mask_u8(decoy)], "scores": [0.95]},
+            ],
+            # Wrist segment_text also lands on the decoy: intersection guard
+            # must reject it and try the projection fallback next.
+            "sam3.segment_text": {"masks": [_mask_u8(decoy)], "scores": [0.9]},
+            "vlm.query_yes_no": {"answer": True, "text": "Yes."},
+            **_geometry_delegates(tool_registry),
+        }
+    )
 
     out = po_module.run(ctx, cameras=obs["cameras"], object_name="red cube")
 
@@ -587,17 +634,19 @@ def test_oneshot_happy_path(skills_registry, tool_registry, scene):
     obs, gt = scene
     cube = gt["cube"]["mask"]
     cube_box = _bbox_of(cube)
-    ctx = FakeContext({
-        "grounding-dino.detect": {
-            "detections": [
-                {"box": _DECOY_BOX, "label": "object", "score": 0.8},
-                {"box": cube_box, "label": "object", "score": 0.7},
-            ],
-        },
-        "vlm.query": {"text": "B"},
-        "sam3.segment_box": {"masks": [_mask_u8(cube)], "scores": [0.91]},
-        **_geometry_delegates(tool_registry),
-    })
+    ctx = FakeContext(
+        {
+            "grounding-dino.detect": {
+                "detections": [
+                    {"box": _DECOY_BOX, "label": "object", "score": 0.8},
+                    {"box": cube_box, "label": "object", "score": 0.7},
+                ],
+            },
+            "vlm.query": {"text": "B"},
+            "sam3.segment_box": {"masks": [_mask_u8(cube)], "scores": [0.91]},
+            **_geometry_delegates(tool_registry),
+        }
+    )
 
     out = mod.run(ctx, cameras=obs["cameras"], object_name="red cube")
 
@@ -615,17 +664,18 @@ def test_oneshot_vlm_none_is_clean_not_found(skills_registry, scene):
     and no segmentation/geometry work happens."""
     mod = _script(skills_registry, "perceiving-objects-oneshot", "perceive_simple")
     obs, gt = scene
-    ctx = FakeContext({
-        "grounding-dino.detect": {
-            "detections": [
-                {"box": _bbox_of(gt["cube"]["mask"]), "label": "object", "score": 0.9},
-            ],
-        },
-        "vlm.query": {"text": "none"},
-    })
+    ctx = FakeContext(
+        {
+            "grounding-dino.detect": {
+                "detections": [
+                    {"box": _bbox_of(gt["cube"]["mask"]), "label": "object", "score": 0.9},
+                ],
+            },
+            "vlm.query": {"text": "none"},
+        }
+    )
 
-    out = mod.run(ctx, cameras=obs["cameras"],
-                  object_name="any grocery item on the floor")
+    out = mod.run(ctx, cameras=obs["cameras"], object_name="any grocery item on the floor")
 
     assert out["found"] is False
     assert out["score"] == 0.0
@@ -680,7 +730,7 @@ def test_parts_happy_path(skills_registry, tool_registry, pan_scene):
     h, w = _IMAGE_HW
     pan = gt["pan"]["mask"]
     handle = gt["handle"]["mask"]
-    parent_mask_bool = pan | handle           # the whole physical pan
+    parent_mask_bool = pan | handle  # the whole physical pan
     parent_box = _bbox_of(parent_mask_bool)
     handle_box = _bbox_of(handle)
 
@@ -692,23 +742,31 @@ def test_parts_happy_path(skills_registry, tool_registry, pan_scene):
         if "handle" not in query:
             # Parent sweep ("frying pan.") on the full frame.
             assert image.shape[:2] == _IMAGE_HW
-            return {"detections": [
-                {"box": parent_box, "label": "frying pan", "score": 0.9},
-            ]}
+            return {
+                "detections": [
+                    {"box": parent_box, "label": "frying pan", "score": 0.9},
+                ]
+            }
         # Subpart sweep on the parent crop: a whole-parent box that scores
         # HIGHER than the true handle box — the area filter must reject it.
         whole_in_crop = {
-            "x1": parent_box["x1"] - px1, "y1": parent_box["y1"] - py1,
-            "x2": parent_box["x2"] - px1, "y2": parent_box["y2"] - py1,
+            "x1": parent_box["x1"] - px1,
+            "y1": parent_box["y1"] - py1,
+            "x2": parent_box["x2"] - px1,
+            "y2": parent_box["y2"] - py1,
         }
         handle_in_crop = {
-            "x1": handle_box["x1"] - px1, "y1": handle_box["y1"] - py1,
-            "x2": handle_box["x2"] - px1, "y2": handle_box["y2"] - py1,
+            "x1": handle_box["x1"] - px1,
+            "y1": handle_box["y1"] - py1,
+            "x2": handle_box["x2"] - px1,
+            "y2": handle_box["y2"] - py1,
         }
-        return {"detections": [
-            {"box": whole_in_crop, "label": "handle", "score": 0.95},
-            {"box": handle_in_crop, "label": "handle", "score": 0.8},
-        ]}
+        return {
+            "detections": [
+                {"box": whole_in_crop, "label": "handle", "score": 0.95},
+                {"box": handle_in_crop, "label": "handle", "score": 0.8},
+            ]
+        }
 
     def fake_segment_text(image, query, **kw):
         # Called on the tight subpart crop; return the handle mask in
@@ -720,22 +778,31 @@ def test_parts_happy_path(skills_registry, tool_registry, pan_scene):
             "boxes": [],
         }
 
-    ctx = FakeContext({
-        "grounding-dino.detect": fake_dino,
-        "sam3.segment_box": {"masks": [_mask_u8(parent_mask_bool)], "scores": [0.9]},
-        "sam3.segment_text": fake_segment_text,
-        **_geometry_delegates(tool_registry),
-    })
+    ctx = FakeContext(
+        {
+            "grounding-dino.detect": fake_dino,
+            "sam3.segment_box": {"masks": [_mask_u8(parent_mask_bool)], "scores": [0.9]},
+            "sam3.segment_text": fake_segment_text,
+            **_geometry_delegates(tool_registry),
+        }
+    )
 
     out = mod.run(
-        ctx, cameras=obs["cameras"],
+        ctx,
+        cameras=obs["cameras"],
         parent_prompt="frying pan",
         subpart_prompt="long horizontal handle of the frying pan",
     )
 
     assert set(out) == {
-        "found", "obb", "mask", "cloud", "subpart_mask", "score",
-        "parent_obb", "parent_cloud",
+        "found",
+        "obb",
+        "mask",
+        "cloud",
+        "subpart_mask",
+        "score",
+        "parent_obb",
+        "parent_cloud",
     }
     assert out["found"] is True
     assert out["score"] == pytest.approx(0.8)  # the true handle box's score
@@ -774,8 +841,10 @@ def test_parts_not_found_returns_found_false(skills_registry, pan_scene):
     ctx = FakeContext({"grounding-dino.detect": {"detections": []}})
 
     out = mod.run(
-        ctx, cameras=obs["cameras"],
-        parent_prompt="frying pan", subpart_prompt="handle",
+        ctx,
+        cameras=obs["cameras"],
+        parent_prompt="frying pan",
+        subpart_prompt="handle",
     )
 
     assert out["found"] is False
