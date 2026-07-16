@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ast
 import hashlib
 import importlib.util
 import json
@@ -86,6 +87,44 @@ POSE = {
     "rotation": {"w": 1.0, "x": 0.0, "y": 0.0, "z": 0.0},
 }
 TRAJECTORY = {"waypoints": [{"positions": [0.0] * 7}, {"positions": [0.1] * 7}]}
+
+PAPER_SCRIPTS = {
+    "perceive": ROOT / "skills/perceiving-objects/scripts/perceive_disambiguate_segment.py",
+    "plan": ROOT / "skills/grasping-with-planner/scripts/plan_validate_grasp.py",
+    "execute": ROOT / "skills/grasping-with-planner/scripts/execute_verify_grasp.py",
+    "transport": ROOT / "skills/transporting-objects/scripts/plan_validate_transport.py",
+}
+
+
+def _literal_string_set(tree: ast.Module, name: str) -> frozenset[str]:
+    assignment = next(
+        node
+        for node in tree.body
+        if isinstance(node, ast.Assign)
+        and any(isinstance(target, ast.Name) and target.id == name for target in node.targets)
+    )
+    assert (
+        isinstance(assignment.value, ast.Call)
+        and isinstance(assignment.value.func, ast.Name)
+        and assignment.value.func.id == "frozenset"
+        and len(assignment.value.args) == 1
+        and not assignment.value.keywords
+    )
+    value = frozenset(ast.literal_eval(assignment.value.args[0]))
+    assert all(isinstance(item, str) for item in value)
+    return value
+
+
+def _runtime_value_reads(tree: ast.Module) -> frozenset[str]:
+    return frozenset(
+        node.slice.value
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Subscript)
+        and isinstance(node.value, ast.Name)
+        and node.value.id == "values"
+        and isinstance(node.slice, ast.Constant)
+        and isinstance(node.slice.value, str)
+    )
 
 
 def _module(relative: str) -> ModuleType:
@@ -817,3 +856,55 @@ def test_paper_scripts_statically_exclude_native_success_and_route_inputs() -> N
         "RETREAT_EXECUTION_FAILED",
     }
     assert all(f'"{code}"' in source for code in required_stage_codes)
+
+
+def test_paper_scripts_have_one_static_run_entrypoint() -> None:
+    for name, path in PAPER_SCRIPTS.items():
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=path.name)
+        run_definitions = [
+            node
+            for node in tree.body
+            if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef) and node.name == "run"
+        ]
+        assert len(run_definitions) == 1, name
+
+
+def test_paper_scripts_use_only_literal_tool_dispatch() -> None:
+    for name, path in PAPER_SCRIPTS.items():
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=path.name)
+        calls = [
+            node
+            for node in ast.walk(tree)
+            if isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Attribute)
+            and node.func.attr == "tool"
+        ]
+        assert calls, name
+        assert all(
+            call.args
+            and isinstance(call.args[0], ast.Constant)
+            and isinstance(call.args[0].value, str)
+            for call in calls
+        ), name
+
+
+def test_preset_field_declarations_match_runtime_reads_and_unique_ownership() -> None:
+    expected_responsibility = {
+        "perceive": frozenset(),
+        "plan": frozenset({"approach_distance_m", "grasp_candidate_count", "ik_seed_count"}),
+        "execute": frozenset({"lift_distance_m", "trajectory_waypoint_count"}),
+        "transport": frozenset(),
+    }
+    all_responsible: list[str] = []
+    for name, path in PAPER_SCRIPTS.items():
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=path.name)
+        consumed = _literal_string_set(tree, "CONSUMED_PRESET_FIELDS")
+        responsible = _literal_string_set(tree, "RESPONSIBLE_PRESET_FIELDS")
+        assert consumed == _runtime_value_reads(tree), name
+        assert responsible == expected_responsibility[name]
+        assert responsible <= consumed
+        all_responsible.extend(responsible)
+
+    expected_fields = {item["name"] for item in PRESET["parameters"]}
+    assert set(all_responsible) == expected_fields
+    assert len(all_responsible) == len(expected_fields)

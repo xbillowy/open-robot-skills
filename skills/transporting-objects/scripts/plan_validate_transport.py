@@ -17,6 +17,10 @@ EXPECTED = {
     "lift_distance_m",
     "trajectory_waypoint_count",
 }
+CONSUMED_PRESET_FIELDS = frozenset(
+    {"approach_distance_m", "ik_seed_count", "trajectory_waypoint_count"}
+)
+RESPONSIBLE_PRESET_FIELDS = frozenset(())
 DIGEST = re.compile(r"sha256:[0-9a-f]{64}\Z")
 SEALED_PRESET_SHA256 = "sha256:8f6f81c9f2880fe0e3f786e276511868142ca8033255d6b598d82baad22b77d9"
 
@@ -90,7 +94,11 @@ def _preset(preset_json: str) -> tuple[dict[str, Any], dict[str, Any]]:
     if len(rows) != 5 or {row.get("name") for row in rows} != EXPECTED:
         raise PaperManipulationError("PRESET_PARAMETERS_INVALID")
     return (
-        {row["name"]: row["runtime_value"] for row in rows},
+        {
+            row["name"]: row["runtime_value"]
+            for row in rows
+            if row["name"] in CONSUMED_PRESET_FIELDS
+        },
         {
             "preset_sha256": preset["preset_sha256"],
             "parameters": [
@@ -125,7 +133,23 @@ def _admitted(result: dict[str, Any], code: str) -> dict[str, Any]:
 
 def _tool(ctx: NodeContext, name: str, code: str, **kwargs: Any) -> dict[str, Any]:
     try:
-        return ctx.tool(name, **kwargs)
+        if name == "robot.get_observation":
+            return ctx.tool("robot.get_observation", **kwargs)
+        if name == "robot.execute_trajectory":
+            return ctx.tool("robot.execute_trajectory", **kwargs)
+        if name == "robot.open_gripper":
+            return ctx.tool("robot.open_gripper", **kwargs)
+        if name == "geometry.compute_drop_position":
+            return ctx.tool("geometry.compute_drop_position", **kwargs)
+        if name == "curobo.plan_with_grasped_object":
+            return ctx.tool("curobo.plan_with_grasped_object", **kwargs)
+        if name == "curobo.plan_directed_linear":
+            return ctx.tool("curobo.plan_directed_linear", **kwargs)
+        if name == "curobo.validate_joint_trajectory_robot":
+            return ctx.tool("curobo.validate_joint_trajectory_robot", **kwargs)
+        if name == "curobo.validate_joint_trajectory_grasped":
+            return ctx.tool("curobo.validate_joint_trajectory_grasped", **kwargs)
+        raise PaperManipulationError("UNDECLARED_TOOL_DISPATCH")
     except Exception as error:
         raise PaperManipulationError(code) from error
 
@@ -205,7 +229,7 @@ def _lineage_valid(lineage: dict[str, Any], role: str) -> bool:
     )
 
 
-def run(
+def _run_impl(
     ctx: NodeContext,
     held_grasp_json: str,
     target_lineage_json: str,
@@ -380,9 +404,6 @@ def run(
     return result
 
 
-_run = run
-
-
 def run(
     ctx: NodeContext,
     held_grasp_json: str,
@@ -394,7 +415,7 @@ def run(
     preset_json: str,
 ) -> Output:
     try:
-        return _run(
+        return _run_impl(
             ctx,
             held_grasp_json,
             target_lineage_json,
