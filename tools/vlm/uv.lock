@@ -345,7 +345,7 @@ wheels = [
 [[package]]
 name = "graph-as-policy-core"
 version = "0.1.0.dev0"
-source = { editable = "../../../graph-as-policy/gap-core" }
+source = { git = "https://github.com/xbillowy/recast?subdirectory=gap-core&rev=32b00d4be2efcd2564cd95ab70bed990cfbb016e#32b00d4be2efcd2564cd95ab70bed990cfbb016e" }
 dependencies = [
     { name = "msgpack" },
     { name = "msgpack-numpy" },
@@ -354,15 +354,6 @@ dependencies = [
     { name = "scipy", version = "1.15.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "typing-extensions", marker = "python_full_version < '3.11'" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "msgpack", specifier = ">=1.0" },
-    { name = "msgpack-numpy", specifier = ">=0.4.8" },
-    { name = "numpy", specifier = ">=1.26" },
-    { name = "scipy", specifier = ">=1.12" },
-    { name = "typing-extensions", marker = "python_full_version < '3.11'", specifier = ">=4.10" },
 ]
 
 [[package]]
@@ -1114,7 +1105,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "google-genai", specifier = ">=1.0,<1.60" },
-    { name = "graph-as-policy-core", editable = "../../../graph-as-policy/gap-core" },
+    { name = "graph-as-policy-core", git = "https://github.com/xbillowy/recast?subdirectory=gap-core&rev=32b00d4be2efcd2564cd95ab70bed990cfbb016e" },
     { name = "httpx", specifier = ">=0.27" },
     { name = "pillow", specifier = ">=10" },
 ]

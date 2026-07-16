@@ -29,8 +29,6 @@ bypass-selection = true
 [tool.hatch.metadata]
 allow-direct-references = true
 
-# Dev-only source override: until graph-as-policy-core is published to PyPI,
-# bundles in the side-by-side open-robot-skills checkout resolve it from the
-# gap workspace's gap-core/ subdir. Drop this block once gap-core is on PyPI.
+# Paper-replication source root: immutable Recast commit and gap-core tree.
 [tool.uv.sources]
-graph-as-policy-core = { path = "../../../graph-as-policy/gap-core", editable = true }
+graph-as-policy-core = { git = "https://github.com/xbillowy/recast", rev = "32b00d4be2efcd2564cd95ab70bed990cfbb016e", subdirectory = "gap-core" }
