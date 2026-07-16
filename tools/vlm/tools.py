@@ -2,18 +2,15 @@
 
 In-process ``@tool`` functions: ``Query`` / ``QueryYesNo`` semantics with a
 free-form prompt and one or more images (``images=`` carries several
-context frames in one request). The tool signatures deliberately expose no
-system prompt and no temperature knob — prompts are self-contained and
-sampling is pinned for determinism.
+context frames in one request). Prompts are self-contained; callers may set
+temperature and a provider sampling seed. Every result retains ``text`` and
+adds a raw-wire ``evidence`` mapping for provenance adapters.
 
 Providers — selected by ``GAP_VLM_PROVIDER`` (default ``"openrouter"``); a
-per-call ``provider=`` kwarg overrides the env. Every ``GAP_VLM_*`` knob
-inherits from the matching ``GAP_LLM_*`` / google-SDK env var when unset
-(see :func:`_resolve_provider`, :func:`_resolve_model`,
-:func:`_resolve_vertex_project`, :func:`_resolve_vertex_region`) — so a
-user who configures the agent's LLM doesn't have to re-configure the VLM
-bundle separately. Set ``GAP_VLM_*`` explicitly only to route the VLM to
-a different provider/model than the agent.
+per-call ``provider=`` kwarg overrides the env. Provider selection is isolated
+from ``GAP_LLM_PROVIDER`` so agent configuration cannot activate the formal
+VLM boundary. Ordinary providers still inherit compatible model/project
+settings where documented below.
 
 - ``openrouter`` (default) — OpenRouter's OpenAI-compatible
   chat-completions API (data-URL image blocks, ``temperature: 0.0``, 3
@@ -29,11 +26,14 @@ a different provider/model than the agent.
   ``GAP_VLM_PROJECT_ID`` (else ``GOOGLE_CLOUD_PROJECT``) +
   ``GAP_VLM_REGION`` (else ``GOOGLE_CLOUD_REGION`` else
   ``GOOGLE_CLOUD_LOCATION`` else ``"global"``).
+- ``openai_compatible`` — strict paper path. Requires explicit
+  ``GAP_VLM_BASE_URL``, ``GAP_VLM_API_KEY``, and ``GAP_VLM_MODEL``; never
+  falls back to OpenRouter, Vertex, or agent LLM configuration. It records
+  canonical request/response hashes and all bounded transport attempts.
 
-Generation config: perception callers (the pairwise tournament, the
-yes/no verify gate) are binary judgments that depend on deterministic
-decoding, so both providers pin ``temperature: 0.0`` + ``max_tokens:
-1024`` with 3 retries + exponential backoff.
+Generation config defaults to temperature 0.0 and max_tokens 1024. Set
+``GAP_VLM_TEMPERATURE`` (the paper environment uses 0.1), or pass an explicit
+``temperature=``. A seed is evidence, never a deterministic claim.
 
 All functions are synchronous — the gap runtime is threaded, not async.
 """
@@ -41,12 +41,16 @@ All functions are synchronous — the gap runtime is threaded, not async.
 from __future__ import annotations
 
 import base64
+import hashlib
 import io
+import json
 import logging
+import math
 import os
 import re
 import time
-from typing import TypedDict
+from typing import Literal, TypedDict
+from urllib.parse import urlsplit
 
 import httpx
 import numpy as np
@@ -62,8 +66,7 @@ logger = logging.getLogger(__name__)
 #: prefix depending on the account.
 DEFAULT_MODEL = "gemini-3.1-flash-lite-preview"
 
-#: Provider used when neither ``provider=`` nor ``GAP_VLM_PROVIDER`` nor
-#: ``GAP_LLM_PROVIDER`` is set.
+#: Provider used when neither ``provider=`` nor ``GAP_VLM_PROVIDER`` is set.
 DEFAULT_PROVIDER = "openrouter"
 
 
@@ -73,16 +76,14 @@ def _envstr(name: str) -> str:
 
 
 def _resolve_provider(provider: str | None) -> str:
-    """Per-call override > ``GAP_VLM_PROVIDER`` > ``GAP_LLM_PROVIDER`` >
-    :data:`DEFAULT_PROVIDER`. The ``GAP_LLM_*`` inheritance lets a user
-    who's already configured the agent's LLM run the VLM bundle through
-    the same provider without re-exporting a parallel set of env vars
-    (the silent ``GAP_VLM_*`` defaults caused the dev-era milk-vs-soup
-    mispick: missing creds → tournament fell back to "box 0 wins")."""
+    """Per-call override > ``GAP_VLM_PROVIDER`` > product default.
+
+    Provider selection intentionally does not inherit ``GAP_LLM_PROVIDER``:
+    agent configuration must never activate the strict paper VLM boundary.
+    """
     return (
         (provider or "").strip().lower()
         or _envstr("GAP_VLM_PROVIDER").lower()
-        or _envstr("GAP_LLM_PROVIDER").lower()
         or DEFAULT_PROVIDER
     )
 
@@ -127,13 +128,50 @@ _BACKOFF_S = 1.0
 _TEMPERATURE = 0.0
 
 
+Digest = str
+
+
+class ModelRandomnessEvidenceWire(TypedDict):
+    requested_seed: int | None
+    provider_reported_seed: int | None
+    seed_control: Literal[
+        "provider_confirmed", "requested_unconfirmed", "unsupported", "uncontrolled"
+    ]
+    deterministic_claim: Literal[False]
+
+
+class ModelCallEvidence(TypedDict):
+    provider: str
+    requested_model: str
+    resolved_model: str | None
+    temperature: float
+    cache_policy: Literal["disabled"]
+    randomness: ModelRandomnessEvidenceWire
+    provider_request_id: str | None
+    request_sha256: Digest
+    response_sha256: Digest
+    usage: dict[str, int] | None
+    transport_attempts: list[dict[str, object]]
+    fallback_used: bool
+
+
+class _ProviderResult(TypedDict):
+    text: str
+    resolved_model: str | None
+    provider_request_id: str | None
+    usage: dict[str, int] | None
+    transport_attempts: list[dict[str, object]]
+
+
 class QueryResult(TypedDict):
     text: str
+    evidence: ModelCallEvidence
 
 
 class YesNoResult(TypedDict):
     answer: bool
     text: str
+    evidence: ModelCallEvidence
 
 
 # ---------------------------------------------------------------------------
@@ -171,6 +209,98 @@ def _gather_images(
     return [_validate_image(a) for a in arrays]
 
 
+def _canonical_sha256(value: object) -> Digest:
+    encoded = json.dumps(
+        value,
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+        allow_nan=False,
+    ).encode("utf-8")
+    return f"sha256:{hashlib.sha256(encoded).hexdigest()}"
+
+
+def _resolve_temperature(temperature: float | None) -> float:
+    raw: object = temperature if temperature is not None else (_envstr("GAP_VLM_TEMPERATURE") or _TEMPERATURE)
+    try:
+        resolved = float(raw)
+    except (TypeError, ValueError) as exc:
+        raise ToolError("vlm", "GAP_VLM_TEMPERATURE must be a finite nonnegative number") from exc
+    if not math.isfinite(resolved) or resolved < 0:
+        raise ToolError("vlm", "GAP_VLM_TEMPERATURE must be a finite nonnegative number")
+    return resolved
+
+
+def _safe_request_id(value: object, *, sensitive_values: tuple[str, ...]) -> str | None:
+    if not isinstance(value, str) or not value or len(value) > 128:
+        return None
+    if any(
+        secret and (value == secret or (len(secret) >= 8 and secret in value))
+        for secret in sensitive_values
+    ):
+        return None
+    if re.fullmatch(r"[A-Za-z0-9._:-]+", value) is None:
+        return None
+    return value
+
+
+def _canonical_usage(value: object) -> dict[str, int] | None:
+    if not isinstance(value, dict) or not value:
+        return None
+    usage: dict[str, int] = {}
+    for key, count in value.items():
+        if not isinstance(key, str) or isinstance(count, bool) or not isinstance(count, int) or count < 0:
+            return None
+        usage[key] = count
+    return usage
+
+
+def _openai_content(prompt: str, images: list[np.ndarray]) -> list[dict[str, object]]:
+    content: list[dict[str, object]] = [{"type": "text", "text": prompt}]
+    for arr in images:
+        content.append(
+            {
+                "type": "image_url",
+                "image_url": {"url": f"data:image/png;base64,{_png_b64(arr)}"},
+            }
+        )
+    return content
+
+
+def _randomness_evidence(
+    *, requested_seed: int | None, reported_seed: object, seed_supported: bool
+) -> ModelRandomnessEvidenceWire:
+    if not seed_supported:
+        return {
+            "requested_seed": None,
+            "provider_reported_seed": None,
+            "seed_control": "unsupported",
+            "deterministic_claim": False,
+        }
+    if requested_seed is None:
+        return {
+            "requested_seed": None,
+            "provider_reported_seed": None,
+            "seed_control": "uncontrolled",
+            "deterministic_claim": False,
+        }
+    if reported_seed is None:
+        return {
+            "requested_seed": requested_seed,
+            "provider_reported_seed": None,
+            "seed_control": "requested_unconfirmed",
+            "deterministic_claim": False,
+        }
+    if isinstance(reported_seed, bool) or not isinstance(reported_seed, int) or reported_seed != requested_seed:
+        raise ToolError("vlm", "openai_compatible seed confirmation mismatch")
+    return {
+        "requested_seed": requested_seed,
+        "provider_reported_seed": reported_seed,
+        "seed_control": "provider_confirmed",
+        "deterministic_claim": False,
+    }
+
+
 # ---------------------------------------------------------------------------
 # Provider: openrouter (OpenRouter's OpenAI-compatible chat-completions API)
 # ---------------------------------------------------------------------------
@@ -181,7 +311,153 @@ def _http_client() -> httpx.Client:
     return httpx.Client(timeout=httpx.Timeout(120.0, connect=10.0))
 
 
-def _query_openrouter(prompt: str, images: list[np.ndarray], model: str | None) -> str:
+def _query_openai_compatible(
+    prompt: str,
+    images: list[np.ndarray],
+    model: str | None,
+    temperature: float | None,
+    seed: int | None,
+) -> QueryResult:
+    base_url = _envstr("GAP_VLM_BASE_URL")
+    api_key = _envstr("GAP_VLM_API_KEY")
+    requested_model = (model or "").strip() or _envstr("GAP_VLM_MODEL")
+    for env_name, value in (
+        ("GAP_VLM_BASE_URL", base_url),
+        ("GAP_VLM_API_KEY", api_key),
+        ("GAP_VLM_MODEL", requested_model),
+    ):
+        if not value:
+            raise ToolError("vlm", f"openai_compatible requires explicit {env_name}")
+    try:
+        parsed_url = urlsplit(base_url)
+        has_credentials = parsed_url.username is not None or parsed_url.password is not None
+    except ValueError as exc:
+        raise ToolError("vlm", "GAP_VLM_BASE_URL must be a valid HTTP(S) URL") from exc
+    if parsed_url.scheme not in {"http", "https"} or not parsed_url.netloc or has_credentials:
+        raise ToolError("vlm", "GAP_VLM_BASE_URL must be an HTTP(S) URL without credentials")
+    resolved_temperature = _resolve_temperature(temperature)
+    if seed is not None and (isinstance(seed, bool) or not isinstance(seed, int)):
+        raise ToolError("vlm", "seed must be an integer or null")
+    capability = _envstr("GAP_VLM_SEED_CAPABILITY").lower() or "supported"
+    if capability not in {"supported", "unsupported"}:
+        raise ToolError("vlm", "GAP_VLM_SEED_CAPABILITY must be supported or unsupported")
+    seed_supported = capability == "supported"
+
+    payload: dict[str, object] = {
+        "model": requested_model,
+        "messages": [{"role": "user", "content": _openai_content(prompt, images)}],
+        "max_tokens": _MAX_TOKENS,
+        "temperature": resolved_temperature,
+    }
+    sent_seed = seed if seed_supported else None
+    if sent_seed is not None:
+        payload["seed"] = sent_seed
+    request_sha256 = _canonical_sha256(payload)
+    headers = {"Authorization": f"Bearer {api_key}"}
+    chat_url = f"{base_url.rstrip('/')}/chat/completions"
+    attempts: list[dict[str, object]] = []
+
+    with _http_client() as client:
+        for attempt_index in range(1, _MAX_RETRIES + 2):
+            try:
+                response = client.post(chat_url, json=payload, headers=headers)
+            except httpx.TransportError:
+                attempts.append(
+                    {
+                        "attempt": attempt_index,
+                        "outcome": "transport_error",
+                        "status": None,
+                        "provider_request_id": None,
+                    }
+                )
+                if attempt_index <= _MAX_RETRIES:
+                    time.sleep(_BACKOFF_S * (2 ** (attempt_index - 1)))
+                    continue
+                raise ToolError(
+                    "vlm", f"openai_compatible transport exhausted after {attempt_index} attempts"
+                ) from None
+
+            header_request_id = _safe_request_id(
+                response.headers.get("x-request-id"), sensitive_values=(api_key, prompt)
+            )
+            if response.status_code == 429 or response.status_code >= 500:
+                attempts.append(
+                    {
+                        "attempt": attempt_index,
+                        "outcome": "http_error",
+                        "status": response.status_code,
+                        "provider_request_id": header_request_id,
+                    }
+                )
+                if attempt_index <= _MAX_RETRIES:
+                    time.sleep(_BACKOFF_S * (2 ** (attempt_index - 1)))
+                    continue
+                raise ToolError(
+                    "vlm",
+                    f"openai_compatible HTTP {response.status_code} after {attempt_index} attempts",
+                )
+            if response.status_code >= 400:
+                raise ToolError("vlm", f"openai_compatible HTTP {response.status_code}")
+
+            try:
+                parsed = response.json()
+                text = parsed["choices"][0]["message"]["content"]
+            except (KeyError, IndexError, TypeError, ValueError) as exc:
+                raise ToolError("vlm", "openai_compatible returned invalid response content") from exc
+            if not isinstance(text, str) or not text:
+                raise ToolError("vlm", "openai_compatible returned invalid response content")
+            body_request_id = parsed.get("id") if isinstance(parsed, dict) else None
+            provider_request_id = header_request_id or _safe_request_id(
+                body_request_id, sensitive_values=(api_key, prompt)
+            )
+            attempts.append(
+                {
+                    "attempt": attempt_index,
+                    "outcome": "success",
+                    "status": response.status_code,
+                    "provider_request_id": provider_request_id,
+                }
+            )
+            resolved_model = parsed.get("model")
+            if not isinstance(resolved_model, str) or not resolved_model:
+                resolved_model = None
+            usage = _canonical_usage(parsed.get("usage"))
+            randomness = _randomness_evidence(
+                requested_seed=sent_seed,
+                reported_seed=parsed.get("seed"),
+                seed_supported=seed_supported,
+            )
+            response_semantics = {
+                "text": text,
+                "resolved_model": resolved_model,
+                "randomness": randomness,
+                "usage": usage,
+            }
+            evidence: ModelCallEvidence = {
+                "provider": "openai_compatible",
+                "requested_model": requested_model,
+                "resolved_model": resolved_model,
+                "temperature": resolved_temperature,
+                "cache_policy": "disabled",
+                "randomness": randomness,
+                "provider_request_id": provider_request_id,
+                "request_sha256": request_sha256,
+                "response_sha256": _canonical_sha256(response_semantics),
+                "usage": usage,
+                "transport_attempts": attempts,
+                "fallback_used": False,
+            }
+            return {"text": text, "evidence": evidence}
+
+    raise AssertionError("unreachable")
+
+
+def _query_openrouter(
+    prompt: str,
+    images: list[np.ndarray],
+    model: str | None,
+    temperature: float | None,
+) -> _ProviderResult:
     base_url = _envstr("GAP_VLM_BASE_URL") or "https://openrouter.ai/api/v1"
     model = _resolve_model(model)
     api_key = _envstr("GAP_VLM_API_KEY") or _envstr("OPENROUTER_API_KEY")
@@ -197,30 +473,92 @@ def _query_openrouter(prompt: str, images: list[np.ndarray], model: str | None) 
         "model": model,
         "messages": [{"role": "user", "content": content}],
         "max_tokens": _MAX_TOKENS,
-        "temperature": 0.0,
+        "temperature": _resolve_temperature(temperature),
     }
     headers = {"Authorization": f"Bearer {api_key}"} if api_key else {}
 
-    last_exc: Exception | None = None
+    attempts: list[dict[str, object]] = []
     with _http_client() as client:
-        for attempt in range(_MAX_RETRIES):
+        for attempt_index in range(1, _MAX_RETRIES + 1):
             try:
                 resp = client.post(chat_url, json=payload, headers=headers)
-                resp.raise_for_status()
-                return resp.json()["choices"][0]["message"]["content"]
-            except Exception as exc:
-                last_exc = exc
-                logger.warning(
-                    "VLM request failed (attempt %d/%d, chat_url=%s): %s",
-                    attempt + 1, _MAX_RETRIES, chat_url, exc,
+            except Exception:  # noqa: BLE001 — preserve legacy retry behavior
+                attempts.append(
+                    {
+                        "attempt": attempt_index,
+                        "outcome": "transport_error",
+                        "status": None,
+                        "provider_request_id": None,
+                    }
                 )
-                if attempt < _MAX_RETRIES - 1:
-                    time.sleep(_BACKOFF_S * (2 ** attempt))
+                if attempt_index < _MAX_RETRIES:
+                    time.sleep(_BACKOFF_S * (2 ** (attempt_index - 1)))
+                    continue
+                break
+
+            request_id = _safe_request_id(
+                resp.headers.get("x-request-id"), sensitive_values=(api_key, prompt)
+            )
+            if resp.status_code >= 400:
+                attempts.append(
+                    {
+                        "attempt": attempt_index,
+                        "outcome": "http_error",
+                        "status": resp.status_code,
+                        "provider_request_id": request_id,
+                    }
+                )
+                if attempt_index < _MAX_RETRIES:
+                    time.sleep(_BACKOFF_S * (2 ** (attempt_index - 1)))
+                    continue
+                break
+
+            try:
+                parsed = resp.json()
+                text = parsed["choices"][0]["message"]["content"]
+            except (KeyError, IndexError, TypeError, ValueError):
+                parsed = None
+                text = None
+            if not isinstance(text, str):
+                attempts.append(
+                    {
+                        "attempt": attempt_index,
+                        "outcome": "transport_error",
+                        "status": None,
+                        "provider_request_id": request_id,
+                    }
+                )
+                if attempt_index < _MAX_RETRIES:
+                    time.sleep(_BACKOFF_S * (2 ** (attempt_index - 1)))
+                    continue
+                raise ToolError(
+                    "vlm", "openrouter returned invalid response content after 3 attempts"
+                ) from None
+            request_id = request_id or _safe_request_id(
+                parsed.get("id"), sensitive_values=(api_key, prompt)
+            )
+            attempts.append(
+                {
+                    "attempt": attempt_index,
+                    "outcome": "success",
+                    "status": resp.status_code,
+                    "provider_request_id": request_id,
+                }
+            )
+            resolved_model = parsed.get("model")
+            if not isinstance(resolved_model, str) or not resolved_model:
+                resolved_model = None
+            return {
+                "text": text,
+                "resolved_model": resolved_model,
+                "provider_request_id": request_id,
+                "usage": _canonical_usage(parsed.get("usage")),
+                "transport_attempts": attempts,
+            }
 
     raise ToolError(
         "vlm",
-        f"backend unavailable after {_MAX_RETRIES} attempts: "
-        f"chat_url={chat_url}, error={last_exc}",
+        f"openrouter backend unavailable after {_MAX_RETRIES} attempts",
     )
 
 
@@ -234,7 +572,31 @@ def _is_claude_model(model: str) -> bool:
     return "claude" in model.lower()
 
 
-def _query_vertex(prompt: str, images: list[np.ndarray], model: str | None) -> str:
+def _vertex_usage(value: object) -> dict[str, int] | None:
+    if value is None:
+        return None
+    raw = {
+        "prompt_tokens": getattr(value, "prompt_token_count", None),
+        "completion_tokens": getattr(value, "candidates_token_count", None),
+        "total_tokens": getattr(value, "total_token_count", None),
+    }
+    if isinstance(value, dict):
+        raw = {
+            "prompt_tokens": value.get("prompt_token_count"),
+            "completion_tokens": value.get("candidates_token_count"),
+            "total_tokens": value.get("total_token_count"),
+        }
+    if any(count is None for count in raw.values()):
+        return None
+    return _canonical_usage(raw)
+
+
+def _query_vertex(
+    prompt: str,
+    images: list[np.ndarray],
+    model: str | None,
+    temperature: float | None,
+) -> _ProviderResult:
     model = _resolve_model(model)
     if _is_claude_model(model):
         raise ToolError(
@@ -265,27 +627,54 @@ def _query_vertex(prompt: str, images: list[np.ndarray], model: str | None) -> s
             data=base64.b64decode(_png_b64(arr)), mime_type="image/png",
         ))
     config = types.GenerateContentConfig(
-        temperature=_TEMPERATURE, max_output_tokens=_MAX_TOKENS,
+        temperature=_resolve_temperature(temperature), max_output_tokens=_MAX_TOKENS,
     )
-    last_exc: Exception | None = None
-    for attempt in range(_MAX_RETRIES):
+    attempts: list[dict[str, object]] = []
+    for attempt_index in range(1, _MAX_RETRIES + 1):
         try:
             response = client.models.generate_content(
                 model=model, contents=parts, config=config,
             )
-            return response.text or ""
-        except Exception as exc:  # noqa: BLE001 — transient API errors
-            last_exc = exc
-            logger.warning(
-                "VLM vertex request failed (attempt %d/%d, model=%s): %s",
-                attempt + 1, _MAX_RETRIES, model, exc,
+            text = response.text or ""
+            request_id = _safe_request_id(
+                getattr(response, "response_id", None), sensitive_values=(prompt,)
             )
-            if attempt < _MAX_RETRIES - 1:
-                time.sleep(_BACKOFF_S * (2 ** attempt))
+            attempts.append(
+                {
+                    "attempt": attempt_index,
+                    "outcome": "success",
+                    "status": None,
+                    "provider_request_id": request_id,
+                }
+            )
+            resolved_model = getattr(response, "model_version", None)
+            if not isinstance(resolved_model, str) or not resolved_model:
+                resolved_model = None
+            return {
+                "text": text,
+                "resolved_model": resolved_model,
+                "provider_request_id": request_id,
+                "usage": _vertex_usage(getattr(response, "usage_metadata", None)),
+                "transport_attempts": attempts,
+            }
+        except Exception:  # noqa: BLE001 — transient API errors
+            attempts.append(
+                {
+                    "attempt": attempt_index,
+                    "outcome": "transport_error",
+                    "status": None,
+                    "provider_request_id": None,
+                }
+            )
+            logger.warning(
+                "VLM vertex request failed (attempt %d/%d, model=%s)",
+                attempt_index, _MAX_RETRIES, model,
+            )
+            if attempt_index < _MAX_RETRIES:
+                time.sleep(_BACKOFF_S * (2 ** (attempt_index - 1)))
     raise ToolError(
         "vlm",
-        f"vertex backend unavailable after {_MAX_RETRIES} attempts: "
-        f"model={model}, error={last_exc}",
+        f"vertex backend unavailable after {_MAX_RETRIES} attempts: model={model}",
     )
 
 
@@ -300,23 +689,90 @@ _PROVIDERS = {
 }
 
 
+def _legacy_result(
+    *,
+    provider_result: _ProviderResult,
+    provider: str,
+    prompt: str,
+    images: list[np.ndarray],
+    model: str | None,
+    temperature: float | None,
+    seed: int | None,
+) -> QueryResult:
+    requested_model = _resolve_model(model)
+    resolved_temperature = _resolve_temperature(temperature)
+    image_wire = [
+        f"data:image/png;base64,{_png_b64(arr)}" for arr in images
+    ]
+    randomness: ModelRandomnessEvidenceWire = {
+        "requested_seed": None,
+        "provider_reported_seed": None,
+        "seed_control": "unsupported" if seed is not None else "uncontrolled",
+        "deterministic_claim": False,
+    }
+    response_semantics = {
+        "text": provider_result["text"],
+        "resolved_model": provider_result["resolved_model"],
+        "randomness": randomness,
+        "usage": provider_result["usage"],
+    }
+    evidence: ModelCallEvidence = {
+        "provider": provider,
+        "requested_model": requested_model,
+        "resolved_model": provider_result["resolved_model"],
+        "temperature": resolved_temperature,
+        "cache_policy": "disabled",
+        "randomness": randomness,
+        "provider_request_id": provider_result["provider_request_id"],
+        "request_sha256": _canonical_sha256(
+            {
+                "prompt": prompt,
+                "images": image_wire,
+                "model": requested_model,
+                "temperature": resolved_temperature,
+            }
+        ),
+        "response_sha256": _canonical_sha256(response_semantics),
+        "usage": provider_result["usage"],
+        "transport_attempts": provider_result["transport_attempts"],
+        "fallback_used": False,
+    }
+    return {"text": provider_result["text"], "evidence": evidence}
+
+
 def _query(
     prompt: str,
     image: np.ndarray | None,
     images: list | None,
     provider: str | None,
     model: str | None,
-) -> str:
+    temperature: float | None,
+    seed: int | None,
+) -> QueryResult:
     name = _resolve_provider(provider)
+    gathered_images = _gather_images(image, images)
+    if name == "openai_compatible":
+        return _query_openai_compatible(
+            prompt, gathered_images, model, temperature, seed
+        )
     fn = _PROVIDERS.get(name)
     if fn is None:
         raise ToolError(
             "vlm",
-            f"unknown provider {name!r} (valid: {sorted(_PROVIDERS)}); set "
-            f"GAP_VLM_PROVIDER (or GAP_LLM_PROVIDER — VLM inherits from "
-            f"LLM when unset) or pass provider=",
+            f"unknown provider {name!r} "
+            f"(valid: {sorted([*_PROVIDERS, 'openai_compatible'])}); set "
+            "GAP_VLM_PROVIDER or pass provider=",
         )
-    return fn(prompt, _gather_images(image, images), model)
+    provider_result = fn(prompt, gathered_images, model, temperature)
+    return _legacy_result(
+        provider_result=provider_result,
+        provider=name,
+        prompt=prompt,
+        images=gathered_images,
+        model=model,
+        temperature=temperature,
+        seed=seed,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -335,6 +791,8 @@ def query(
     images: list | None = None,
     provider: str | None = None,
     model: str | None = None,
+    temperature: float | None = None,
+    seed: int | None = None,
 ) -> QueryResult:
     """Ask the configured VLM a free-form question, optionally about images.
 
@@ -344,11 +802,13 @@ def query(
         images: Optional additional context images (same dtype/shape).
         provider: Per-call provider override (``openrouter``/``vertex``).
         model: Per-call model override.
+        temperature: Per-call sampling temperature override.
+        seed: Optional provider sampling seed (strict provider only).
 
     Returns:
-        ``{"text": <model response>}``.
+        ``{"text": <model response>, "evidence": <call evidence>}``.
     """
-    return {"text": _query(prompt, image, images, provider, model)}
+    return _query(prompt, image, images, provider, model, temperature, seed)
 
 
 #: Appended to every ``query_yes_no`` prompt so the reply is machine-checkable.
@@ -386,6 +846,8 @@ def query_yes_no(
     images: list | None = None,
     provider: str | None = None,
     model: str | None = None,
+    temperature: float | None = None,
+    seed: int | None = None,
 ) -> YesNoResult:
     """Ask the configured VLM a yes/no question, optionally about images.
 
@@ -398,5 +860,17 @@ def query_yes_no(
     Returns:
         ``{"answer": <bool>, "text": <raw model response>}``.
     """
-    text = _query(prompt + _YES_NO_INSTRUCTION, image, images, provider, model)
-    return {"answer": _coerce_yes_no(text), "text": text}
+    result = _query(
+        prompt + _YES_NO_INSTRUCTION,
+        image,
+        images,
+        provider,
+        model,
+        temperature,
+        seed,
+    )
+    return {
+        "answer": _coerce_yes_no(result["text"]),
+        "text": result["text"],
+        "evidence": result["evidence"],
+    }

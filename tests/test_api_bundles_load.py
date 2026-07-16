@@ -7,7 +7,9 @@ bundles must not pull in google-genai).
 
 from __future__ import annotations
 
+import importlib.util
 import sys
+import typing
 from pathlib import Path
 
 import pytest
@@ -26,8 +28,8 @@ EXPECTED_TOOLS: dict[str, list[str]] = {
 }
 
 EXPECTED_INPUTS: dict[str, list[str]] = {
-    "vlm.query": ["prompt", "image", "images", "provider", "model"],
-    "vlm.query_yes_no": ["prompt", "image", "images", "provider", "model"],
+    "vlm.query": ["prompt", "image", "images", "provider", "model", "temperature", "seed"],
+    "vlm.query_yes_no": ["prompt", "image", "images", "provider", "model", "temperature", "seed"],
     "gemini-er.detect": ["image", "query", "model"],
     "molmo.point_prompt": ["image", "query"],
     "molmo.query": ["prompt", "image"],
@@ -35,8 +37,8 @@ EXPECTED_INPUTS: dict[str, list[str]] = {
 }
 
 EXPECTED_OUTPUTS: dict[str, list[str]] = {
-    "vlm.query": ["text"],
-    "vlm.query_yes_no": ["answer", "text"],
+    "vlm.query": ["text", "evidence"],
+    "vlm.query_yes_no": ["answer", "text", "evidence"],
     "gemini-er.detect": ["detections"],
     "molmo.point_prompt": ["pixel_x", "pixel_y", "found"],
     "molmo.query": ["text"],
@@ -67,6 +69,19 @@ def loaded():
 
     heavy_before = {m for m in HEAVY_MODULES if m in sys.modules}
     registry = load_skills(ROOT, only=API_BUNDLES)
+    # Stdio-served bundles are discovered without importing their implementation
+    # into the host runtime. Import each tools module explicitly to exercise the
+    # decorator/schema surface while preserving the zero-GPU import check.
+    for bundle in API_BUNDLES:
+        module_name = f"gap_skills.tools.{bundle}.tools"
+        spec = importlib.util.spec_from_file_location(
+            module_name, ROOT / "tools" / bundle / "tools.py"
+        )
+        assert spec is not None and spec.loader is not None
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[module_name] = module
+        spec.loader.exec_module(module)
+        registry.get(bundle).tools_module = module
     heavy_added = {m for m in HEAVY_MODULES if m in sys.modules} - heavy_before
 
     tool_registry = ToolRegistry()
@@ -129,10 +144,35 @@ def test_schema_extraction_inputs_and_outputs(loaded):
     # Spot-check typing detail: image params are optional where the proto had
     # an optional image, required for the localization tools.
     assert tool_registry.get("vlm.query").schema.inputs["image"].required is False
+    assert tool_registry.get("vlm.query").schema.inputs["temperature"].required is False
+    assert tool_registry.get("vlm.query").schema.inputs["seed"].required is False
     assert tool_registry.get("molmo.query").schema.inputs["image"].required is False
     assert tool_registry.get("molmo.point_prompt").schema.inputs["image"].required is True
     assert tool_registry.get("gemini-er.detect").schema.inputs["image"].required is True
     assert tool_registry.get("gemini-er.detect").schema.inputs["query"].required is True
+
+    evidence_type = tool_registry.get("vlm.query").schema.outputs["evidence"].python_type
+    evidence_fields = typing.get_type_hints(evidence_type)
+    assert list(evidence_fields) == [
+        "provider",
+        "requested_model",
+        "resolved_model",
+        "temperature",
+        "cache_policy",
+        "randomness",
+        "provider_request_id",
+        "request_sha256",
+        "response_sha256",
+        "usage",
+        "transport_attempts",
+        "fallback_used",
+    ]
+    assert list(typing.get_type_hints(evidence_fields["randomness"])) == [
+        "requested_seed",
+        "provider_reported_seed",
+        "seed_control",
+        "deterministic_claim",
+    ]
 
 
 def test_tools_dispatchable_through_registry(loaded):
