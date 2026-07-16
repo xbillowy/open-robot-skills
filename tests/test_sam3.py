@@ -6,8 +6,18 @@ behind ``pytest.importorskip`` inside the gpu-marked tests.
 
 from __future__ import annotations
 
+import importlib.util
+import sys
+import typing
+from pathlib import Path
+
 import numpy as np
 import pytest
+from gap_core.errors import ToolError
+from gap_core.tools import ToolRegistry
+from gap_core.tools._registry import _PENDING_TOOLS
+
+ROOT = Path(__file__).resolve().parents[1]
 
 EXPECTED_TOOLS = {
     "sam3.segment_text",
@@ -17,6 +27,27 @@ EXPECTED_TOOLS = {
     "sam3.tracker_update",
     "sam3.tracker_close",
 }
+
+
+@pytest.fixture(scope="module")
+def sam3_module():
+    name = "gap_skills.tools.sam3.tools"
+    sys.modules.pop(name, None)
+    _PENDING_TOOLS[:] = [e for e in _PENDING_TOOLS if e["name"] not in EXPECTED_TOOLS]
+    spec = importlib.util.spec_from_file_location(name, ROOT / "tools/sam3/tools.py")
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+@pytest.fixture(scope="module")
+def tool_registry(sam3_module):
+    del sam3_module
+    registry = ToolRegistry()
+    registry.discover_pending()
+    return registry
 
 
 def test_all_tools_registered(tool_registry):
@@ -31,44 +62,68 @@ def test_segment_text_schema(tool_registry):
     assert schema.inputs["query"].required
     assert schema.inputs["max_results"].required is False
     assert schema.inputs["max_results"].default == 5
-    assert set(schema.outputs) == {"masks", "scores", "boxes"}
+    assert set(schema.outputs) == {"masks", "scores", "boxes", "evidence"}
 
 
 def test_segment_box_schema(tool_registry):
     schema = tool_registry.get("sam3.segment_box").schema
     assert set(schema.inputs) == {"image", "box", "pixel_x", "pixel_y", "use_point"}
     assert schema.inputs["use_point"].default is False
-    assert set(schema.outputs) == {"masks", "scores"}
+    assert set(schema.outputs) == {"masks", "scores", "evidence"}
 
 
 def test_tracker_schemas(tool_registry):
     init = tool_registry.get("sam3.tracker_init").schema
     assert set(init.inputs) == {
-        "image", "text", "box", "pixel_x", "pixel_y", "use_point", "object_name",
+        "image",
+        "text",
+        "box",
+        "pixel_x",
+        "pixel_y",
+        "use_point",
+        "object_name",
     }
     assert set(init.outputs) == {
-        "tracker_id", "initial_mask", "initial_box", "score", "object_present",
+        "tracker_id",
+        "initial_mask",
+        "initial_box",
+        "score",
+        "object_present",
+        "evidence",
     }
 
     update = tool_registry.get("sam3.tracker_update").schema
     assert set(update.inputs) == {"tracker_id", "image"}
-    assert set(update.outputs) == {"mask", "box", "confidence", "object_present"}
+    assert set(update.outputs) == {"mask", "box", "confidence", "object_present", "evidence"}
 
     close = tool_registry.get("sam3.tracker_close").schema
     assert set(close.inputs) == {"tracker_id"}
-    assert set(close.outputs) == {"closed"}
+    assert set(close.outputs) == {"closed", "evidence"}
 
 
-def test_invalid_image_shape_rejected_before_model_load(tool_registry, skills_registry):
+def test_invalid_image_shape_rejected_before_model_load(tool_registry, sam3_module):
     """The RGB shape check fires in _to_pil — but only after the model
     singleton loads, so exercise the helper directly (no GPU needed)."""
     from gap_core.errors import ToolError
 
-    mod = skills_registry.get("sam3").tools_module
+    mod = sam3_module
     with pytest.raises(ToolError):
         mod._to_pil(np.zeros((4, 4), dtype=np.uint8))
     pil = mod._to_pil(np.zeros((4, 4, 3), dtype=np.uint8))
     assert pil.size == (4, 4)
+
+
+def test_sam3_paper_artifact_is_unavailable_without_checked_weights(sam3_module):
+    fields = typing.get_type_hints(sam3_module.LearnedServiceEvidence)
+    assert "weights_sha256" in fields
+    with pytest.raises(ToolError, match="paper|artifact|weights"):
+        sam3_module.paper_model_artifact()
+
+
+@pytest.mark.parametrize("invalid", ["a" * 64, "sha256:abc", "SHA256:" + "a" * 64])
+def test_sam3_rejects_noncanonical_weight_hash(sam3_module, invalid):
+    with pytest.raises(ValueError, match="canonical SHA256"):
+        sam3_module._validate_digest(invalid)
 
 
 def _smoke_image() -> np.ndarray:
@@ -84,10 +139,9 @@ def test_segment_text_gpu_smoke(tool_registry):
     if not torch.cuda.is_available():
         pytest.skip("needs a CUDA device")
 
-    out = tool_registry.invoke(
-        "sam3.segment_text", image=_smoke_image(), query="red square"
-    )
-    assert set(out) == {"masks", "scores", "boxes"}
+    out = tool_registry.invoke("sam3.segment_text", image=_smoke_image(), query="red square")
+    assert set(out) == {"masks", "scores", "boxes", "evidence"}
+    assert out["evidence"] is None
     assert len(out["masks"]) == len(out["scores"]) == len(out["boxes"])
     for mask in out["masks"]:
         assert mask.dtype == np.uint8
@@ -133,13 +187,13 @@ def test_tracker_roundtrip_gpu_smoke(tool_registry):
     # Shift the square a few pixels and track it.
     frame1 = np.full_like(frame0, 255)
     frame1[36:100, 36:100] = (220, 30, 30)
-    upd = tool_registry.invoke(
-        "sam3.tracker_update", tracker_id=init["tracker_id"], image=frame1
-    )
-    assert set(upd) == {"mask", "box", "confidence", "object_present"}
+    upd = tool_registry.invoke("sam3.tracker_update", tracker_id=init["tracker_id"], image=frame1)
+    assert set(upd) == {"mask", "box", "confidence", "object_present", "evidence"}
+    assert upd["evidence"] is None
 
     closed = tool_registry.invoke("sam3.tracker_close", tracker_id=init["tracker_id"])
     assert closed["closed"] is True
+    assert closed["evidence"] is None
     # Idempotent close.
     closed2 = tool_registry.invoke("sam3.tracker_close", tracker_id=init["tracker_id"])
     assert closed2["closed"] is False

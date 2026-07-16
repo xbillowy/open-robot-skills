@@ -23,6 +23,18 @@ The Grounding DINO servicer (`IDEA-Research/grounding-dino-base` via
 transformers) as one in-process tool. Image in: RGB uint8 `[H, W, 3]` numpy
 array; out: `{detections: [{box, label, score}, ...]}`.
 
+## Checked paper model artifact manifest
+
+This identity was derived once from the locally cached Hugging Face snapshot;
+runtime selection checks the immutable snapshot symlink and content-addressed
+blob name without repeatedly hashing the 890 MB weight file.
+
+```yaml
+requested_model: IDEA-Research/grounding-dino-base
+resolved_revision: 12bdfa3120f3e7ec7b434d90674b3396eccf88eb
+weights_sha256: sha256:5548f844c928c4b6f411fa8cbcc2bfa8dbbba437cb1d513975519f93c2a9ed21
+```
+
 ## When to use
 
 - Locating a named object in a camera frame: `grounding-dino.detect(rgb,
@@ -39,8 +51,8 @@ uv sync --extra grounding-dino   # torch + transformers
 ```
 
 Weights download from HuggingFace on first call. Env knobs:
-`GAP_DINO_DEVICE` (default `cuda`; CPU works but is slow) and
-`GAP_DINO_MODEL` (default `IDEA-Research/grounding-dino-base`).
+`GAP_DINO_DEVICE` (default `cuda`; CPU works but is slow). The model name and
+revision are intentionally not environment-overridable in the paper service.
 
 ## Gotchas (carried over from the servicer)
 

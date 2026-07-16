@@ -41,6 +41,15 @@ mask back-projection through OBB fitting to grasp-candidate generation,
 plus the two scalar helpers (`geometry.iou`, `geometry.pose_distance`).
 Fully CPU — no model weights, no GPU.
 
+Paper-facing mask back-projection, filtering, OBB, and world-reconstruction
+results include discriminated `algorithm_service` evidence. It binds the ORS
+Git object, this bundle's `uv.lock`, effective parameters, runtime dependency
+versions, inputs, and outputs. A dirty/unverifiable source checkout, all-noise
+filter pass-through, non-7-DOF robot-exclusion skip, target-OBB projection, or
+empty world reconstruction sets `fallback_used=true` and is not paper-admissible.
+OBB fitting runs its legacy tiny jitter under an isolated fixed seed so evidence
+and output hashes are repeatable without perturbing process-global RNG state.
+
 ## When to use
 
 - Turning a segmentation mask + depth + camera calibration into world-frame

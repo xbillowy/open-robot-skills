@@ -20,13 +20,17 @@ gRPC server.
 
 from __future__ import annotations
 
+import hashlib
 import logging
+import re
 import threading
 import traceback
+from pathlib import Path
 from types import SimpleNamespace
-from typing import Any, TypedDict
+from typing import Any, Literal, TypedDict
 
 import numpy as np
+import tomllib
 from gap_core.errors import PlanningFailed, ToolError
 from gap_core.tools import tool
 from gap_core.types import (
@@ -40,12 +44,65 @@ from gap_core.types import (
 
 logger = logging.getLogger(__name__)
 
+
+class AlgorithmServiceEvidence(TypedDict):
+    kind: Literal["algorithm_service"]
+    source_commit: str
+    uv_lock_sha256: str
+    config_sha256: str
+    runtime_environment_sha256: str
+    input_sha256: str
+    output_sha256: str
+    fallback_used: bool
+
+
+def _validate_git_object_id(value: str) -> str:
+    if re.fullmatch(r"(?:[0-9a-f]{40}|[0-9a-f]{64})", value) is None:
+        raise ValueError("source commit must be a 40- or 64-hex Git object ID")
+    return value
+
+
+def _validate_digest(value: str) -> str:
+    if re.fullmatch(r"sha256:[0-9a-f]{64}", value) is None:
+        raise ValueError("digest must be canonical SHA256 (sha256:<64 lowercase hex>)")
+    return value
+
+
+def paper_service_capability() -> dict[str, Any]:
+    """Truthful paper admission status for the pinned cuRobo v0.8 API."""
+
+    lock_bytes = Path(__file__).with_name("uv.lock").read_bytes()
+    lock_sha256 = _validate_digest(f"sha256:{hashlib.sha256(lock_bytes).hexdigest()}")
+    expected_lock = _validate_digest(
+        "sha256:eff980495ea60e5db0046e6de3cf49870da88690a2358d31ef3f6b2a261a24c7"
+    )
+    if lock_sha256 != expected_lock:
+        raise RuntimeError("curobo uv.lock hash drift")
+    packages = tomllib.loads(lock_bytes.decode("utf-8"))["package"]
+    package = next(item for item in packages if item["name"] == "nvidia-curobo")
+    version = str(package["version"])
+    source = str(package["source"]["git"])
+    commit = source.rsplit("#", 1)[-1]
+    return {
+        "available": False,
+        "pinned_version": version,
+        "source_commit": _validate_git_object_id(commit),
+        "uv_lock_sha256": lock_sha256,
+        "missing_required_paths": (
+            "batch_ik",
+            "robot_collision_validation",
+            "held_object_collision_validation",
+            "trajectory_validation",
+        ),
+    }
+
+
 # Serialise GPU access -- CuRobo is not thread-safe.
 _LOCK = threading.Lock()
 
 _INSTALL_HINT = (
     "cuRobo is not installed (or failed to import). Install the bundle "
-    "deps with:  pip install -e \"open-robot-skills[curobo]\" --no-build-isolation  "
+    'deps with:  pip install -e "open-robot-skills[curobo]" --no-build-isolation  '
     "with CUDA_HOME pointing at your CUDA toolkit — see tools/curobo/SKILL.md."
 )
 
@@ -54,6 +111,7 @@ def _impl():
     """Import the cuRobo implementation lazily, with an actionable error."""
     try:
         from gap_skills.tools.curobo import _curobo_impl
+
         return _curobo_impl
     except ImportError as e:
         raise ToolError("curobo", f"{_INSTALL_HINT} (import error: {e})") from e
@@ -91,8 +149,7 @@ def _joints(js: JointState) -> np.ndarray:
         if "joint_state" in js:
             return _joints(js["joint_state"])
         raise TypeError(
-            "joint state dict has neither 'positions' nor 'joint_state' "
-            f"(keys: {sorted(js)})"
+            f"joint state dict has neither 'positions' nor 'joint_state' (keys: {sorted(js)})"
         )
     return np.asarray(js, dtype=np.float64).flatten()
 
@@ -129,16 +186,22 @@ def _world_ns(wc: WorldConfig | None) -> Any:
         if m.get("pose") is not None:
             p = m["pose"]
             pose = [
-                p["position"]["x"], p["position"]["y"], p["position"]["z"],
-                p["rotation"]["w"], p["rotation"]["x"],
-                p["rotation"]["y"], p["rotation"]["z"],
+                p["position"]["x"],
+                p["position"]["y"],
+                p["position"]["z"],
+                p["rotation"]["w"],
+                p["rotation"]["x"],
+                p["rotation"]["y"],
+                p["rotation"]["z"],
             ]
-        meshes.append(SimpleNamespace(
-            name=m["name"],
-            pose=pose,
-            vertices=verts.tolist(),
-            faces=faces.tolist(),
-        ))
+        meshes.append(
+            SimpleNamespace(
+                name=m["name"],
+                pose=pose,
+                vertices=verts.tolist(),
+                faces=faces.tolist(),
+            )
+        )
     return SimpleNamespace(mesh=meshes)
 
 
@@ -146,11 +209,7 @@ def _traj_out(trajectory: np.ndarray | None) -> Trajectory | None:
     """(N, dof) numpy trajectory -> gap Trajectory."""
     if trajectory is None:
         return None
-    return {
-        "waypoints": [
-            {"positions": np.asarray(row, dtype=np.float64)} for row in trajectory
-        ]
-    }
+    return {"waypoints": [{"positions": np.asarray(row, dtype=np.float64)} for row in trajectory]}
 
 
 def _traj_in(traj: Trajectory) -> np.ndarray:
@@ -168,8 +227,8 @@ def _traj_in(traj: Trajectory) -> np.ndarray:
 
 class PlanGraspResult(TypedDict):
     success: bool
-    trajectory: Trajectory | None       # joint trajectory (N waypoints x dof)
-    goalset_index: int                  # which grasp pose was reached
+    trajectory: Trajectory | None  # joint trajectory (N waypoints x dof)
+    goalset_index: int  # which grasp pose was reached
 
 
 class PlanResult(TypedDict):
@@ -186,28 +245,28 @@ class PlanLinearResult(TypedDict):
 class PlanGraspMotionResult(TypedDict):
     success: bool
     approach_trajectory: Trajectory | None  # current state -> pre-grasp
-    grasp_trajectory: Trajectory | None     # pre-grasp -> grasp (constrained linear)
-    lift_trajectory: Trajectory | None      # grasp -> post-grasp (constrained linear)
+    grasp_trajectory: Trajectory | None  # pre-grasp -> grasp (constrained linear)
+    lift_trajectory: Trajectory | None  # grasp -> post-grasp (constrained linear)
     failure_reason: str
 
 
 class SolveIkResult(TypedDict):
     success: bool
-    joint_config: JointState | None     # in URDF kinematic order
+    joint_config: JointState | None  # in URDF kinematic order
 
 
 class BatchFeasibilityResult(TypedDict):
-    feasible: list[bool]                       # aligned with input grasp_poses
+    feasible: list[bool]  # aligned with input grasp_poses
     grasp_ik_ok: list[bool]
     approach_ik_ok: list[bool]
-    corridor_collision_fraction: list[float]   # 0.0=clear, 1.0=fully blocked
+    corridor_collision_fraction: list[float]  # 0.0=clear, 1.0=fully blocked
 
 
 class ValidateResult(TypedDict):
     success: bool
-    failure_reason: str                 # empty if success
-    first_collision_waypoint: int       # -1 if none / success
-    collision_status_detail: str        # e.g. MotionGenStatus name
+    failure_reason: str  # empty if success
+    first_collision_waypoint: int  # -1 if none / success
+    collision_status_detail: str  # e.g. MotionGenStatus name
 
 
 # ---------------------------------------------------------------------------
@@ -474,20 +533,18 @@ def plan_grasp_motion(
     impl = _impl()
     try:
         with _LOCK:
-            success, approach_traj, grasp_traj, lift_traj, reason = (
-                impl.plan_grasp_motion(
-                    start_config=_joints(start_joint_position),
-                    grasp_pose=_pose_tuple(grasp_pose),
-                    approach_axis=approach_axis or "y",
-                    approach_distance=approach_distance,
-                    approach_in_tool_frame=approach_in_tool_frame,
-                    lift_axis=lift_axis or "y",
-                    lift_distance=lift_distance,
-                    lift_in_tool_frame=lift_in_tool_frame,
-                    plan_approach=True,
-                    plan_lift=True,
-                    robot_file=robot_file,
-                )
+            success, approach_traj, grasp_traj, lift_traj, reason = impl.plan_grasp_motion(
+                start_config=_joints(start_joint_position),
+                grasp_pose=_pose_tuple(grasp_pose),
+                approach_axis=approach_axis or "y",
+                approach_distance=approach_distance,
+                approach_in_tool_frame=approach_in_tool_frame,
+                lift_axis=lift_axis or "y",
+                lift_distance=lift_distance,
+                lift_in_tool_frame=lift_in_tool_frame,
+                plan_approach=True,
+                plan_lift=True,
+                robot_file=robot_file,
             )
     except Exception as e:
         logger.error("plan_grasp_motion failed: %s\n%s", e, traceback.format_exc())
@@ -599,9 +656,7 @@ def solve_ik(
     return {
         "success": bool(success),
         "joint_config": (
-            {"positions": np.asarray(q, dtype=np.float64)}
-            if success and q is not None
-            else None
+            {"positions": np.asarray(q, dtype=np.float64)} if success and q is not None else None
         ),
     }
 
@@ -639,22 +694,20 @@ def batch_grasp_feasibility(
 
     try:
         with _LOCK:
-            feasible, grasp_ok, approach_ok, corridor_frac = (
-                impl.batch_grasp_feasibility(
-                    _world_ns(world_config),
-                    _joints(start_state),
-                    [_pose_tuple(gp) for gp in grasp_poses],
-                    grasp_pose_is_fingertip=grasp_pose_is_fingertip,
-                    approach_offset_m=approach_offset_m,
-                    num_corridor_samples=num_corridor_samples,
-                    robot_file=robot_file,
-                    num_ik_seeds=num_ik_seeds,
-                    position_threshold=position_threshold,
-                    rotation_threshold=rotation_threshold,
-                    collision_activation_distance=collision_activation_distance,
-                    robot_collision_sphere_buffer=robot_collision_sphere_buffer,
-                    ignore_obstacle_names=ignore_obstacle_names,
-                )
+            feasible, grasp_ok, approach_ok, corridor_frac = impl.batch_grasp_feasibility(
+                _world_ns(world_config),
+                _joints(start_state),
+                [_pose_tuple(gp) for gp in grasp_poses],
+                grasp_pose_is_fingertip=grasp_pose_is_fingertip,
+                approach_offset_m=approach_offset_m,
+                num_corridor_samples=num_corridor_samples,
+                robot_file=robot_file,
+                num_ik_seeds=num_ik_seeds,
+                position_threshold=position_threshold,
+                rotation_threshold=rotation_threshold,
+                collision_activation_distance=collision_activation_distance,
+                robot_collision_sphere_buffer=robot_collision_sphere_buffer,
+                ignore_obstacle_names=ignore_obstacle_names,
             )
     except Exception as e:
         logger.error("batch_grasp_feasibility failed: %s\n%s", e, traceback.format_exc())
@@ -693,9 +746,7 @@ def validate_joint_trajectory_robot(
     must stay False (check_start_state requirement)."""
     impl = _impl()
     if not trajectory.get("waypoints"):
-        raise ToolError(
-            "curobo.validate_joint_trajectory_robot", "trajectory has no waypoints"
-        )
+        raise ToolError("curobo.validate_joint_trajectory_robot", "trajectory has no waypoints")
 
     try:
         with _LOCK:
@@ -711,9 +762,7 @@ def validate_joint_trajectory_robot(
                 ),
             )
     except Exception as e:
-        logger.error(
-            "validate_joint_trajectory_robot failed: %s\n%s", e, traceback.format_exc()
-        )
+        logger.error("validate_joint_trajectory_robot failed: %s\n%s", e, traceback.format_exc())
         raise PlanningFailed(f"validate_joint_trajectory_robot failed: {e}") from e
 
     detail = meta.get("motion_gen_status", "") if meta else ""
@@ -747,13 +796,9 @@ def validate_joint_trajectory_grasped(
     planner cache so attachment state cannot leak into later calls."""
     impl = _impl()
     if not object_name:
-        raise ToolError(
-            "curobo.validate_joint_trajectory_grasped", "object_name is required"
-        )
+        raise ToolError("curobo.validate_joint_trajectory_grasped", "object_name is required")
     if not trajectory.get("waypoints"):
-        raise ToolError(
-            "curobo.validate_joint_trajectory_grasped", "trajectory has no waypoints"
-        )
+        raise ToolError("curobo.validate_joint_trajectory_grasped", "trajectory has no waypoints")
 
     try:
         with _LOCK:
@@ -772,7 +817,8 @@ def validate_joint_trajectory_grasped(
     except Exception as e:
         logger.error(
             "validate_joint_trajectory_grasped failed: %s\n%s",
-            e, traceback.format_exc(),
+            e,
+            traceback.format_exc(),
         )
         raise PlanningFailed(f"validate_joint_trajectory_grasped failed: {e}") from e
 

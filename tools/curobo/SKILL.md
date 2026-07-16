@@ -34,6 +34,17 @@ in/out are gap `Trajectory` dicts (`waypoints: [{positions:
 float64[dof]}]`); worlds are gap `WorldConfig` dicts (build one with
 `geometry.build_world_config`).
 
+## Paper service admission
+
+The locked implementation is cuRobo `0.8.0` at source commit
+`4ea77366ca48ee453e7df139e39fa6532af49f3b`. Paper admission is currently
+**unavailable**: this API supplies the v0.8 motion planner but lacks the real
+batch-IK, robot-collision, held-object-collision, and trajectory-validator
+paths required as one validated closure. The legacy tools remain callable;
+`solve_ik`, `batch_grasp_feasibility`, and both validators must not be promoted
+from direct-IK success or synthetic stubs, and no learned-model revision or
+weight digest is claimed for this algorithm service.
+
 ## When to use
 
 - Tabletop pick: `geometry.top_down_grasp_candidates` →

@@ -18,12 +18,13 @@ from __future__ import annotations
 import collections
 import logging
 import os
+import re
 import shutil
 import threading
 import time
 import uuid
 from dataclasses import dataclass, field
-from typing import Any, TypedDict
+from typing import Any, Literal, TypedDict
 
 import numpy as np
 from gap_core.errors import PerceptionFailed, ToolError
@@ -79,6 +80,7 @@ def prefetch() -> None:
     snapshot_download(repo_id=_SAM3_HF_REPO, repo_type="model")
     logger.info("[sam3] prefetch complete (cached at HF default)")
 
+
 # Cap how many detections segment_text returns by default.  The model emits
 # one mask per detected instance — on cluttered scenes that can be ~200, each
 # ~1 MB at 1280x720 (uint8 0/255).  Most callers consume only ``masks[0]``.
@@ -105,22 +107,25 @@ _DRIFT_MAX_CONSECUTIVE = 5
 
 
 class SegmentTextResult(TypedDict):
-    masks: list[Mask]              # uint8 [H, W], 0 background / 255 foreground
-    scores: list[float]            # confidence per mask, best-first
-    boxes: list[BoundingBox2D]     # tight boxes (text prompt only)
+    masks: list[Mask]  # uint8 [H, W], 0 background / 255 foreground
+    scores: list[float]  # confidence per mask, best-first
+    boxes: list[BoundingBox2D]  # tight boxes (text prompt only)
+    evidence: LearnedServiceEvidence | None
 
 
 class SegmentResult(TypedDict):
     masks: list[Mask]
     scores: list[float]
+    evidence: LearnedServiceEvidence | None
 
 
 class TrackerInitResult(TypedDict):
-    tracker_id: str                # opaque session id; "" when nothing detected
+    tracker_id: str  # opaque session id; "" when nothing detected
     initial_mask: Mask | None
     initial_box: BoundingBox2D | None
     score: float
     object_present: bool
+    evidence: LearnedServiceEvidence | None
 
 
 class TrackerUpdateResult(TypedDict):
@@ -128,10 +133,37 @@ class TrackerUpdateResult(TypedDict):
     box: BoundingBox2D | None
     confidence: float
     object_present: bool
+    evidence: LearnedServiceEvidence | None
 
 
 class TrackerCloseResult(TypedDict):
     closed: bool
+    evidence: LearnedServiceEvidence | None
+
+
+class LearnedServiceEvidence(TypedDict):
+    kind: Literal["learned_model"]
+    requested_model: str
+    resolved_revision: str
+    weights_sha256: str
+    input_sha256: str
+    output_sha256: str
+    fallback_used: bool
+
+
+def _validate_digest(value: str) -> str:
+    if re.fullmatch(r"sha256:[0-9a-f]{64}", value) is None:
+        raise ValueError("digest must be canonical SHA256 (sha256:<64 lowercase hex>)")
+    return value
+
+
+def paper_model_artifact() -> dict[str, str]:
+    """Fail closed until SAM3 has a locally derived checked weight manifest."""
+
+    raise ToolError(
+        "sam3",
+        "paper model artifact is unavailable: no immutable checked SAM3 weights manifest",
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -185,9 +217,7 @@ def _get_tracker_predictor() -> Any:
             # Single-GPU mode: gpus_to_use of size 1 means world_size=1 and no
             # worker processes are spawned, so we can call predictor.model
             # directly from this process.
-            gpu_id = (
-                torch.cuda.current_device() if torch.cuda.is_available() else 0
-            )
+            gpu_id = torch.cuda.current_device() if torch.cuda.is_available() else 0
             logger.info("Loading SAM3 video predictor (single GPU, dev=%d) ...", gpu_id)
             # Disable temporal disambiguation. The default build uses
             # hotstart_delay=15 + hotstart_unmatch_thresh=8 + masklet
@@ -269,9 +299,7 @@ def _autocast(device: str):
     import torch
 
     return (
-        torch.autocast(device, dtype=torch.bfloat16)
-        if "cuda" in device
-        else torch.autocast("cpu")
+        torch.autocast(device, dtype=torch.bfloat16) if "cuda" in device else torch.autocast("cpu")
     )
 
 
@@ -331,9 +359,7 @@ def segment_text(
     try:
         with _autocast(_DEVICE):
             inference_state = processor.set_image(pil_image)
-            output = processor.set_text_prompt(
-                state=inference_state, prompt=query
-            )
+            output = processor.set_text_prompt(state=inference_state, prompt=query)
     except Exception as e:
         raise PerceptionFailed(f"SAM3 inference failed: {e}") from e
 
@@ -342,7 +368,7 @@ def segment_text(
     scores_tensor = output.get("scores")
 
     if masks_tensor is None or boxes_tensor is None:
-        return {"masks": [], "scores": [], "boxes": []}
+        return {"masks": [], "scores": [], "boxes": [], "evidence": None}
 
     masks_np = _to_numpy(masks_tensor)
     boxes_np = _to_numpy(boxes_tensor)
@@ -371,7 +397,12 @@ def segment_text(
         scores_out.append(float(scores_np[i]))
         boxes_out.append(_box_dict(boxes_np[i]))
 
-    return {"masks": masks_out, "scores": scores_out, "boxes": boxes_out}
+    return {
+        "masks": masks_out,
+        "scores": scores_out,
+        "boxes": boxes_out,
+        "evidence": None,
+    }
 
 
 @tool(
@@ -439,15 +470,11 @@ def segment_box(
         with _autocast(_DEVICE):
             inference_state = processor.set_image(pil_image)
 
-            box_np = np.array(
-                [box["x1"], box["y1"], box["x2"], box["y2"]], dtype=np.float32
-            )
+            box_np = np.array([box["x1"], box["y1"], box["x2"], box["y2"]], dtype=np.float32)
             kwargs: dict[str, Any] = {"box": box_np, "multimask_output": True}
 
             if use_point:
-                kwargs["point_coords"] = np.array(
-                    [[pixel_x, pixel_y]], dtype=np.float32
-                )
+                kwargs["point_coords"] = np.array([[pixel_x, pixel_y]], dtype=np.float32)
                 kwargs["point_labels"] = np.array([1], dtype=np.int64)
 
             masks, scores, _ = model.predict_inst(inference_state, **kwargs)
@@ -463,7 +490,7 @@ def _sorted_segment_result(masks, scores) -> SegmentResult:
     scores_np = np.asarray(scores)
 
     if masks_np.size == 0 or scores_np.size == 0:
-        return {"masks": [], "scores": []}
+        return {"masks": [], "scores": [], "evidence": None}
 
     # Sort by score descending
     sort_idx = np.argsort(scores_np)[::-1]
@@ -482,7 +509,7 @@ def _sorted_segment_result(masks, scores) -> SegmentResult:
         masks_out.append(_mask_u8(bool_mask))
         scores_out.append(float(scores_np[i]))
 
-    return {"masks": masks_out, "scores": scores_out}
+    return {"masks": masks_out, "scores": scores_out, "evidence": None}
 
 
 # ---------------------------------------------------------------------------
@@ -512,10 +539,12 @@ _table_lock = threading.Lock()
 
 def _close_video_session(predictor: Any, video_session_id: str) -> None:
     try:
-        predictor.handle_request({
-            "type": "close_session",
-            "session_id": video_session_id,
-        })
+        predictor.handle_request(
+            {
+                "type": "close_session",
+                "session_id": video_session_id,
+            }
+        )
     except Exception:
         logger.debug("close_session failed", exc_info=True)
 
@@ -525,9 +554,7 @@ def _reap_stale_sessions(predictor: Any, ttl_s: float = _DEFAULT_TTL_S) -> None:
     servicer's background reaper thread)."""
     now = time.monotonic()
     with _table_lock:
-        stale = [
-            tid for tid, s in _sessions.items() if (now - s.last_touched) > ttl_s
-        ]
+        stale = [tid for tid, s in _sessions.items() if (now - s.last_touched) > ttl_s]
         for tid in stale:
             sess = _sessions.pop(tid, None)
             if sess is not None:
@@ -569,7 +596,9 @@ def tracker_init(
 
     if box is not None and box["x2"] > box["x1"] and box["y2"] > box["y1"]:
         bbox_norm_xywh = _xyxy_to_normalized_xywh(
-            (box["x1"], box["y1"], box["x2"], box["y2"]), image_w, image_h,
+            (box["x1"], box["y1"], box["x2"], box["y2"]),
+            image_w,
+            image_h,
         )
         prompt_kind = "box"
     elif use_point:
@@ -579,8 +608,10 @@ def tracker_init(
         py = float(pixel_y) / image_h
         half = 0.05
         bbox_norm_xywh = [
-            max(0.0, px - half), max(0.0, py - half),
-            min(1.0, 2 * half), min(1.0, 2 * half),
+            max(0.0, px - half),
+            max(0.0, py - half),
+            min(1.0, 2 * half),
+            min(1.0, 2 * half),
         ]
         prompt_kind = "point"
     elif text:
@@ -593,10 +624,12 @@ def tracker_init(
         )
 
     # Open a SAM3 video session seeded with the first PIL image.
-    sess = predictor.handle_request({
-        "type": "start_session",
-        "resource_path": [pil],
-    })
+    sess = predictor.handle_request(
+        {
+            "type": "start_session",
+            "resource_path": [pil],
+        }
+    )
     video_session_id = sess["session_id"]
 
     # Flip is_image_only to False so the video tracker's visual-prompt +
@@ -614,24 +647,32 @@ def tracker_init(
 
     logger.debug(
         "tracker_init: prompt_kind=%s bbox_norm_xywh=%s text=%r image=%dx%d",
-        prompt_kind, bbox_norm_xywh, prompt_text, image_w, image_h,
+        prompt_kind,
+        bbox_norm_xywh,
+        prompt_text,
+        image_w,
+        image_h,
     )
     try:
         if bbox_norm_xywh is not None:
-            prompt_resp = predictor.handle_request({
-                "type": "add_prompt",
-                "session_id": video_session_id,
-                "frame_index": 0,
-                "bounding_boxes": [bbox_norm_xywh],
-                "bounding_box_labels": [1],
-            })
+            prompt_resp = predictor.handle_request(
+                {
+                    "type": "add_prompt",
+                    "session_id": video_session_id,
+                    "frame_index": 0,
+                    "bounding_boxes": [bbox_norm_xywh],
+                    "bounding_box_labels": [1],
+                }
+            )
         else:
-            prompt_resp = predictor.handle_request({
-                "type": "add_prompt",
-                "session_id": video_session_id,
-                "frame_index": 0,
-                "text": prompt_text,
-            })
+            prompt_resp = predictor.handle_request(
+                {
+                    "type": "add_prompt",
+                    "session_id": video_session_id,
+                    "frame_index": 0,
+                    "text": prompt_text,
+                }
+            )
     except Exception as e:
         logger.warning("add_prompt failed on init: %s", e, exc_info=True)
         _close_video_session(predictor, video_session_id)
@@ -641,6 +682,7 @@ def tracker_init(
             "initial_box": None,
             "score": 0.0,
             "object_present": False,
+            "evidence": None,
         }
 
     from gap_skills.tools.sam3 import _streaming
@@ -652,7 +694,9 @@ def tracker_init(
         _close_video_session(predictor, video_session_id)
         logger.warning(
             "tracker_init: no object detected (prompt_kind=%s text=%r bbox=%s)",
-            prompt_kind, prompt_text, bbox_norm_xywh,
+            prompt_kind,
+            prompt_text,
+            bbox_norm_xywh,
         )
         return {
             "tracker_id": "",
@@ -660,6 +704,7 @@ def tracker_init(
             "initial_box": None,
             "score": 0.0,
             "object_present": False,
+            "evidence": None,
         }
 
     tracker_id = uuid.uuid4().hex
@@ -678,7 +723,10 @@ def tracker_init(
 
     logger.info(
         "tracker_init created %s prompt=%s name=%r score=%.3f",
-        tracker_id, prompt_kind, object_name, score,
+        tracker_id,
+        prompt_kind,
+        object_name,
+        score,
     )
     return {
         "tracker_id": tracker_id,
@@ -686,6 +734,7 @@ def tracker_init(
         "initial_box": _box_dict(box_pixels),
         "score": float(score),
         "object_present": True,
+        "evidence": None,
     }
 
 
@@ -720,32 +769,54 @@ def tracker_update(tracker_id: str, image: np.ndarray) -> TrackerUpdateResult:
         if sess_state_obj is None:
             # SAM3-side session vanished (rare — predictor reset).
             session.last_touched = time.monotonic()
-            return {"mask": None, "box": None, "confidence": 0.0, "object_present": False}
+            return {
+                "mask": None,
+                "box": None,
+                "confidence": 0.0,
+                "object_present": False,
+                "evidence": None,
+            }
         inference_state = sess_state_obj["state"]
 
         new_frame_idx = _streaming.add_new_frame(
-            predictor.model, inference_state, pil,
+            predictor.model,
+            inference_state,
+            pil,
         )
 
         outputs: dict | None = None
-        for resp in predictor.handle_stream_request({
-            "type": "propagate_in_video",
-            "session_id": session.video_session_id,
-            "propagation_direction": "forward",
-            "start_frame_index": new_frame_idx,
-            "max_frame_num_to_track": 1,
-        }):
+        for resp in predictor.handle_stream_request(
+            {
+                "type": "propagate_in_video",
+                "session_id": session.video_session_id,
+                "propagation_direction": "forward",
+                "start_frame_index": new_frame_idx,
+                "max_frame_num_to_track": 1,
+            }
+        ):
             outputs = resp.get("outputs")
             break
 
         session.last_touched = time.monotonic()
 
         if outputs is None:
-            return {"mask": None, "box": None, "confidence": 0.0, "object_present": False}
+            return {
+                "mask": None,
+                "box": None,
+                "confidence": 0.0,
+                "object_present": False,
+                "evidence": None,
+            }
 
         mask, box_pixels, score, present = _streaming.first_object_from_outputs(outputs)
         if not present or mask is None or box_pixels is None:
-            return {"mask": None, "box": None, "confidence": 0.0, "object_present": False}
+            return {
+                "mask": None,
+                "box": None,
+                "confidence": 0.0,
+                "object_present": False,
+                "evidence": None,
+            }
 
         new_area = int(mask.sum())
         drift_signals: list[str] = []
@@ -760,12 +831,20 @@ def tracker_update(tracker_id: str, image: np.ndarray) -> TrackerUpdateResult:
             session.consecutive_drift += 1
             logger.info(
                 "drift on tracker %s frame=%d signals=[%s] consec=%d/%d",
-                tracker_id, new_frame_idx,
+                tracker_id,
+                new_frame_idx,
                 ",".join(drift_signals),
-                session.consecutive_drift, _DRIFT_MAX_CONSECUTIVE,
+                session.consecutive_drift,
+                _DRIFT_MAX_CONSECUTIVE,
             )
             if session.consecutive_drift >= _DRIFT_MAX_CONSECUTIVE:
-                return {"mask": None, "box": None, "confidence": 0.0, "object_present": False}
+                return {
+                    "mask": None,
+                    "box": None,
+                    "confidence": 0.0,
+                    "object_present": False,
+                    "evidence": None,
+                }
             # Hold the previous good mask out so the caller doesn't act on
             # the drifted one. Confidence=0 signals the caller to skip.
             return {
@@ -773,6 +852,7 @@ def tracker_update(tracker_id: str, image: np.ndarray) -> TrackerUpdateResult:
                 "box": _box_dict(session.last_box_pixels),
                 "confidence": 0.0,
                 "object_present": True,
+                "evidence": None,
             }
 
         session.consecutive_drift = 0
@@ -786,6 +866,7 @@ def tracker_update(tracker_id: str, image: np.ndarray) -> TrackerUpdateResult:
             "box": _box_dict(box_pixels),
             "confidence": float(score),
             "object_present": True,
+            "evidence": None,
         }
 
 
@@ -799,4 +880,4 @@ def tracker_close(tracker_id: str) -> TrackerCloseResult:
         session = _sessions.pop(tracker_id, None)
     if session is not None and _tracker_predictor is not None:
         _close_video_session(_tracker_predictor, session.video_session_id)
-    return {"closed": session is not None}
+    return {"closed": session is not None, "evidence": None}

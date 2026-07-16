@@ -49,6 +49,14 @@ Model weights download on first model build. Device is taken from
 `GAP_SAM3_DEVICE` (default `cuda`); the image model also runs on `cpu`
 (slow), the video tracker is CUDA-only in practice.
 
+## Paper model admission
+
+Paper admission is currently **unavailable**. No local SAM3 weight artifact was
+available from which to derive and check an immutable `facebook/sam3` revision
+and canonical weight SHA256. Legacy runtime loading remains unchanged, but its
+results carry `evidence: null`; paper mode must reject that missing attestation.
+No revision or weight digest is inferred from the mutable model name.
+
 ## Gotchas (carried over from the servicers)
 
 - **Lazy singletons**: the image model and the video predictor each load on

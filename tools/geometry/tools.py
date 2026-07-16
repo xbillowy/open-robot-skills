@@ -12,8 +12,20 @@ that need them, so importing this module is always cheap.
 
 from __future__ import annotations
 
+import hashlib
+import importlib.metadata
+import json
 import math
-from typing import TypedDict
+import os
+import platform
+import re
+import subprocess
+import sys
+import threading
+from collections.abc import Mapping
+from functools import lru_cache
+from pathlib import Path
+from typing import Any, Literal, TypedDict
 
 import numpy as np
 from gap_core.tools import tool
@@ -36,12 +48,60 @@ from gap_core.types import (
 # ---------------------------------------------------------------------------
 
 
+class AlgorithmServiceEvidence(TypedDict):
+    kind: Literal["algorithm_service"]
+    source_commit: str
+    uv_lock_sha256: str
+    config_sha256: str
+    runtime_environment_sha256: str
+    input_sha256: str
+    output_sha256: str
+    fallback_used: bool
+
+
+class MaskWorldEvidence(AlgorithmServiceEvidence):
+    valid_depth_count: int
+    total_mask_count: int
+    depth_bounds_m: tuple[float, float]
+    camera_to_world_sha256: str
+    world_points_sha256: str
+
+
 class PointCloudResult(TypedDict):
     points: PointCloud
 
 
+class MaskWorldResult(PointCloudResult):
+    evidence: MaskWorldEvidence
+
+
+class EvidencedPointCloudResult(PointCloudResult):
+    evidence: AlgorithmServiceEvidence
+
+
+class FilterEvidence(AlgorithmServiceEvidence):
+    eps: float
+    min_samples: int
+    input_points_sha256: str
+    filtered_points_sha256: str
+
+
+class FilterPointCloudResult(PointCloudResult):
+    evidence: FilterEvidence
+
+
+class ObbEvidence(AlgorithmServiceEvidence):
+    input_points_sha256: str
+    obb_sha256: str
+    random_seed: int
+
+
 class ObbResult(TypedDict):
     obb: OrientedBoundingBox
+
+
+class EvidencedObbResult(ObbResult):
+    evidence: ObbEvidence
 
 
 class PoseResult(TypedDict):
@@ -90,6 +150,139 @@ class ObjectMaskEntry(TypedDict):
 class WorldConfigResult(TypedDict):
     config: WorldConfig
     mesh_names: list[str]
+    evidence: AlgorithmServiceEvidence
+
+
+_SOURCE_COMMIT = "158ddeef24a9b5f39ff481eb2a63f15eb858dae6"
+_UV_LOCK_SHA256 = "sha256:53e83f9b1a5db267b6210de7aa1c45f9526eef40b82db850738aa6b309cee49d"
+_OBB_RANDOM_SEED = 0
+_OBB_RANDOM_LOCK = threading.Lock()
+
+
+def _validate_digest(value: str) -> str:
+    if re.fullmatch(r"sha256:[0-9a-f]{64}", value) is None:
+        raise ValueError("digest must be canonical SHA256 (sha256:<64 lowercase hex>)")
+    return value
+
+
+def _validate_git_object_id(value: str) -> str:
+    if re.fullmatch(r"(?:[0-9a-f]{40}|[0-9a-f]{64})", value) is None:
+        raise ValueError("source commit must be a 40- or 64-hex Git object ID")
+    return value
+
+
+def _jsonable(value: Any) -> Any:
+    if isinstance(value, np.ndarray):
+        contiguous = np.ascontiguousarray(value)
+        return {
+            "dtype": str(contiguous.dtype),
+            "shape": list(contiguous.shape),
+            "bytes_sha256": hashlib.sha256(contiguous.tobytes()).hexdigest(),
+        }
+    if isinstance(value, Mapping):
+        return {str(key): _jsonable(item) for key, item in sorted(value.items())}
+    if isinstance(value, (list, tuple)):
+        return [_jsonable(item) for item in value]
+    if isinstance(value, np.generic):
+        return value.item()
+    return value
+
+
+def _canonical_sha256(value: Any) -> str:
+    payload = json.dumps(
+        _jsonable(value), sort_keys=True, separators=(",", ":"), allow_nan=False
+    ).encode()
+    return f"sha256:{hashlib.sha256(payload).hexdigest()}"
+
+
+@lru_cache(maxsize=1)
+def _runtime_environment_sha256() -> str:
+    distributions = {}
+    for name in ("numpy", "scipy", "scikit-learn", "open3d", "opencv-python"):
+        try:
+            distributions[name] = importlib.metadata.version(name)
+        except importlib.metadata.PackageNotFoundError:
+            distributions[name] = "unavailable"
+    return _canonical_sha256(
+        {
+            "python": sys.version,
+            "platform": platform.platform(),
+            "distributions": distributions,
+        }
+    )
+
+
+@lru_cache(maxsize=1)
+def _verified_uv_lock_sha256() -> str:
+    actual = (
+        f"sha256:{hashlib.sha256(Path(__file__).with_name('uv.lock').read_bytes()).hexdigest()}"
+    )
+    if actual != _validate_digest(_UV_LOCK_SHA256):
+        raise RuntimeError("geometry uv.lock hash drift")
+    return actual
+
+
+def _source_state() -> tuple[str, bool]:
+    root = Path(__file__).resolve().parents[2]
+    git_env = {
+        "PATH": os.environ.get("PATH", ""),
+        "LC_ALL": "C",
+        "GIT_CONFIG_NOSYSTEM": "1",
+        "GIT_CONFIG_GLOBAL": os.devnull,
+        "GIT_CONFIG_SYSTEM": os.devnull,
+        "GIT_TERMINAL_PROMPT": "0",
+        "GIT_OPTIONAL_LOCKS": "0",
+    }
+    try:
+        commit = subprocess.run(
+            ["git", "rev-parse", "HEAD^{commit}"],
+            cwd=root,
+            env=git_env,
+            check=True,
+            text=True,
+            capture_output=True,
+        ).stdout.strip()
+        dirty = bool(
+            subprocess.run(
+                [
+                    "git",
+                    "status",
+                    "--porcelain",
+                    "--",
+                    "tools/geometry/tools.py",
+                    "tools/geometry/SKILL.md",
+                    "tools/geometry/uv.lock",
+                ],
+                cwd=root,
+                env=git_env,
+                check=True,
+                text=True,
+                capture_output=True,
+            ).stdout
+        )
+        return _validate_git_object_id(commit), dirty
+    except (OSError, subprocess.SubprocessError, ValueError):
+        return _validate_git_object_id(_SOURCE_COMMIT), True
+
+
+def _algorithm_evidence(
+    inputs: Any,
+    output: Any,
+    config: Any,
+    *,
+    algorithm_fallback: bool = False,
+) -> AlgorithmServiceEvidence:
+    source_commit, source_unsealed = _source_state()
+    return {
+        "kind": "algorithm_service",
+        "source_commit": source_commit,
+        "uv_lock_sha256": _verified_uv_lock_sha256(),
+        "config_sha256": _canonical_sha256(config),
+        "runtime_environment_sha256": _runtime_environment_sha256(),
+        "input_sha256": _canonical_sha256(inputs),
+        "output_sha256": _canonical_sha256(output),
+        "fallback_used": source_unsealed or algorithm_fallback,
+    }
 
 
 def _pc(points: np.ndarray) -> PointCloud:
@@ -127,19 +320,37 @@ def mask_to_world_points(
     depth: np.ndarray,
     intrinsics: np.ndarray,
     camera_pose: Se3Pose,
-) -> PointCloudResult:
+) -> MaskWorldResult:
     """Foreground pixels of ``mask`` (uint8 0/255 [H, W]) with valid depth in
     [0.015, 20.0] m (HyRL bounds) become world-frame points via the
     camera-to-world ``camera_pose``."""
     from gap_skills.tools.geometry import _impl
 
-    points = _impl.mask_to_world_points(
-        _impl.as_mask_bool(mask),
-        np.asarray(depth, dtype=np.float32),
-        np.asarray(intrinsics, dtype=np.float64),
-        pose_to_matrix(camera_pose),
-    )
-    return {"points": _pc(points)}
+    mask_bool = _impl.as_mask_bool(mask)
+    depth_array = np.asarray(depth, dtype=np.float32)
+    intrinsics_array = np.asarray(intrinsics, dtype=np.float64)
+    camera_to_world = pose_to_matrix(camera_pose)
+    points = _impl.mask_to_world_points(mask_bool, depth_array, intrinsics_array, camera_to_world)
+    output = {"points": _pc(points)}
+    valid = mask_bool & np.isfinite(depth_array) & (depth_array >= 0.015) & (depth_array <= 20.0)
+    evidence: MaskWorldEvidence = {
+        **_algorithm_evidence(
+            {
+                "mask": np.asarray(mask),
+                "depth": depth_array,
+                "intrinsics": intrinsics_array,
+                "camera_pose": camera_pose,
+            },
+            output,
+            {"depth_bounds_m": (0.015, 20.0)},
+        ),
+        "valid_depth_count": int(np.count_nonzero(valid)),
+        "total_mask_count": int(np.count_nonzero(mask_bool)),
+        "depth_bounds_m": (0.015, 20.0),
+        "camera_to_world_sha256": _canonical_sha256(camera_to_world),
+        "world_points_sha256": _canonical_sha256(points),
+    }
+    return {**output, "evidence": evidence}
 
 
 @tool(
@@ -190,30 +401,43 @@ def transform_points(points: PointCloud, transform: Se3Pose) -> PointCloudResult
 @tool(
     name="geometry.exclude_robot_points",
     summary="Remove points near the robot body via FK-based sphere exclusion "
-            "(7-DOF Franka; other arms pass through unchanged).",
+    "(7-DOF Franka; other arms pass through unchanged).",
     tags=("perception",),
 )
 def exclude_robot_points(
     points: PointCloud,
     joint_positions: JointState,
     distance_threshold: float = 0.05,
-) -> PointCloudResult:
+) -> EvidencedPointCloudResult:
     """Strip robot-body points from a perception cloud (HyRL RobotSegmenter
     concept, simplified FK + link spheres). Essential when the perceived
     object sits against the robot base — the segmentation mask bleeds onto
     robot pixels and the merged cloud yields a wildly oversized OBB."""
     import numpy as np
-
     from gap_skills.tools.geometry import _impl
 
     pts = _impl.as_points(points)
     joints = np.asarray(joint_positions["positions"], dtype=np.float64).reshape(-1)
     if joints.shape[0] != 7:
-        return {"points": _pc(pts)}
+        output = {"points": _pc(pts)}
+        return {
+            **output,
+            "evidence": _algorithm_evidence(
+                {"points": pts, "joint_positions": joints},
+                output,
+                {"distance_threshold": distance_threshold},
+                algorithm_fallback=True,
+            ),
+        }
+    filtered = _impl._exclude_robot_points(pts, joints, distance_threshold)
+    output = {"points": _pc(filtered)}
     return {
-        "points": _pc(
-            _impl._exclude_robot_points(pts, joints, distance_threshold)
-        )
+        **output,
+        "evidence": _algorithm_evidence(
+            {"points": pts, "joint_positions": joints},
+            output,
+            {"distance_threshold": distance_threshold},
+        ),
     }
 
 
@@ -226,14 +450,29 @@ def filter_noise(
     points: PointCloud,
     eps: float = 0.005,
     min_samples: int = 10,
-) -> PointCloudResult:
+) -> FilterPointCloudResult:
     """Mirrors HyRL filter_noise: keeps ALL non-noise points (labels != -1),
     not just the largest cluster. If everything is classified as noise the
     original cloud is returned unchanged."""
     from gap_skills.tools.geometry import _impl
 
     pts = _impl.as_points(points)
-    return {"points": _pc(_impl.filter_noise(pts, eps, min_samples))}
+    filtered = _impl.filter_noise(pts, eps, min_samples)
+    output = {"points": _pc(filtered)}
+    all_noise_fallback = bool(len(pts) and filtered is pts)
+    evidence: FilterEvidence = {
+        **_algorithm_evidence(
+            {"points": pts},
+            output,
+            {"eps": eps, "min_samples": min_samples},
+            algorithm_fallback=all_noise_fallback,
+        ),
+        "eps": eps,
+        "min_samples": min_samples,
+        "input_points_sha256": _canonical_sha256(pts),
+        "filtered_points_sha256": _canonical_sha256(filtered),
+    }
+    return {**output, "evidence": evidence}
 
 
 @tool(
@@ -241,14 +480,29 @@ def filter_noise(
     summary="Fit an oriented bounding box to 3D points (HyRL contour-based min-width fit, upright in Z).",
     tags=("perception",),
 )
-def compute_obb(points: PointCloud) -> ObbResult:
+def compute_obb(points: PointCloud) -> EvidencedObbResult:
     """Statistical outlier removal → XY rasterization → contour polygon →
     min-width rectangle search → 2nd/98th percentile extents. The returned
     OBB is upright (rotation only around world Z); ``extent`` holds
     HALF-extents per gap.types. Raises PerceptionFailed on < 4 points."""
     from gap_skills.tools.geometry import _impl
 
-    return {"obb": _impl.compute_obb(_impl.as_points(points))}
+    pts = _impl.as_points(points)
+    with _OBB_RANDOM_LOCK:
+        state = np.random.get_state()
+        try:
+            np.random.seed(_OBB_RANDOM_SEED)
+            obb = _impl.compute_obb(pts)
+        finally:
+            np.random.set_state(state)
+    output = {"obb": obb}
+    evidence: ObbEvidence = {
+        **_algorithm_evidence({"points": pts}, output, {"random_seed": _OBB_RANDOM_SEED}),
+        "input_points_sha256": _canonical_sha256(pts),
+        "obb_sha256": _canonical_sha256(obb),
+        "random_seed": _OBB_RANDOM_SEED,
+    }
+    return {**output, "evidence": evidence}
 
 
 @tool(
@@ -260,14 +514,38 @@ def filter_and_compute_obb(
     points: PointCloud,
     eps: float = 0.005,
     min_samples: int = 10,
-) -> ObbResult:
+) -> EvidencedObbResult:
     """Sequences geometry.filter_noise + geometry.compute_obb (the servicer
     offered this fusion to avoid two round trips; kept for workflow parity)."""
     from gap_skills.tools.geometry import _impl
 
     pts = _impl.as_points(points)
     filtered = _impl.filter_noise(pts, eps, min_samples)
-    return {"obb": _impl.compute_obb(filtered)}
+    with _OBB_RANDOM_LOCK:
+        state = np.random.get_state()
+        try:
+            np.random.seed(_OBB_RANDOM_SEED)
+            obb = _impl.compute_obb(filtered)
+        finally:
+            np.random.set_state(state)
+    output = {"obb": obb}
+    all_noise_fallback = bool(len(pts) and filtered is pts)
+    evidence: ObbEvidence = {
+        **_algorithm_evidence(
+            {"points": pts},
+            output,
+            {
+                "eps": eps,
+                "min_samples": min_samples,
+                "random_seed": _OBB_RANDOM_SEED,
+            },
+            algorithm_fallback=all_noise_fallback,
+        ),
+        "input_points_sha256": _canonical_sha256(pts),
+        "obb_sha256": _canonical_sha256(obb),
+        "random_seed": _OBB_RANDOM_SEED,
+    }
+    return {**output, "evidence": evidence}
 
 
 # ---------------------------------------------------------------------------
@@ -399,7 +677,38 @@ def build_world_config(
         target_obb=target_obb,
         target_obb_name=target_obb_name,
     )
-    return {"config": config, "mesh_names": mesh_names}
+    output = {"config": config, "mesh_names": mesh_names}
+    used_projection_fallback = not object_masks and target_obb is not None
+    invalid_robot_shape = bool(
+        robot_joint_state is not None
+        and len(np.asarray(robot_joint_state.get("positions", [])).reshape(-1)) != 7
+    )
+    empty_reconstruction = not mesh_names
+    return {
+        **output,
+        "evidence": _algorithm_evidence(
+            {
+                "cameras": cameras,
+                "object_masks": object_masks,
+                "robot_joint_state": robot_joint_state,
+                "target_obb": target_obb,
+            },
+            output,
+            {
+                "voxel_size": voxel_size,
+                "noise_eps": noise_eps,
+                "noise_min_samples": noise_min_samples,
+                "table_z_threshold": table_z_threshold,
+                "mesh_alpha": mesh_alpha,
+                "robot_distance_threshold": robot_distance_threshold,
+                "robot_file": robot_file,
+                "target_obb_name": target_obb_name,
+            },
+            algorithm_fallback=(
+                used_projection_fallback or invalid_robot_shape or empty_reconstruction
+            ),
+        ),
+    }
 
 
 # ---------------------------------------------------------------------------
