@@ -15,15 +15,23 @@ a TTL.
 
 from __future__ import annotations
 
+import argparse
 import collections
+import hashlib
+import json
 import logging
 import os
 import re
 import shutil
+import stat
+import tempfile
 import threading
 import time
 import uuid
+from collections.abc import Mapping
+from contextlib import contextmanager
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any, Literal, TypedDict
 
 import numpy as np
@@ -41,6 +49,16 @@ _DEVICE = os.environ.get("GAP_SAM3_DEVICE", "cuda")
 #: ``SAM3_MODEL_ID``; kept here so ``prefetch()`` doesn't have to import
 #: torch / sam3 just to read the constant.
 _SAM3_HF_REPO = "facebook/sam3"
+_SAM3_LOADER_REVISION = "b26a5f330e05d321afb39d01d3d4881f258f65ff"
+_CHECKED_MANIFEST_PATH = Path(__file__).with_name("paper_model_manifest.json")
+_PAPER_MODEL_FILES = ("config.json", "sam3.pt")
+_MANIFEST_KEYS = {
+    "schema_version",
+    "requested_model",
+    "resolved_revision",
+    "loader_revision",
+    "files",
+}
 
 
 def weights_cached() -> bool | None:
@@ -157,13 +175,317 @@ def _validate_digest(value: str) -> str:
     return value
 
 
-def paper_model_artifact() -> dict[str, str]:
-    """Fail closed until SAM3 has a locally derived checked weight manifest."""
+def _validate_git_object_id(value: str) -> str:
+    if re.fullmatch(r"(?:[0-9a-f]{40}|[0-9a-f]{64})", value) is None:
+        raise ValueError("revision must be a 40- or 64-hex Git object ID")
+    return value
 
-    raise ToolError(
-        "sam3",
-        "paper model artifact is unavailable: no immutable checked SAM3 weights manifest",
+
+def _paper_artifact_error(message: str) -> ToolError:
+    return ToolError("sam3", f"paper model artifact {message}")
+
+
+def _hf_hub_cache() -> Path:
+    configured = os.environ.get("HUGGINGFACE_HUB_CACHE")
+    if configured:
+        return Path(configured).expanduser().resolve()
+    hf_home = Path(os.environ.get("HF_HOME", Path.home() / ".cache/huggingface"))
+    return (hf_home / "hub").expanduser().resolve()
+
+
+def _snapshot_layout(snapshot_path: Path) -> tuple[str, Path]:
+    """Validate an exact HF cache snapshot path and return revision + blob root."""
+
+    snapshot = snapshot_path.expanduser().absolute()
+    if snapshot.is_symlink() or not snapshot.is_dir():
+        raise _paper_artifact_error("snapshot must be a real immutable directory")
+    try:
+        revision = _validate_git_object_id(snapshot.name)
+    except (TypeError, ValueError) as exc:
+        raise _paper_artifact_error(f"snapshot revision is invalid: {exc}") from exc
+    snapshots = snapshot.parent
+    repo = snapshots.parent
+    blobs = repo / "blobs"
+    if snapshots.name != "snapshots" or repo.name != "models--facebook--sam3":
+        raise _paper_artifact_error(
+            "snapshot path must be models--facebook--sam3/snapshots/<revision>"
+        )
+    for label, directory in (("repository", repo), ("snapshots", snapshots), ("blobs", blobs)):
+        if directory.is_symlink() or not directory.is_dir():
+            raise _paper_artifact_error(f"{label} cache directory is missing or mutable")
+    return revision, blobs.resolve(strict=True)
+
+
+def _checked_snapshot_file(snapshot: Path, blobs: Path, filename: str) -> Path:
+    selected = snapshot / filename
+    if not selected.is_symlink():
+        raise _paper_artifact_error(
+            f"snapshot file {filename} is missing or mutable (expected a blob symlink)"
+        )
+    try:
+        target = selected.resolve(strict=True)
+        target.relative_to(blobs)
+    except (FileNotFoundError, RuntimeError, ValueError) as exc:
+        raise _paper_artifact_error(
+            f"snapshot file {filename} escapes the repository blobs"
+        ) from exc
+    if target.parent != blobs or not target.is_file() or target.is_symlink():
+        raise _paper_artifact_error(f"snapshot file {filename} is not a regular repository blob")
+    return target
+
+
+def _file_identity(path: Path) -> dict[str, str | int]:
+    """Hash a regular blob through one descriptor and bind its observed size."""
+
+    flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
+    descriptor = os.open(path, flags)
+    try:
+        before = os.fstat(descriptor)
+        if not stat.S_ISREG(before.st_mode) or before.st_size <= 0:
+            raise _paper_artifact_error(f"blob {path.name} is empty or not a regular file")
+        with os.fdopen(descriptor, "rb", closefd=False) as stream:
+            digest = f"sha256:{hashlib.file_digest(stream, 'sha256').hexdigest()}"
+        after = os.fstat(descriptor)
+        if _stat_fingerprint(before) != _stat_fingerprint(after):
+            raise _paper_artifact_error(f"blob {path.name} changed while it was being hashed")
+        return {"sha256": digest, "size_bytes": before.st_size}
+    finally:
+        os.close(descriptor)
+
+
+def _stat_fingerprint(metadata: os.stat_result) -> tuple[int, int, int, int, int]:
+    return (
+        metadata.st_dev,
+        metadata.st_ino,
+        metadata.st_size,
+        metadata.st_mtime_ns,
+        metadata.st_ctime_ns,
     )
+
+
+def _descriptor_identity(descriptor: int) -> dict[str, str | int]:
+    """Hash one already-open descriptor without changing its shared file offset."""
+
+    before = os.fstat(descriptor)
+    if not stat.S_ISREG(before.st_mode) or before.st_size <= 0:
+        raise _paper_artifact_error("sam3.pt descriptor is empty or not a regular file")
+    digest = hashlib.sha256()
+    offset = 0
+    while chunk := os.pread(descriptor, 8 * 1024 * 1024, offset):
+        digest.update(chunk)
+        offset += len(chunk)
+    after = os.fstat(descriptor)
+    if _stat_fingerprint(before) != _stat_fingerprint(after):
+        raise _paper_artifact_error("sam3.pt changed while it was being hashed")
+    return {"sha256": f"sha256:{digest.hexdigest()}", "size_bytes": before.st_size}
+
+
+def _validate_manifest(payload: Any) -> dict[str, Any]:
+    if type(payload) is not dict or set(payload) != _MANIFEST_KEYS:
+        raise _paper_artifact_error("manifest schema has missing or unexpected fields")
+    if type(payload["schema_version"]) is not int or payload["schema_version"] != 1:
+        raise _paper_artifact_error("manifest schema_version must be exactly 1")
+    if payload["requested_model"] != _SAM3_HF_REPO:
+        raise _paper_artifact_error("manifest requested_model differs from facebook/sam3")
+    if payload["loader_revision"] != _SAM3_LOADER_REVISION:
+        raise _paper_artifact_error("manifest loader_revision differs from the pinned SAM3 source")
+    try:
+        _validate_git_object_id(payload["resolved_revision"])
+    except (TypeError, ValueError) as exc:
+        raise _paper_artifact_error(f"manifest revision is invalid: {exc}") from exc
+    files = payload["files"]
+    if type(files) is not dict or set(files) != set(_PAPER_MODEL_FILES):
+        raise _paper_artifact_error("manifest files must be exactly config.json and sam3.pt")
+    for filename in _PAPER_MODEL_FILES:
+        identity = files[filename]
+        if type(identity) is not dict or set(identity) != {"sha256", "size_bytes"}:
+            raise _paper_artifact_error(f"manifest schema for {filename} is invalid")
+        try:
+            _validate_digest(identity["sha256"])
+        except (TypeError, ValueError) as exc:
+            raise _paper_artifact_error(
+                f"manifest digest for {filename} is invalid: {exc}"
+            ) from exc
+        if type(identity["size_bytes"]) is not int or identity["size_bytes"] <= 0:
+            raise _paper_artifact_error(f"manifest size for {filename} must be a positive integer")
+    return payload
+
+
+def _reject_duplicate_json_keys(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    result: dict[str, Any] = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError(f"duplicate JSON key: {key}")
+        result[key] = value
+    return result
+
+
+def _read_checked_manifest(path: Path) -> dict[str, Any]:
+    if path.is_symlink():
+        raise _paper_artifact_error("manifest must not be a symlink")
+    flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
+    try:
+        descriptor = os.open(path, flags)
+    except (FileNotFoundError, OSError) as exc:
+        raise _paper_artifact_error(
+            "is unavailable: no immutable checked SAM3 weights manifest"
+        ) from exc
+    try:
+        if not stat.S_ISREG(os.fstat(descriptor).st_mode):
+            raise _paper_artifact_error("manifest is not a regular file")
+        with os.fdopen(descriptor, encoding="utf-8", closefd=False) as stream:
+            payload = json.load(stream, object_pairs_hook=_reject_duplicate_json_keys)
+    except (UnicodeDecodeError, json.JSONDecodeError, ValueError) as exc:
+        raise _paper_artifact_error(f"manifest is not strict JSON: {exc}") from exc
+    finally:
+        os.close(descriptor)
+    return _validate_manifest(payload)
+
+
+def seal_paper_model_manifest(*, snapshot_path: Path, output_path: Path) -> dict[str, Any]:
+    """Seal an already-authorized, locally cached HF snapshot into checked JSON.
+
+    The caller must pass the exact ``.../snapshots/<commit>`` directory returned
+    by Hugging Face. Existing authority is never overwritten.
+    """
+
+    snapshot = Path(snapshot_path).expanduser().absolute()
+    revision, blobs = _snapshot_layout(snapshot)
+    files = {
+        filename: _file_identity(_checked_snapshot_file(snapshot, blobs, filename))
+        for filename in _PAPER_MODEL_FILES
+    }
+    payload = _validate_manifest(
+        {
+            "schema_version": 1,
+            "requested_model": _SAM3_HF_REPO,
+            "resolved_revision": revision,
+            "loader_revision": _SAM3_LOADER_REVISION,
+            "files": files,
+        }
+    )
+    output = Path(output_path).expanduser().absolute()
+    output.parent.mkdir(parents=True, exist_ok=True)
+    serialized = (json.dumps(payload, sort_keys=True, indent=2) + "\n").encode()
+    descriptor, temporary_name = tempfile.mkstemp(prefix=f".{output.name}.", dir=output.parent)
+    temporary = Path(temporary_name)
+    try:
+        with os.fdopen(descriptor, "wb") as stream:
+            stream.write(serialized)
+            stream.flush()
+            os.fsync(stream.fileno())
+        try:
+            os.link(temporary, output)
+        except FileExistsError as exc:
+            raise _paper_artifact_error(f"manifest already exists: {output}") from exc
+    finally:
+        temporary.unlink(missing_ok=True)
+    return payload
+
+
+def _manifest_sealer_main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        description="Seal an authorized facebook/sam3 HF snapshot into checked authority JSON."
+    )
+    parser.add_argument(
+        "--snapshot",
+        required=True,
+        type=Path,
+        help="Exact models--facebook--sam3/snapshots/<commit> directory",
+    )
+    parser.add_argument(
+        "--output",
+        required=True,
+        type=Path,
+        help="New manifest path (must not already exist)",
+    )
+    args = parser.parse_args(argv)
+    seal_paper_model_manifest(snapshot_path=args.snapshot, output_path=args.output)
+    print(f"sealed checked SAM3 manifest: {args.output.expanduser().absolute()}")
+    return 0
+
+
+def _paper_model_selection() -> tuple[dict[str, Any], str, dict[str, Path]]:
+    manifest = _read_checked_manifest(_CHECKED_MANIFEST_PATH)
+    cache = _hf_hub_cache()
+    snapshot = cache / "models--facebook--sam3" / "snapshots" / manifest["resolved_revision"]
+    revision, blobs = _snapshot_layout(snapshot)
+    if revision != manifest["resolved_revision"]:
+        raise _paper_artifact_error("snapshot revision differs from manifest")
+    selected = {
+        filename: _checked_snapshot_file(snapshot, blobs, filename)
+        for filename in _PAPER_MODEL_FILES
+    }
+    return manifest, revision, selected
+
+
+def _check_selected_identity(
+    filename: str,
+    observed: Mapping[str, str | int],
+    manifest: Mapping[str, Any],
+) -> None:
+    expected = manifest["files"][filename]
+    if observed["size_bytes"] != expected["size_bytes"]:
+        raise _paper_artifact_error(f"{filename} size differs from checked manifest")
+    if observed["sha256"] != expected["sha256"]:
+        raise _paper_artifact_error(f"{filename} digest differs from checked manifest")
+
+
+def _paper_artifact(manifest: Mapping[str, Any], revision: str) -> dict[str, str]:
+    return {
+        "requested_model": _SAM3_HF_REPO,
+        "resolved_revision": revision,
+        "weights_sha256": manifest["files"]["sam3.pt"]["sha256"],
+    }
+
+
+def _validated_paper_model() -> dict[str, str]:
+    """Validate checked config/checkpoint bytes and return their attestation."""
+
+    manifest, revision, selected = _paper_model_selection()
+    for filename in _PAPER_MODEL_FILES:
+        _check_selected_identity(filename, _file_identity(selected[filename]), manifest)
+    return _paper_artifact(manifest, revision)
+
+
+@contextmanager
+def _open_validated_checkpoint():
+    """Hold the attested checkpoint inode open across model construction."""
+
+    manifest, revision, selected = _paper_model_selection()
+    _check_selected_identity("config.json", _file_identity(selected["config.json"]), manifest)
+    flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
+    descriptor = os.open(selected["sam3.pt"], flags)
+    try:
+        _check_selected_identity("sam3.pt", _descriptor_identity(descriptor), manifest)
+        descriptor_stat = os.fstat(descriptor)
+        load_fingerprint = _stat_fingerprint(descriptor_stat)
+        proc_path = Path("/proc/self/fd") / str(descriptor)
+        try:
+            proc_stat = proc_path.stat()
+        except OSError as exc:
+            raise _paper_artifact_error(
+                "cannot expose the checked checkpoint via /proc/self/fd"
+            ) from exc
+        if (proc_stat.st_dev, proc_stat.st_ino) != (descriptor_stat.st_dev, descriptor_stat.st_ino):
+            raise _paper_artifact_error("/proc/self/fd checkpoint identity mismatch")
+        try:
+            yield _paper_artifact(manifest, revision), str(proc_path)
+        except BaseException:
+            raise
+        else:
+            post_identity = _descriptor_identity(descriptor)
+            if _stat_fingerprint(os.fstat(descriptor)) != load_fingerprint:
+                raise _paper_artifact_error("sam3.pt changed while the model was loading")
+            _check_selected_identity("sam3.pt", post_identity, manifest)
+    finally:
+        os.close(descriptor)
+
+
+def paper_model_artifact() -> dict[str, str]:
+    """Validate the checked manifest and exact local HF snapshot, then attest it."""
+
+    return _validated_paper_model()
 
 
 # ---------------------------------------------------------------------------
@@ -193,10 +515,16 @@ def _get_model(device: str | None = None) -> tuple[Any, Any]:
 
             dev = device or _DEVICE
             logger.info("Loading SAM3 model on %s ...", dev)
-            model = build_sam3_image_model(enable_inst_interactivity=True)
-            model = model.to(dev)
-            _image_model = model
-            _image_processor = Sam3Processor(model, confidence_threshold=0.0)
+            with _open_validated_checkpoint() as (_, checkpoint_path):
+                model = build_sam3_image_model(
+                    enable_inst_interactivity=True,
+                    checkpoint_path=checkpoint_path,
+                    load_from_HF=False,
+                )
+                candidate_model = model.to(dev)
+                candidate_processor = Sam3Processor(candidate_model, confidence_threshold=0.0)
+            _image_model = candidate_model
+            _image_processor = candidate_processor
             logger.info("SAM3 model loaded on %s.", dev)
         return _image_model, _image_processor
 
@@ -230,10 +558,13 @@ def _get_tracker_predictor() -> Any:
             # Setting apply_temporal_disambiguation=False switches to the
             # ablation build (hotstart_delay=0, no removal heuristics) which
             # is the right behavior for a single-target visual-prompt stream.
-            _tracker_predictor = build_sam3_video_predictor(
-                gpus_to_use=[gpu_id],
-                apply_temporal_disambiguation=False,
-            )
+            with _open_validated_checkpoint() as (_, checkpoint_path):
+                candidate_predictor = build_sam3_video_predictor(
+                    gpus_to_use=[gpu_id],
+                    apply_temporal_disambiguation=False,
+                    checkpoint_path=checkpoint_path,
+                )
+            _tracker_predictor = candidate_predictor
             logger.info("SAM3 video predictor loaded.")
         return _tracker_predictor
 
@@ -881,3 +1212,7 @@ def tracker_close(tracker_id: str) -> TrackerCloseResult:
     if session is not None and _tracker_predictor is not None:
         _close_video_session(_tracker_predictor, session.video_session_id)
     return {"closed": session is not None, "evidence": None}
+
+
+if __name__ == "__main__":  # pragma: no cover - exercised through _manifest_sealer_main
+    raise SystemExit(_manifest_sealer_main())

@@ -45,17 +45,77 @@ uv sync --extra sam3       # torch + torchvision + the upstream sam3 package
 # (pip: pip install -e ".[sam3]")
 ```
 
-Model weights download on first model build. Device is taken from
-`GAP_SAM3_DEVICE` (default `cuda`); the image model also runs on `cpu`
-(slow), the video tracker is CUDA-only in practice.
+Use `prefetch()` / `gap skills check --download` to download the gated model
+before sealing its checked manifest. Model construction never falls back to an
+unpinned Hugging Face lookup. Device is taken from `GAP_SAM3_DEVICE` (default
+`cuda`); the image model also runs on `cpu` (slow), while the video tracker is
+CUDA-only in practice.
 
 ## Paper model admission
 
-Paper admission is currently **unavailable**. No local SAM3 weight artifact was
-available from which to derive and check an immutable `facebook/sam3` revision
-and canonical weight SHA256. Legacy runtime loading remains unchanged, but its
-results carry `evidence: null`; paper mode must reject that missing attestation.
-No revision or weight digest is inferred from the mutable model name.
+Paper admission is currently **unavailable** until
+`paper_model_manifest.json` is created from locally downloaded, authorized
+bytes and checked into this bundle. Its absence is intentional and
+`paper_model_artifact()` fails closed; no revision or digest is inferred from
+the mutable model name or public metadata. Image and tracker singleton creation
+also fails closed without this authority; neither builder may silently download
+from an unpinned revision. Tool results still carry `evidence: null` until the
+paper evidence plumbing promotes this validated identity.
+
+The checked-manifest pipeline binds all of the following:
+
+- the exact 40- or 64-hex Hugging Face snapshot revision for `facebook/sam3`;
+- the pinned upstream loader source revision
+  `b26a5f330e05d321afb39d01d3d4881f258f65ff`;
+- byte size and SHA256 for `config.json` and `sam3.pt`;
+- the normal Hugging Face cache layout, where both selected files are symlinks
+  into the same repository's `blobs/` directory.
+
+Those are the two files fetched by pinned upstream
+`sam3/model_builder.py::download_ckpt_from_hf()`. The helper discards the
+`config.json` path without parsing its contents, so config is validated as part
+of the official two-file download closure, not claimed as model-construction
+input. The actual checkpoint authority is `sam3.pt`, shared by the image and
+video builders. The repository's separate `model.safetensors` artifact is not
+selected by these paper services, so it is not admitted as runtime authority.
+
+After an account has been authorized for the gated repository, download the
+snapshot normally and retain the exact path returned by `snapshot_download`:
+
+```python
+from huggingface_hub import snapshot_download
+
+snapshot = snapshot_download(repo_id="facebook/sam3", repo_type="model")
+print(snapshot)  # .../models--facebook--sam3/snapshots/<immutable-commit>
+```
+
+Then seal those local bytes. Both paths are mandatory, the output must not
+already exist, and sealing never contacts Hugging Face:
+
+```bash
+tools/sam3/.venv/bin/python tools/sam3/tools.py \
+  --snapshot /path/to/models--facebook--sam3/snapshots/<immutable-commit> \
+  --output tools/sam3/paper_model_manifest.json
+```
+
+Review and commit the generated JSON. At admission time,
+`paper_model_artifact()` strictly parses that checked file, reconstructs the
+exact snapshot path under the configured Hugging Face cache, rejects regular
+snapshot files, dangling/escaping symlinks, incomplete layouts, schema drift,
+and loader/revision drift, and re-hashes both config and checkpoint bytes.
+The singleton loaders receive the already-validated resolved `sam3.pt` blob;
+they hold one `O_NOFOLLOW` file descriptor across pre-load hashing, model
+construction through `/proc/self/fd/<fd>`, and post-load hashing. Thus pathname
+replacement cannot redirect a builder, and in-place mutation during loading
+fails before a singleton is published. A `(device, inode, size, mtime_ns,
+ctime_ns)` fingerprint must also remain identical across the entire load
+window; unlike mtime, an ordinary same-user writer cannot restore ctime with
+`utime` after a mutate-read-restore attack. The image builder additionally sets
+`load_from_HF=False`, while the tracker predictor's pinned API suppresses its
+internal HF download whenever an explicit checkpoint path is present. Hosts
+without a valid `/proc/self/fd` view fail closed.
+Synthetic tests write manifests only under pytest temporary directories; they
+never mint production authority.
 
 ## Gotchas (carried over from the servicers)
 
