@@ -83,17 +83,27 @@ def paper_service_capability() -> dict[str, Any]:
     version = str(package["version"])
     source = str(package["source"]["git"])
     commit = source.rsplit("#", 1)[-1]
+    required_paths = (
+        "batch_ik",
+        "robot_collision_validation",
+        "held_object_collision_validation",
+        "trajectory_validation",
+    )
+    probe_error_type = None
+    try:
+        contracts = _impl().paper_v08_contracts()
+    except Exception as exc:
+        probe_error_type = type(exc).__name__
+        logger.error("cuRobo paper capability probe failed: error_type=%s", probe_error_type)
+        contracts = {}
+    missing = tuple(name for name in required_paths if contracts.get(name) is not True)
     return {
-        "available": False,
+        "available": not missing,
         "pinned_version": version,
         "source_commit": _validate_git_object_id(commit),
         "uv_lock_sha256": lock_sha256,
-        "missing_required_paths": (
-            "batch_ik",
-            "robot_collision_validation",
-            "held_object_collision_validation",
-            "trajectory_validation",
-        ),
+        "missing_required_paths": missing,
+        "probe_error_type": probe_error_type,
     }
 
 
@@ -266,7 +276,7 @@ class ValidateResult(TypedDict):
     success: bool
     failure_reason: str  # empty if success
     first_collision_waypoint: int  # -1 if none / success
-    collision_status_detail: str  # e.g. MotionGenStatus name
+    collision_status_detail: str  # validator-specific diagnostic detail
 
 
 # ---------------------------------------------------------------------------
@@ -684,8 +694,8 @@ def batch_grasp_feasibility(
     """All result vectors align with the input ``grasp_poses`` order so
     callers can filter without losing rank. Put the target object in
     ``ignore_obstacle_names`` — the gripper is meant to close on it. NOTE:
-    backed by the v0.7 IKSolver API, removed in curobo v0.8 — raises
-    PlanningFailed on a v0.8-only install."""
+    implemented as two pinned-v0.8 true-batch collision-aware IK solves plus
+    native scene/self/joint-bound validation of each approach corridor."""
     impl = _impl()
     if len(grasp_poses) == 0:
         raise ToolError("curobo.batch_grasp_feasibility", "empty grasp_poses")
@@ -741,9 +751,8 @@ def validate_joint_trajectory_robot(
     collision_activation_distance: float = 0.01,
     ignore_obstacle_names: list[str] | None = None,
 ) -> ValidateResult:
-    """Checks every waypoint with MotionGen.check_start_state against the
-    same WorldConfig used for perception-built meshes. ``use_cuda_graph``
-    must stay False (check_start_state requirement)."""
+    """Checks every waypoint with pinned-v0.8 joint-bound, self-collision,
+    and scene-collision primitives against the perception-built world."""
     impl = _impl()
     if not trajectory.get("waypoints"):
         raise ToolError("curobo.validate_joint_trajectory_robot", "trajectory has no waypoints")
@@ -791,9 +800,8 @@ def validate_joint_trajectory_grasped(
     link_name: str = "attached_object",
     remove_obstacles_from_world: bool = False,
 ) -> ValidateResult:
-    """Attaches ``object_name`` (a mesh in ``world_config``) at the FIRST
-    waypoint configuration, validates every row, and always resets the
-    planner cache so attachment state cannot leak into later calls."""
+    """Fits and attaches ``object_name`` at the first waypoint, validates every
+    row with pinned-v0.8 collision primitives, and always detaches afterward."""
     impl = _impl()
     if not object_name:
         raise ToolError("curobo.validate_joint_trajectory_grasped", "object_name is required")
@@ -823,6 +831,11 @@ def validate_joint_trajectory_grasped(
         raise PlanningFailed(f"validate_joint_trajectory_grasped failed: {e}") from e
 
     detail = meta.get("motion_gen_status", "") if meta else ""
+    if meta and "attached_sphere_capacity" in meta:
+        detail = (
+            f"attached_sphere_count={meta.get('attached_sphere_count')};"
+            f"attached_sphere_capacity={meta['attached_sphere_capacity']}"
+        )
     return {
         "success": bool(ok),
         "failure_reason": "" if ok else (reason or "collision"),
