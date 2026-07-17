@@ -384,6 +384,133 @@ def test_v08_held_object_validation_always_detaches(curobo_impl_module, monkeypa
     assert events == ["attach", "validate", "detach"]
 
 
+def test_v08_plan_with_grasped_object_plans_without_target_then_validates_attachment(
+    curobo_impl_module, monkeypatch
+):
+    held = SimpleNamespace(name="held")
+    blocker = SimpleNamespace(name="blocker")
+    world = SimpleNamespace(mesh=[held, blocker])
+    trajectory = np.stack([_FRANKA_HOME, _FRANKA_HOME])
+    calls = []
+
+    def fake_plan(target_position, target_quat, start, **kwargs):
+        calls.append(("plan", kwargs["world_config"], target_position, target_quat, start))
+        return True, trajectory
+
+    def fake_validate(bound_world, waypoints, object_name, **kwargs):
+        calls.append(("validate", bound_world, waypoints, object_name, kwargs))
+        return True, "", None, {}
+
+    monkeypatch.setattr(curobo_impl_module, "_V2_AVAILABLE", True)
+    monkeypatch.setattr(curobo_impl_module, "plan_to_pose", fake_plan)
+    monkeypatch.setattr(
+        curobo_impl_module,
+        "validate_joint_trajectory_grasped_object",
+        fake_validate,
+    )
+
+    success, actual = curobo_impl_module.plan_with_grasped_object(
+        world,
+        _FRANKA_HOME,
+        (np.array([0.45, 0.0, 0.35]), np.array([0.0, 1.0, 0.0, 0.0])),
+        "held",
+        debug_out_dir=None,
+    )
+
+    assert success is True
+    np.testing.assert_array_equal(actual, trajectory)
+    assert [mesh.name for mesh in calls[0][1].mesh] == ["blocker"]
+    assert calls[1][1] is world
+    assert calls[1][3] == "held"
+
+
+def test_v08_plan_with_grasped_object_rejects_unknown_attachment_link(
+    curobo_impl_module, monkeypatch
+):
+    monkeypatch.setattr(curobo_impl_module, "_V2_AVAILABLE", True)
+    monkeypatch.setattr(
+        curobo_impl_module,
+        "plan_to_pose",
+        lambda *_args, **_kwargs: pytest.fail("unsupported link must fail before planning"),
+    )
+
+    with pytest.raises(ValueError, match="attached_object"):
+        curobo_impl_module.plan_with_grasped_object(
+            SimpleNamespace(mesh=[SimpleNamespace(name="held")]),
+            _FRANKA_HOME,
+            (np.array([0.45, 0.0, 0.35]), np.array([0.0, 1.0, 0.0, 0.0])),
+            "held",
+            link_name="custom_attachment",
+            debug_out_dir=None,
+        )
+
+
+def test_v08_plan_with_grasped_object_stops_before_validation_when_plan_fails(
+    curobo_impl_module, monkeypatch
+):
+    monkeypatch.setattr(curobo_impl_module, "_V2_AVAILABLE", True)
+    monkeypatch.setattr(curobo_impl_module, "plan_to_pose", lambda *_a, **_k: (False, None))
+    monkeypatch.setattr(
+        curobo_impl_module,
+        "validate_joint_trajectory_grasped_object",
+        lambda *_a, **_k: pytest.fail("failed plan must not be validated"),
+    )
+
+    assert curobo_impl_module.plan_with_grasped_object(
+        SimpleNamespace(mesh=[SimpleNamespace(name="held")]),
+        _FRANKA_HOME,
+        (np.array([0.45, 0.0, 0.35]), np.array([0.0, 1.0, 0.0, 0.0])),
+        "held",
+        debug_out_dir=None,
+    ) == (False, None)
+    assert curobo_impl_module._last_planning_debug["status"] == "planning_failed"
+
+
+def test_v08_plan_with_grasped_object_rejects_failed_attachment_validation_without_world(
+    curobo_impl_module, monkeypatch
+):
+    held = SimpleNamespace(name="held")
+    blocker = SimpleNamespace(name="blocker")
+    trajectory = np.stack([_FRANKA_HOME, _FRANKA_HOME])
+    calls = []
+    monkeypatch.setattr(curobo_impl_module, "_V2_AVAILABLE", True)
+
+    def fake_plan(*_args, **kwargs):
+        calls.append(("plan", kwargs["world_config"]))
+        return True, trajectory
+
+    def fake_validate(world, _trajectory, _object_name, **kwargs):
+        calls.append(("validate", world, kwargs))
+        return False, "held_collision", 1, {"probe": "blocked"}
+
+    monkeypatch.setattr(curobo_impl_module, "plan_to_pose", fake_plan)
+    monkeypatch.setattr(
+        curobo_impl_module,
+        "validate_joint_trajectory_grasped_object",
+        fake_validate,
+    )
+
+    assert curobo_impl_module.plan_with_grasped_object(
+        SimpleNamespace(mesh=[held, blocker]),
+        _FRANKA_HOME,
+        (np.array([0.45, 0.0, 0.35]), np.array([0.0, 1.0, 0.0, 0.0])),
+        "held",
+        use_world_collision=False,
+        debug_out_dir=None,
+    ) == (False, None)
+    assert calls[0] == ("plan", None)
+    assert [mesh.name for mesh in calls[1][1].mesh] == ["held"]
+    assert calls[1][2]["link_name"] == "attached_object"
+    assert curobo_impl_module._last_planning_debug == {
+        "function": "plan_with_grasped_object",
+        "status": "attachment_validation_failed",
+        "backend": "curobo_v0.8",
+        "failure_reason": "held_collision",
+        "first_collision_waypoint": 1,
+        "validation": {"probe": "blocked"},
+    }
+
+
 def test_v08_batch_grasp_feasibility_preserves_candidate_alignment(curobo_impl_module, monkeypatch):
     torch = pytest.importorskip("torch")
     calls = []
@@ -491,6 +618,31 @@ def test_plan_to_grasp_poses_gpu_smoke(
     if out["success"]:
         assert out["goalset_index"] in (0, 1)
         assert out["trajectory"] is not None
+
+
+@pytest.mark.gpu
+def test_plan_with_grasped_object_gpu_smoke(
+    tool_registry, curobo_module, curobo_impl_module, monkeypatch
+):
+    torch = pytest.importorskip("torch")
+    pytest.importorskip("curobo")
+    if not torch.cuda.is_available():
+        pytest.skip("needs a CUDA device")
+    monkeypatch.setattr(curobo_module, "_impl", lambda: curobo_impl_module)
+
+    out = tool_registry.invoke(
+        "curobo.plan_with_grasped_object",
+        world_config={"meshes": [_cube_mesh("held", [0.55, 0.0, 0.45], 0.03)]},
+        start_joint_position={"positions": _FRANKA_HOME},
+        target_pose=_pose(0.45, 0.0, 0.35),
+        object_name="held",
+        remove_obstacles_from_world=True,
+        debug_out_dir=None,
+    )
+
+    assert out["success"] is True
+    assert out["trajectory"] is not None
+    assert len(out["trajectory"]["waypoints"]) > 1
 
 
 @pytest.mark.gpu

@@ -2025,7 +2025,8 @@ def plan_with_grasped_object(
     the object moves with the robot and is checked for collisions with the remaining
     scene obstacles.
 
-    If planning fails, debug world meshes are saved to debug_out_dir (default: "curobo_debug2"):
+    On the legacy v0.7 path, planning failures save debug world meshes to
+    debug_out_dir (default: "curobo_debug2"):
     - start_joint_state_{tag}.obj: World + robot at start configuration
     - end_joint_state_{tag}.obj: World + robot at IK goal configuration (if IK succeeded)
 
@@ -2045,11 +2046,86 @@ def plan_with_grasped_object(
     :param robot_collision_sphere_buffer: Override robot collision_sphere_buffer (m).
     :param collision_activation_distance: Distance (m) to activate collision cost.
     :param surface_sphere_radius: Radius (m) for surface spheres when attaching object.
-    :param link_name: Link name to attach object to (default "attached_object").
+    :param link_name: Attachment slot name. cuRobo v0.8 supports the configured
+        ``attached_object`` slots only.
     :param remove_obstacles_from_world: Remove attached object from world after attaching.
-    :param debug_out_dir: Directory to save debug meshes on planning failure (default "curobo_debug2"). Set to None to disable.
+    :param debug_out_dir: Legacy v0.7 directory for planning-failure debug meshes
+        (default: "curobo_debug2"). Set to None to disable.
     :return: (success, joint_trajectory). joint_trajectory is (T, 7) or None.
     """
+    global _last_planning_debug
+    if _V2_AVAILABLE:
+        if link_name != "attached_object":
+            raise ValueError(
+                "cuRobo v0.8 supports only the configured 'attached_object' attachment slots"
+            )
+        meshes = list(getattr(world_config, "mesh", None) or [])
+        planning_meshes = [mesh for mesh in meshes if getattr(mesh, "name", None) != object_name]
+        planning_world = (
+            SimpleNamespace(mesh=planning_meshes)
+            if use_world_collision and planning_meshes
+            else None
+        )
+        position_tolerance = max(
+            position_threshold,
+            position_threshold if position_threshold_z is None else position_threshold_z,
+        )
+        success, trajectory = plan_to_pose(
+            target_pose[0],
+            target_pose[1],
+            start_joint_position,
+            robot_file=robot_file,
+            world_config=planning_world,
+            position_threshold=position_tolerance,
+            rotation_threshold=rotation_threshold,
+            max_attempts=max_attempts,
+            num_ik_seeds=num_ik_seeds,
+            use_cuda_graph=use_cuda_graph,
+            tensor_args=tensor_args,
+        )
+        if not success or trajectory is None:
+            _last_planning_debug = {
+                "function": "plan_with_grasped_object",
+                "status": "planning_failed",
+                "backend": "curobo_v0.8",
+            }
+            return False, None
+        validation_world = (
+            world_config
+            if use_world_collision
+            else SimpleNamespace(
+                mesh=[mesh for mesh in meshes if getattr(mesh, "name", None) == object_name]
+            )
+        )
+        valid, reason, index, metadata = validate_joint_trajectory_grasped_object(
+            validation_world,
+            trajectory,
+            object_name,
+            robot_file=robot_file,
+            tensor_args=tensor_args,
+            use_cuda_graph=use_cuda_graph,
+            robot_collision_sphere_buffer=robot_collision_sphere_buffer,
+            collision_activation_distance=collision_activation_distance,
+            surface_sphere_radius=surface_sphere_radius,
+            link_name=link_name,
+            remove_obstacles_from_world=remove_obstacles_from_world,
+        )
+        _last_planning_debug = {
+            "function": "plan_with_grasped_object",
+            "status": "success" if valid else "attachment_validation_failed",
+            "backend": "curobo_v0.8",
+            "failure_reason": reason,
+            "first_collision_waypoint": index,
+            "validation": metadata,
+        }
+        if not valid:
+            _log.warning(
+                "plan_with_grasped_object rejected trajectory: reason=%s waypoint=%s",
+                reason,
+                index,
+            )
+        return (True, trajectory) if valid else (False, None)
+
     if tensor_args is None:
         tensor_args = TensorDeviceType()
     device = tensor_args.device
@@ -2260,7 +2336,6 @@ def plan_with_grasped_object(
     _last_post_attach_spheres = _post_attach_spheres
 
     # Extract intermediate trajectories for debug logging
-    global _last_planning_debug
     try:
         _last_planning_debug = extract_planning_debug_trajectories(
             result, robot_file=robot_file, tensor_args=tensor_args,
