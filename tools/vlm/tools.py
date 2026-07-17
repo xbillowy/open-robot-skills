@@ -50,7 +50,7 @@ import os
 import re
 import time
 from typing import Literal, TypedDict
-from urllib.parse import urlsplit
+from urllib.parse import unquote
 
 import httpx
 import numpy as np
@@ -82,9 +82,7 @@ def _resolve_provider(provider: str | None) -> str:
     agent configuration must never activate the strict paper VLM boundary.
     """
     return (
-        (provider or "").strip().lower()
-        or _envstr("GAP_VLM_PROVIDER").lower()
-        or DEFAULT_PROVIDER
+        (provider or "").strip().lower() or _envstr("GAP_VLM_PROVIDER").lower() or DEFAULT_PROVIDER
     )
 
 
@@ -103,10 +101,7 @@ def _resolve_vertex_project() -> str:
     """``GAP_VLM_PROJECT_ID`` > ``GOOGLE_CLOUD_PROJECT`` (the documented
     google-genai knob). Empty string when unset — the caller raises with
     the install hint."""
-    return (
-        _envstr("GAP_VLM_PROJECT_ID")
-        or _envstr("GOOGLE_CLOUD_PROJECT")
-    )
+    return _envstr("GAP_VLM_PROJECT_ID") or _envstr("GOOGLE_CLOUD_PROJECT")
 
 
 def _resolve_vertex_region() -> str:
@@ -118,6 +113,7 @@ def _resolve_vertex_region() -> str:
         or _envstr("GOOGLE_CLOUD_LOCATION")
         or "global"
     )
+
 
 _MAX_TOKENS = 1024  # ported from the source servicer
 _MAX_RETRIES = 3
@@ -142,6 +138,7 @@ class ModelRandomnessEvidenceWire(TypedDict):
 
 class ModelCallEvidence(TypedDict):
     provider: str
+    base_url: str | None
     requested_model: str
     resolved_model: str | None
     temperature: float
@@ -157,6 +154,7 @@ class ModelCallEvidence(TypedDict):
 
 class _ProviderResult(TypedDict):
     text: str
+    base_url: str | None
     resolved_model: str | None
     provider_request_id: str | None
     usage: dict[str, int] | None
@@ -183,8 +181,7 @@ def _validate_image(image: np.ndarray) -> np.ndarray:
     arr = np.asarray(image)
     if arr.dtype != np.uint8 or arr.ndim != 3 or arr.shape[2] != 3:
         raise ValueError(
-            f"vlm expects a uint8 [H, W, 3] RGB array, got dtype={arr.dtype} "
-            f"shape={arr.shape}"
+            f"vlm expects a uint8 [H, W, 3] RGB array, got dtype={arr.dtype} shape={arr.shape}"
         )
     return arr
 
@@ -198,9 +195,7 @@ def _png_b64(image: np.ndarray) -> str:
         return base64.b64encode(buf.getvalue()).decode("utf-8")
 
 
-def _gather_images(
-    image: np.ndarray | None, images: list | None
-) -> list[np.ndarray]:
+def _gather_images(image: np.ndarray | None, images: list | None) -> list[np.ndarray]:
     arrays: list[np.ndarray] = []
     if image is not None:
         arrays.append(image)
@@ -221,7 +216,9 @@ def _canonical_sha256(value: object) -> Digest:
 
 
 def _resolve_temperature(temperature: float | None) -> float:
-    raw: object = temperature if temperature is not None else (_envstr("GAP_VLM_TEMPERATURE") or _TEMPERATURE)
+    raw: object = (
+        temperature if temperature is not None else (_envstr("GAP_VLM_TEMPERATURE") or _TEMPERATURE)
+    )
     try:
         resolved = float(raw)
     except (TypeError, ValueError) as exc:
@@ -249,7 +246,12 @@ def _canonical_usage(value: object) -> dict[str, int] | None:
         return None
     usage: dict[str, int] = {}
     for key, count in value.items():
-        if not isinstance(key, str) or isinstance(count, bool) or not isinstance(count, int) or count < 0:
+        if (
+            not isinstance(key, str)
+            or isinstance(count, bool)
+            or not isinstance(count, int)
+            or count < 0
+        ):
             return None
         usage[key] = count
     return usage
@@ -291,7 +293,11 @@ def _randomness_evidence(
             "seed_control": "requested_unconfirmed",
             "deterministic_claim": False,
         }
-    if isinstance(reported_seed, bool) or not isinstance(reported_seed, int) or reported_seed != requested_seed:
+    if (
+        isinstance(reported_seed, bool)
+        or not isinstance(reported_seed, int)
+        or reported_seed != requested_seed
+    ):
         raise ToolError("vlm", "openai_compatible seed confirmation mismatch")
     return {
         "requested_seed": requested_seed,
@@ -311,6 +317,37 @@ def _http_client() -> httpx.Client:
     return httpx.Client(timeout=httpx.Timeout(120.0, connect=10.0))
 
 
+def _canonical_public_base_url(value: str, *, sensitive_values: tuple[str, ...]) -> str:
+    """Return the exact public request base URL or reject ambiguous/secret input."""
+
+    try:
+        url = httpx.URL(value)
+        port = url.port
+    except (TypeError, ValueError) as exc:
+        raise ToolError("vlm", "provider requires a valid public HTTP(S) base URL") from exc
+    if (
+        url.scheme not in {"http", "https"}
+        or not url.host
+        or url.userinfo
+        or url.query
+        or url.fragment
+    ):
+        raise ToolError("vlm", "provider requires a valid public HTTP(S) base URL")
+    raw_host = url.raw_host.decode("ascii")
+    host = f"[{raw_host}]" if ":" in raw_host else raw_host
+    default_port = 443 if url.scheme == "https" else 80
+    authority = host if port in {None, default_port} else f"{host}:{port}"
+    path = url.raw_path.rstrip(b"/").decode("ascii")
+    canonical = f"{url.scheme}://{authority}{path}"
+    decoded = unquote(canonical)
+    if any(secret and (secret in canonical or secret in decoded) for secret in sensitive_values):
+        raise ToolError("vlm", "provider requires a valid public HTTP(S) base URL")
+    final = httpx.URL(canonical)
+    if final.userinfo or final.query or final.fragment or str(final) != canonical:
+        raise ToolError("vlm", "provider requires a valid public HTTP(S) base URL")
+    return canonical
+
+
 def _query_openai_compatible(
     prompt: str,
     images: list[np.ndarray],
@@ -328,13 +365,7 @@ def _query_openai_compatible(
     ):
         if not value:
             raise ToolError("vlm", f"openai_compatible requires explicit {env_name}")
-    try:
-        parsed_url = urlsplit(base_url)
-        has_credentials = parsed_url.username is not None or parsed_url.password is not None
-    except ValueError as exc:
-        raise ToolError("vlm", "GAP_VLM_BASE_URL must be a valid HTTP(S) URL") from exc
-    if parsed_url.scheme not in {"http", "https"} or not parsed_url.netloc or has_credentials:
-        raise ToolError("vlm", "GAP_VLM_BASE_URL must be an HTTP(S) URL without credentials")
+    base_url = _canonical_public_base_url(base_url, sensitive_values=(api_key,))
     resolved_temperature = _resolve_temperature(temperature)
     if seed is not None and (isinstance(seed, bool) or not isinstance(seed, int)):
         raise ToolError("vlm", "seed must be an integer or null")
@@ -352,7 +383,9 @@ def _query_openai_compatible(
     sent_seed = seed if seed_supported else None
     if sent_seed is not None:
         payload["seed"] = sent_seed
-    request_sha256 = _canonical_sha256(payload)
+    request_sha256 = _canonical_sha256(
+        {"provider": "openai_compatible", "base_url": base_url, "payload": payload}
+    )
     headers = {"Authorization": f"Bearer {api_key}"}
     chat_url = f"{base_url.rstrip('/')}/chat/completions"
     attempts: list[dict[str, object]] = []
@@ -403,7 +436,9 @@ def _query_openai_compatible(
                 parsed = response.json()
                 text = parsed["choices"][0]["message"]["content"]
             except (KeyError, IndexError, TypeError, ValueError) as exc:
-                raise ToolError("vlm", "openai_compatible returned invalid response content") from exc
+                raise ToolError(
+                    "vlm", "openai_compatible returned invalid response content"
+                ) from exc
             if not isinstance(text, str) or not text:
                 raise ToolError("vlm", "openai_compatible returned invalid response content")
             body_request_id = parsed.get("id") if isinstance(parsed, dict) else None
@@ -435,6 +470,7 @@ def _query_openai_compatible(
             }
             evidence: ModelCallEvidence = {
                 "provider": "openai_compatible",
+                "base_url": base_url,
                 "requested_model": requested_model,
                 "resolved_model": resolved_model,
                 "temperature": resolved_temperature,
@@ -461,14 +497,17 @@ def _query_openrouter(
     base_url = _envstr("GAP_VLM_BASE_URL") or "https://openrouter.ai/api/v1"
     model = _resolve_model(model)
     api_key = _envstr("GAP_VLM_API_KEY") or _envstr("OPENROUTER_API_KEY")
+    base_url = _canonical_public_base_url(base_url, sensitive_values=(api_key,))
     chat_url = f"{base_url.rstrip('/')}/chat/completions"
 
     content: list[dict] = [{"type": "text", "text": prompt}]
     for arr in images:
-        content.append({
-            "type": "image_url",
-            "image_url": {"url": f"data:image/png;base64,{_png_b64(arr)}"},
-        })
+        content.append(
+            {
+                "type": "image_url",
+                "image_url": {"url": f"data:image/png;base64,{_png_b64(arr)}"},
+            }
+        )
     payload = {
         "model": model,
         "messages": [{"role": "user", "content": content}],
@@ -550,6 +589,7 @@ def _query_openrouter(
                 resolved_model = None
             return {
                 "text": text,
+                "base_url": base_url,
                 "resolved_model": resolved_model,
                 "provider_request_id": request_id,
                 "usage": _canonical_usage(parsed.get("usage")),
@@ -623,17 +663,23 @@ def _query_vertex(
     client = genai.Client(vertexai=True, project=project_id, location=region)
     parts: list = [prompt]
     for arr in images:
-        parts.append(types.Part.from_bytes(
-            data=base64.b64decode(_png_b64(arr)), mime_type="image/png",
-        ))
+        parts.append(
+            types.Part.from_bytes(
+                data=base64.b64decode(_png_b64(arr)),
+                mime_type="image/png",
+            )
+        )
     config = types.GenerateContentConfig(
-        temperature=_resolve_temperature(temperature), max_output_tokens=_MAX_TOKENS,
+        temperature=_resolve_temperature(temperature),
+        max_output_tokens=_MAX_TOKENS,
     )
     attempts: list[dict[str, object]] = []
     for attempt_index in range(1, _MAX_RETRIES + 1):
         try:
             response = client.models.generate_content(
-                model=model, contents=parts, config=config,
+                model=model,
+                contents=parts,
+                config=config,
             )
             text = response.text or ""
             request_id = _safe_request_id(
@@ -652,6 +698,7 @@ def _query_vertex(
                 resolved_model = None
             return {
                 "text": text,
+                "base_url": None,
                 "resolved_model": resolved_model,
                 "provider_request_id": request_id,
                 "usage": _vertex_usage(getattr(response, "usage_metadata", None)),
@@ -668,7 +715,9 @@ def _query_vertex(
             )
             logger.warning(
                 "VLM vertex request failed (attempt %d/%d, model=%s)",
-                attempt_index, _MAX_RETRIES, model,
+                attempt_index,
+                _MAX_RETRIES,
+                model,
             )
             if attempt_index < _MAX_RETRIES:
                 time.sleep(_BACKOFF_S * (2 ** (attempt_index - 1)))
@@ -701,9 +750,7 @@ def _legacy_result(
 ) -> QueryResult:
     requested_model = _resolve_model(model)
     resolved_temperature = _resolve_temperature(temperature)
-    image_wire = [
-        f"data:image/png;base64,{_png_b64(arr)}" for arr in images
-    ]
+    image_wire = [f"data:image/png;base64,{_png_b64(arr)}" for arr in images]
     randomness: ModelRandomnessEvidenceWire = {
         "requested_seed": None,
         "provider_reported_seed": None,
@@ -718,6 +765,7 @@ def _legacy_result(
     }
     evidence: ModelCallEvidence = {
         "provider": provider,
+        "base_url": provider_result["base_url"],
         "requested_model": requested_model,
         "resolved_model": provider_result["resolved_model"],
         "temperature": resolved_temperature,
@@ -726,6 +774,8 @@ def _legacy_result(
         "provider_request_id": provider_result["provider_request_id"],
         "request_sha256": _canonical_sha256(
             {
+                "provider": provider,
+                "base_url": provider_result["base_url"],
                 "prompt": prompt,
                 "images": image_wire,
                 "model": requested_model,
@@ -752,9 +802,7 @@ def _query(
     name = _resolve_provider(provider)
     gathered_images = _gather_images(image, images)
     if name == "openai_compatible":
-        return _query_openai_compatible(
-            prompt, gathered_images, model, temperature, seed
-        )
+        return _query_openai_compatible(prompt, gathered_images, model, temperature, seed)
     fn = _PROVIDERS.get(name)
     if fn is None:
         raise ToolError(
@@ -820,8 +868,7 @@ def query(
 #: such a false "No" rejects a correct exterior pick and forces a degraded
 #: single-view wrist fallback — the G1 cream-cheese failure mode.
 _YES_NO_INSTRUCTION = (
-    " Answer with the single word YES or NO first, then one short "
-    "sentence of justification."
+    " Answer with the single word YES or NO first, then one short sentence of justification."
 )
 
 _YES_NO_WORD = re.compile(r"\b(yes|no)\b")

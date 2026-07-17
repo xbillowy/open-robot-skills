@@ -49,10 +49,19 @@ def image() -> np.ndarray:
 
 @pytest.fixture(autouse=True)
 def _clean_env(monkeypatch: pytest.MonkeyPatch):
-    for var in ("GAP_VLM_PROVIDER", "GAP_VLM_MODEL", "GAP_VLM_BASE_URL",
-                "GAP_VLM_API_KEY", "GAP_VLM_TEMPERATURE",
-                "GAP_VLM_SEED_CAPABILITY", "GAP_VLM_PROJECT_ID", "GAP_VLM_REGION",
-                "GAP_LLM_PROVIDER", "GAP_LLM_MODEL", "OPENROUTER_API_KEY"):
+    for var in (
+        "GAP_VLM_PROVIDER",
+        "GAP_VLM_MODEL",
+        "GAP_VLM_BASE_URL",
+        "GAP_VLM_API_KEY",
+        "GAP_VLM_TEMPERATURE",
+        "GAP_VLM_SEED_CAPABILITY",
+        "GAP_VLM_PROJECT_ID",
+        "GAP_VLM_REGION",
+        "GAP_LLM_PROVIDER",
+        "GAP_LLM_MODEL",
+        "OPENROUTER_API_KEY",
+    ):
         monkeypatch.delenv(var, raising=False)
 
 
@@ -65,7 +74,8 @@ def _mock_openrouter(vlm, monkeypatch, reply: str):
         captured["auth"] = request.headers.get("Authorization")
         captured["payload"] = json.loads(request.content)
         return httpx.Response(
-            200, json={"choices": [{"message": {"content": reply}}]},
+            200,
+            json={"choices": [{"message": {"content": reply}}]},
         )
 
     transport = httpx.MockTransport(handler)
@@ -132,6 +142,7 @@ def test_openai_compatible_shapes_images_and_evidence(vlm, image, monkeypatch):
     evidence = result["evidence"]
     assert evidence == {
         "provider": "openai_compatible",
+        "base_url": "https://relay.test/v1",
         "requested_model": "paper/model-v1",
         "resolved_model": "paper/model-v1-resolved",
         "temperature": 0.1,
@@ -146,12 +157,14 @@ def test_openai_compatible_shapes_images_and_evidence(vlm, image, monkeypatch):
         "request_sha256": evidence["request_sha256"],
         "response_sha256": evidence["response_sha256"],
         "usage": {"prompt_tokens": 11, "completion_tokens": 4, "total_tokens": 15},
-        "transport_attempts": [{
-            "attempt": 1,
-            "outcome": "success",
-            "status": 200,
-            "provider_request_id": "relay-request-1",
-        }],
+        "transport_attempts": [
+            {
+                "attempt": 1,
+                "outcome": "success",
+                "status": 200,
+                "provider_request_id": "relay-request-1",
+            }
+        ],
         "fallback_used": False,
     }
     assert evidence["request_sha256"].startswith("sha256:")
@@ -171,18 +184,95 @@ def test_openai_compatible_requires_explicit_config(vlm, monkeypatch, missing):
 def test_openai_compatible_rejects_url_embedded_password(vlm, monkeypatch):
     _strict_env(monkeypatch)
     monkeypatch.setenv("GAP_VLM_BASE_URL", "https://:password@relay.test/v1")
-    with pytest.raises(ToolError, match="without credentials"):
+    with pytest.raises(ToolError, match="public HTTP.*base URL"):
         vlm.query(prompt="q")
+
+
+@pytest.mark.parametrize(
+    "provider,base_url",
+    [
+        ("openai_compatible", "https://relay.test/v1?token=secret"),
+        ("openai_compatible", "https://relay.test/v1/strict-secret-key"),
+        ("openrouter", "https://user:secret@relay.test/v1"),
+        ("openrouter", "https://relay.test/v1#secret"),
+        ("openrouter", "https://relay.test/v1/strict-secret-key"),
+    ],
+)
+def test_published_base_url_rejects_secret_or_ambiguous_components(
+    vlm, monkeypatch, provider, base_url
+):
+    monkeypatch.setenv("GAP_VLM_PROVIDER", provider)
+    monkeypatch.setenv("GAP_VLM_BASE_URL", base_url)
+    monkeypatch.setenv("GAP_VLM_MODEL", "paper/model-v1")
+    monkeypatch.setenv("GAP_VLM_API_KEY", "strict-secret-key")
+    monkeypatch.setenv("OPENROUTER_API_KEY", "sk-router")
+    with pytest.raises(ToolError, match="public HTTP.*base URL"):
+        vlm.query(prompt="q")
+
+
+def test_openai_compatible_request_hash_binds_canonical_endpoint(vlm, monkeypatch):
+    _strict_env(monkeypatch)
+
+    def handler(_request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            200,
+            json={
+                "model": "paper/model-v1",
+                "choices": [{"message": {"content": "ok"}}],
+            },
+        )
+
+    _mock_strict(vlm, monkeypatch, handler)
+    first = vlm.query(prompt="same", seed=3)
+    monkeypatch.setenv("GAP_VLM_BASE_URL", "HTTPS://OTHER.TEST:443/a/../v1/")
+    second = vlm.query(prompt="same", seed=3)
+    assert second["evidence"]["base_url"] == "https://other.test/v1"
+    assert first["evidence"]["request_sha256"] != second["evidence"]["request_sha256"]
+
+
+@pytest.mark.parametrize(
+    "configured,canonical",
+    [
+        ("https://relay.test/v1%3Fopaque=x", "https://relay.test/v1%3Fopaque=x"),
+        ("https://relay.test/v1%23opaque", "https://relay.test/v1%23opaque"),
+        ("https://relay.test/v1%2Fopaque", "https://relay.test/v1%2Fopaque"),
+        ("https://例え.テスト/v1", "https://xn--r8jz45g.xn--zckzah/v1"),
+    ],
+)
+def test_openai_compatible_evidence_matches_raw_canonical_request_endpoint(
+    vlm, monkeypatch, configured, canonical
+):
+    _strict_env(monkeypatch)
+    monkeypatch.setenv("GAP_VLM_BASE_URL", configured)
+    captured: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        captured.append(request)
+        return httpx.Response(
+            200,
+            json={
+                "model": "paper/model-v1",
+                "choices": [{"message": {"content": "ok"}}],
+            },
+        )
+
+    _mock_strict(vlm, monkeypatch, handler)
+    result = vlm.query(prompt="same", seed=3)
+    assert result["evidence"]["base_url"] == canonical
+    assert str(captured[0].url) == f"{canonical}/chat/completions"
 
 
 def test_openai_compatible_seed_unconfirmed_and_independent_results(vlm, monkeypatch):
     _strict_env(monkeypatch)
 
     def handler(request: httpx.Request) -> httpx.Response:
-        return httpx.Response(200, json={
-            "model": "paper/model-v1",
-            "choices": [{"message": {"content": "ok"}}],
-        })
+        return httpx.Response(
+            200,
+            json={
+                "model": "paper/model-v1",
+                "choices": [{"message": {"content": "ok"}}],
+            },
+        )
 
     _mock_strict(vlm, monkeypatch, handler)
     first = vlm.query(prompt="same", model="explicit/model", temperature=0.2, seed=9)
@@ -254,23 +344,30 @@ def test_openai_compatible_known_unsupported_seed_is_not_sent(vlm, monkeypatch):
 
 def test_openai_compatible_seed_mismatch_fails_closed(vlm, monkeypatch):
     _strict_env(monkeypatch)
-    _mock_strict(vlm, monkeypatch, lambda request: httpx.Response(
-        200, json={"seed": 8, "choices": [{"message": {"content": "unsafe"}}]},
-    ))
+    _mock_strict(
+        vlm,
+        monkeypatch,
+        lambda request: httpx.Response(
+            200,
+            json={"seed": 8, "choices": [{"message": {"content": "unsafe"}}]},
+        ),
+    )
     with pytest.raises(ToolError, match="seed confirmation mismatch"):
         vlm.query(prompt="q", seed=7)
 
 
 @pytest.mark.parametrize("unsafe_id", ["strict-secret-key-reflected", "sensitiveprompt"])
-def test_openai_compatible_nulls_unsafe_reflected_request_id(
-    vlm, monkeypatch, unsafe_id
-):
+def test_openai_compatible_nulls_unsafe_reflected_request_id(vlm, monkeypatch, unsafe_id):
     _strict_env(monkeypatch)
-    _mock_strict(vlm, monkeypatch, lambda request: httpx.Response(
-        200,
-        headers={"x-request-id": unsafe_id},
-        json={"choices": [{"message": {"content": "ok"}}]},
-    ))
+    _mock_strict(
+        vlm,
+        monkeypatch,
+        lambda request: httpx.Response(
+            200,
+            headers={"x-request-id": unsafe_id},
+            json={"choices": [{"message": {"content": "ok"}}]},
+        ),
+    )
     result = vlm.query(prompt="sensitiveprompt")
     assert result["evidence"]["provider_request_id"] is None
     assert result["evidence"]["transport_attempts"][0]["provider_request_id"] is None
@@ -289,9 +386,13 @@ def test_openai_compatible_retries_then_stops_on_content(vlm, monkeypatch):
             raise httpx.ConnectError("secret transport detail", request=request)
         if len(attempts) == 3:
             return httpx.Response(429, headers={"x-request-id": "retry-3"})
-        return httpx.Response(200, headers={"x-request-id": "success-4"}, json={
-            "choices": [{"message": {"content": "first content"}}],
-        })
+        return httpx.Response(
+            200,
+            headers={"x-request-id": "success-4"},
+            json={
+                "choices": [{"message": {"content": "first content"}}],
+            },
+        )
 
     _mock_strict(vlm, monkeypatch, handler)
     result = vlm.query(prompt="q")
@@ -357,7 +458,8 @@ def test_openrouter_is_default_with_data_url_image(vlm, image, monkeypatch):
     assert url.startswith("data:image/png;base64,")
     raw = base64.b64decode(url.split(",", 1)[1])
     np.testing.assert_array_equal(
-        np.asarray(Image.open(io.BytesIO(raw)).convert("RGB")), image,
+        np.asarray(Image.open(io.BytesIO(raw)).convert("RGB")),
+        image,
     )
 
 
@@ -383,6 +485,7 @@ def test_openrouter_custom_base_url(vlm, image, monkeypatch):
 
     out = vlm.query(prompt="What objects are on the table?", image=image)
     assert out["text"] == "two cups"
+    assert out["evidence"]["base_url"] == "http://vlm.test/v1"
 
     assert captured["url"] == "http://vlm.test/v1/chat/completions"
     assert captured["auth"] == "Bearer sk-test"
@@ -403,18 +506,14 @@ def test_openrouter_temperature_override_matches_evidence(vlm, monkeypatch):
     assert result["evidence"]["temperature"] == 0.7
 
 
-def test_legacy_request_hash_binds_png_shape_stability_and_image_order(
-    vlm, monkeypatch
-):
+def test_legacy_request_hash_binds_png_shape_stability_and_image_order(vlm, monkeypatch):
     _mock_openrouter(vlm, monkeypatch, reply="ok")
     raw = np.arange(6, dtype=np.uint8)
     wide = raw.reshape(1, 2, 3)
     tall = raw.reshape(2, 1, 3)
 
     wide_hash = vlm.query(prompt="q", image=wide)["evidence"]["request_sha256"]
-    wide_copy_hash = vlm.query(
-        prompt="q", image=wide.copy()
-    )["evidence"]["request_sha256"]
+    wide_copy_hash = vlm.query(prompt="q", image=wide.copy())["evidence"]["request_sha256"]
     tall_hash = vlm.query(prompt="q", image=tall)["evidence"]["request_sha256"]
     assert wide_hash == wide_copy_hash
     assert wide_hash != tall_hash
@@ -453,8 +552,18 @@ def test_openrouter_reports_actual_retry_and_response_metadata(vlm, monkeypatch)
     assert evidence["provider_request_id"] == "legacy-success"
     assert evidence["usage"] == {"prompt_tokens": 5, "completion_tokens": 2, "total_tokens": 7}
     assert evidence["transport_attempts"] == [
-        {"attempt": 1, "outcome": "http_error", "status": 503, "provider_request_id": "legacy-retry"},
-        {"attempt": 2, "outcome": "success", "status": 200, "provider_request_id": "legacy-success"},
+        {
+            "attempt": 1,
+            "outcome": "http_error",
+            "status": 503,
+            "provider_request_id": "legacy-retry",
+        },
+        {
+            "attempt": 2,
+            "outcome": "success",
+            "status": 200,
+            "provider_request_id": "legacy-success",
+        },
     ]
 
 
@@ -586,8 +695,11 @@ def test_vertex_provider_routes_gemini_models_to_genai(vlm, image, monkeypatch):
     out = vlm.query(prompt="hi", image=image, temperature=0.7)
     assert out["text"] == "gemini says hi"
     assert out["evidence"]["provider"] == "vertex"
+    assert out["evidence"]["base_url"] is None
     assert captured["client_kwargs"] == {
-        "vertexai": True, "project": "test-project", "location": "global",
+        "vertexai": True,
+        "project": "test-project",
+        "location": "global",
     }
     assert captured["model"] == "gemini-3-flash-preview"
     assert captured["contents"][0] == "hi"
@@ -699,7 +811,12 @@ def test_vertex_reports_available_metadata_and_attempts_without_sdk(vlm, monkeyp
     assert evidence["usage"] == {"prompt_tokens": 4, "completion_tokens": 2, "total_tokens": 6}
     assert evidence["transport_attempts"] == [
         {"attempt": 1, "outcome": "transport_error", "status": None, "provider_request_id": None},
-        {"attempt": 2, "outcome": "success", "status": None, "provider_request_id": "vertex-request"},
+        {
+            "attempt": 2,
+            "outcome": "success",
+            "status": None,
+            "provider_request_id": "vertex-request",
+        },
     ]
 
 
