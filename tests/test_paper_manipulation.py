@@ -301,6 +301,19 @@ class FailingContext(FakeContext):
         return super().tool(name, **kwargs)
 
 
+class NegativeResultContext(FakeContext):
+    def __init__(self, tool_name: str, response: dict[str, Any]) -> None:
+        super().__init__()
+        self.tool_name = tool_name
+        self.response = response
+
+    def tool(self, name: str, **kwargs: Any) -> dict[str, Any]:
+        if name == self.tool_name:
+            self.calls.append((name, kwargs))
+            return self.response
+        return super().tool(name, **kwargs)
+
+
 def _happy_artifacts() -> tuple[dict[str, ModuleType], dict[str, Any]]:
     modules = {
         "perceive": _module("skills/perceiving-objects/scripts/perceive_disambiguate_segment.py"),
@@ -388,6 +401,13 @@ def test_paper_manipulation_exact_admitted_path_and_distinct_lineages() -> None:
 
     assert target["semantic_role"] == "target"
     assert destination["semantic_role"] == "destination"
+    for output in (target, destination, grasp, held, result):
+        assert output["paper_outcome"] == {
+            "status": "success",
+            "failure_code": None,
+            "source": "canonical_script",
+        }
+        assert isinstance(output["semantic_evidence"], list)
     assert (
         target["lineage_record"]["lineage_sha256"]
         != destination["lineage_record"]["lineage_sha256"]
@@ -665,37 +685,72 @@ def test_detector_exception_is_mapped_to_stable_stage_code() -> None:
         return original(name, **kwargs)
 
     ctx.tool = tool  # type: ignore[method-assign]
-    _assert_failure(
-        module.run(ctx, query="mug", semantic_role="target", preset_json=PRESET_JSON),
-        "DETECTION_FAILED",
-    )
+    result = module.run(ctx, query="mug", semantic_role="target", preset_json=PRESET_JSON)
+    _assert_failure(result, "DETECTOR_SERVICE_ERROR")
+    assert result["paper_outcome"]["failure_code"] == "detector_service_error"
 
 
 @pytest.mark.parametrize(
     ("tool_name", "error_code"),
     [
-        ("vlm.query", "VLM_DISAMBIGUATION_FAILED"),
-        ("geometry.mask_to_world_points", "DEPTH_PROJECTION_FAILED"),
-        ("geometry.filter_and_compute_obb", "OBB_FIT_FAILED"),
+        ("vlm.query", "VLM_SERVICE_ERROR"),
+        ("geometry.mask_to_world_points", "SERVICE_UNAVAILABLE"),
+        ("geometry.filter_and_compute_obb", "SERVICE_UNAVAILABLE"),
     ],
 )
 def test_perception_tool_failures_have_stage_codes(tool_name: str, error_code: str) -> None:
     module = _module("skills/perceiving-objects/scripts/perceive_disambiguate_segment.py")
-    _assert_failure(
-        module.run(
-            FailingContext(tool_name), query="mug", semantic_role="target", preset_json=PRESET_JSON
-        ),
-        error_code,
+    result = module.run(
+        FailingContext(tool_name), query="mug", semantic_role="target", preset_json=PRESET_JSON
     )
+    _assert_failure(result, error_code)
+    assert result["paper_outcome"]["failure_code"] != "protocol_contract_violation"
+
+
+@pytest.mark.parametrize(
+    ("tool_name", "response", "internal_code", "paper_code"),
+    [
+        (
+            "grounding-dino.detect",
+            {"detections": [], "evidence": _learned()},
+            "DETECTION_CANDIDATES_INSUFFICIENT",
+            "detector_no_candidate",
+        ),
+        (
+            "vlm.query",
+            {"text": "not-a-label", "evidence": _vlm()},
+            "VLM_DISAMBIGUATION_FAILED",
+            "vlm_no_valid_selection",
+        ),
+        (
+            "sam3.segment_box",
+            {"masks": [], "scores": [], "evidence": _learned()},
+            "SEGMENTATION_EMPTY",
+            "segmentation_empty_mask",
+        ),
+    ],
+)
+def test_perception_domain_negatives_are_not_service_errors(
+    tool_name: str, response: dict[str, Any], internal_code: str, paper_code: str
+) -> None:
+    module = _module("skills/perceiving-objects/scripts/perceive_disambiguate_segment.py")
+    result = module.run(
+        NegativeResultContext(tool_name, response),
+        query="mug",
+        semantic_role="target",
+        preset_json=PRESET_JSON,
+    )
+    _assert_failure(result, internal_code)
+    assert result["paper_outcome"]["failure_code"] == paper_code
 
 
 @pytest.mark.parametrize(
     ("tool_name", "error_code"),
     [
-        ("curobo.batch_grasp_feasibility", "IK_FEASIBILITY_FAILED"),
-        ("curobo.plan_to_grasp_poses", "GRASP_PLANNING_FAILED"),
-        ("curobo.validate_joint_trajectory_robot", "ROBOT_TRAJECTORY_VALIDATION_FAILED"),
-        ("curobo.validate_joint_trajectory_grasped", "HELD_OBJECT_TRAJECTORY_VALIDATION_FAILED"),
+        ("curobo.batch_grasp_feasibility", "SERVICE_UNAVAILABLE"),
+        ("curobo.plan_to_grasp_poses", "SERVICE_UNAVAILABLE"),
+        ("curobo.validate_joint_trajectory_robot", "SERVICE_UNAVAILABLE"),
+        ("curobo.validate_joint_trajectory_grasped", "SERVICE_UNAVAILABLE"),
     ],
 )
 def test_grasp_planning_failures_have_stage_codes(tool_name: str, error_code: str) -> None:
@@ -709,13 +764,71 @@ def test_grasp_planning_failures_have_stage_codes(tool_name: str, error_code: st
         preset_json=PRESET_JSON,
     )
     _assert_failure(result, error_code)
+    assert result["paper_outcome"]["failure_code"] == "service_unavailable"
+
+
+@pytest.mark.parametrize(
+    ("tool_name", "response", "internal_code", "paper_code"),
+    [
+        (
+            "curobo.batch_grasp_feasibility",
+            {
+                "feasible": [False] * 29,
+                "grasp_ik_ok": [False] * 29,
+                "approach_ik_ok": [False] * 29,
+                "corridor_collision_fraction": [1.0] * 29,
+                "evidence": _algorithm(),
+            },
+            "IK_UNSOLVED",
+            "ik_unsolved",
+        ),
+        (
+            "curobo.batch_grasp_feasibility",
+            {
+                "feasible": [False] * 29,
+                "grasp_ik_ok": [True] * 29,
+                "approach_ik_ok": [True] * 29,
+                "corridor_collision_fraction": [1.0] * 29,
+                "evidence": _algorithm(),
+            },
+            "TRAJECTORY_INVALID",
+            "trajectory_invalid",
+        ),
+        (
+            "curobo.plan_to_grasp_poses",
+            {"success": False, "trajectory": None, "evidence": _algorithm()},
+            "MOTION_PLAN_FAILED",
+            "motion_plan_failed",
+        ),
+        (
+            "curobo.validate_joint_trajectory_robot",
+            {"success": False, "evidence": _algorithm()},
+            "TRAJECTORY_INVALID",
+            "trajectory_invalid",
+        ),
+    ],
+)
+def test_grasp_domain_negatives_are_not_service_errors(
+    tool_name: str, response: dict[str, Any], internal_code: str, paper_code: str
+) -> None:
+    modules, values = _happy_artifacts()
+    result = modules["plan"].run(
+        NegativeResultContext(tool_name, response),
+        target_obb=values["target"]["obb"],
+        target_lineage_json=values["target"]["lineage_json"],
+        world_config=values["world"],
+        target_name="red_mug",
+        preset_json=PRESET_JSON,
+    )
+    _assert_failure(result, internal_code)
+    assert result["paper_outcome"]["failure_code"] == paper_code
 
 
 @pytest.mark.parametrize(
     ("tool_name", "occurrence", "mode", "error_code"),
     [
-        ("robot.execute_trajectory", 1, "raise", "GRASP_EXECUTION_FAILED"),
-        ("robot.close_gripper", 1, "raise", "GRASP_CLOSE_FAILED"),
+        ("robot.execute_trajectory", 1, "raise", "SERVICE_UNAVAILABLE"),
+        ("robot.close_gripper", 1, "raise", "SERVICE_UNAVAILABLE"),
         ("vlm.query", 1, "vlm_no", "TARGET_NOT_HELD"),
         ("vlm.query", 2, "vlm_no", "POST_LIFT_TARGET_NOT_HELD"),
     ],
@@ -733,16 +846,61 @@ def test_grasp_execution_failures_have_stage_codes(
         preset_json=PRESET_JSON,
     )
     _assert_failure(result, error_code)
+    if mode == "raise":
+        assert result["paper_outcome"]["failure_code"] == "service_unavailable"
+
+
+def test_visual_hold_without_exterior_camera_is_not_a_negative_hold() -> None:
+    module = _module("skills/grasping-with-planner/scripts/execute_verify_grasp.py")
+
+    with pytest.raises(module.PaperManipulationError) as caught:
+        module._visual_hold(
+            FakeContext(),
+            {"cameras": [{"name": "wrist", "rgb": "image"}]},
+            "red_mug",
+            "TARGET_NOT_HELD",
+        )
+
+    assert caught.value.code == "EXTERNAL_CAMERA_UNAVAILABLE"
+    assert module._PAPER_FAILURE_CODE[caught.value.code] == "service_unavailable"
+
+
+@pytest.mark.parametrize(
+    "evidence",
+    [
+        None,
+        {**_vlm(), "fallback_used": True},
+        {**_vlm(), "request_sha256": "sha256:malformed"},
+    ],
+)
+def test_visual_hold_invalid_vlm_evidence_is_not_a_negative_hold(
+    evidence: dict[str, Any] | None,
+) -> None:
+    module = _module("skills/grasping-with-planner/scripts/execute_verify_grasp.py")
+    response: dict[str, Any] = {"text": "NO"}
+    if evidence is not None:
+        response["evidence"] = evidence
+
+    with pytest.raises(module.PaperManipulationError) as caught:
+        module._visual_hold(
+            NegativeResultContext("vlm.query", response),
+            {"cameras": [{"name": "exterior", "rgb": "image"}]},
+            "red_mug",
+            "TARGET_NOT_HELD",
+        )
+
+    assert caught.value.code == "VLM_EVIDENCE_UNAVAILABLE"
+    assert module._PAPER_FAILURE_CODE[caught.value.code] == "vlm_service_error"
 
 
 @pytest.mark.parametrize(
     ("tool_name", "occurrence", "mode", "error_code", "released"),
     [
-        ("curobo.plan_with_grasped_object", 1, "raise", "TRANSPORT_PLANNING_FAILED", False),
-        ("curobo.plan_directed_linear", 1, "raise", "PLACEMENT_PLANNING_FAILED", False),
+        ("curobo.plan_with_grasped_object", 1, "raise", "SERVICE_UNAVAILABLE", False),
+        ("curobo.plan_directed_linear", 1, "raise", "SERVICE_UNAVAILABLE", False),
         ("robot.open_gripper", 1, "release_closed", "RELEASE_FAILED", False),
-        ("curobo.plan_directed_linear", 2, "raise", "RETREAT_PLANNING_FAILED", True),
-        ("robot.execute_trajectory", 3, "raise", "RETREAT_EXECUTION_FAILED", True),
+        ("curobo.plan_directed_linear", 2, "raise", "SERVICE_UNAVAILABLE", True),
+        ("robot.execute_trajectory", 3, "raise", "SERVICE_UNAVAILABLE", True),
     ],
 )
 def test_transport_failures_record_stage_and_release_state(
@@ -760,6 +918,30 @@ def test_transport_failures_record_stage_and_release_state(
         preset_json=PRESET_JSON,
     )
     _assert_failure(result, error_code, released=released)
+    if mode == "raise":
+        assert result["paper_outcome"]["failure_code"] == "service_unavailable"
+
+
+def test_release_call_has_explicit_destination_drop_annotation() -> None:
+    modules, values = _happy_artifacts()
+    ctx = FakeContext()
+    result = modules["transport"].run(
+        ctx,
+        held_grasp_json=values["held"]["held_grasp_json"],
+        target_lineage_json=values["target"]["lineage_json"],
+        destination_obb=values["destination"]["obb"],
+        destination_lineage_json=values["destination"]["lineage_json"],
+        world_config=values["world"],
+        target_name="red_mug",
+        preset_json=PRESET_JSON,
+    )
+
+    assert result["success"] is True
+    release = next(kwargs for name, kwargs in ctx.calls if name == "robot.open_gripper")
+    assert release["_paper_evidence"] == {
+        "branch": "destination",
+        "operation": "drop_release",
+    }
 
 
 def test_fewer_than_sealed_grasp_candidates_fails_without_top_one() -> None:

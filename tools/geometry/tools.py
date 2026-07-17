@@ -583,7 +583,18 @@ def top_down_grasp_candidates(
     from gap_skills.tools.geometry import _impl
 
     poses = _impl.top_down_grasp_candidates(obb, z_offset)
-    return {"candidates": {"poses": poses}}
+    output = {"candidates": {"poses": poses}}
+    return {
+        **output,
+        "evidence": _algorithm_evidence(
+            {"obb": obb, "z_offset": z_offset}, output, {}
+        ),
+        "paper_outcome": {
+            "status": "success" if poses else "failure",
+            "failure_code": None if poses else "no_valid_grasp_candidate",
+            "source": "service",
+        },
+    }
 
 
 @tool(
@@ -748,7 +759,24 @@ def compute_drop_position(
     c = obb["center"]
     e = obb["extent"]
     drop_z = c["z"] + e["z"] / 2.0 + obj_z + clearance
-    return {"position": {"x": c["x"], "y": c["y"], "z": drop_z}}
+    output = {"position": {"x": c["x"], "y": c["y"], "z": drop_z}}
+    return {
+        **output,
+        "evidence": _algorithm_evidence(
+            {
+                "container_obb": container_obb,
+                "clearance": clearance,
+                "object_z_extent": object_z_extent,
+            },
+            output,
+            {},
+        ),
+        "paper_outcome": {
+            "status": "success",
+            "failure_code": None,
+            "source": "service",
+        },
+    }
 
 
 @tool(

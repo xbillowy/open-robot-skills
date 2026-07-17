@@ -32,6 +32,32 @@ class PaperManipulationError(RuntimeError):
         super().__init__(code)
 
 
+_PAPER_FAILURE_CODE = {
+    "SERVICE_UNAVAILABLE": "service_unavailable",
+    "TRANSPORT_PLANNING_FAILED": "transport_failed",
+    "PLACEMENT_PLANNING_FAILED": "placement_failed",
+    "RETREAT_PLANNING_FAILED": "placement_failed",
+    "TRANSPORT_ROBOT_COLLISION_INVALID": "trajectory_invalid",
+    "TRANSPORT_HELD_OBJECT_COLLISION_INVALID": "trajectory_invalid",
+    "TRAJECTORY_EMPTY": "trajectory_invalid",
+    "RELEASE_FAILED": "placement_failed",
+    "ROBOT_VALIDATION_EVIDENCE_UNAVAILABLE": "service_unavailable",
+    "HELD_OBJECT_VALIDATION_EVIDENCE_UNAVAILABLE": "service_unavailable",
+    "PLACEMENT_GEOMETRY_EVIDENCE_UNAVAILABLE": "service_unavailable",
+    "TRANSPORT_PLAN_EVIDENCE_UNAVAILABLE": "service_unavailable",
+    "PLACEMENT_PLAN_EVIDENCE_UNAVAILABLE": "service_unavailable",
+    "RETREAT_PLAN_EVIDENCE_UNAVAILABLE": "service_unavailable",
+    "TARGET_LINEAGE_INVALID": "protocol_contract_violation",
+    "DESTINATION_LINEAGE_INVALID": "protocol_contract_violation",
+    "HELD_GEOMETRY_INVALID": "protocol_contract_violation",
+    "PRESET_SCHEMA_INVALID": "protocol_contract_violation",
+    "PRESET_HASH_MISMATCH": "protocol_contract_violation",
+    "PRESET_PARAMETERS_INVALID": "protocol_contract_violation",
+    "UNDECLARED_TOOL_DISPATCH": "protocol_contract_violation",
+    "PAPER_MANIPULATION_INTERNAL_ERROR": "protocol_contract_violation",
+}
+
+
 class Output(TypedDict, total=False):
     success: bool
     error_code: str | None
@@ -150,8 +176,10 @@ def _tool(ctx: NodeContext, name: str, code: str, **kwargs: Any) -> dict[str, An
         if name == "curobo.validate_joint_trajectory_grasped":
             return ctx.tool("curobo.validate_joint_trajectory_grasped", **kwargs)
         raise PaperManipulationError("UNDECLARED_TOOL_DISPATCH")
+    except PaperManipulationError:
+        raise
     except Exception as error:
-        raise PaperManipulationError(code) from error
+        raise PaperManipulationError("SERVICE_UNAVAILABLE") from error
 
 
 def _validate(
@@ -166,6 +194,10 @@ def _validate(
         ctx,
         "curobo.validate_joint_trajectory_robot",
         "TRANSPORT_ROBOT_VALIDATION_FAILED",
+        _paper_evidence={
+            "branch": "shared",
+            "operation": "robot_trajectory_validation",
+        },
         world_config=world_config,
         trajectory=trajectory,
         ignore_obstacle_names=[target_name] if held else None,
@@ -179,6 +211,7 @@ def _validate(
             ctx,
             "curobo.validate_joint_trajectory_grasped",
             "TRANSPORT_HELD_VALIDATION_FAILED",
+            _paper_evidence={"branch": "target", "operation": "held_collision"},
             world_config=world_config,
             trajectory=trajectory,
             object_name=target_name,
@@ -290,6 +323,7 @@ def _run_impl(
         ctx,
         "curobo.plan_with_grasped_object",
         "TRANSPORT_PLANNING_FAILED",
+        _paper_evidence={"branch": "shared", "operation": "ik_planner"},
         **{
             key: value for key, value in transport_inputs.items() if key != "destination_obb_sha256"
         },
@@ -305,12 +339,14 @@ def _run_impl(
         ctx,
         "robot.execute_trajectory",
         "TRANSPORT_EXECUTION_FAILED",
+        _paper_evidence={"branch": "shared", "operation": "execution_state"},
         trajectory=transport_trajectory,
     )
     descend = _tool(
         ctx,
         "curobo.plan_directed_linear",
         "PLACEMENT_PLANNING_FAILED",
+        _paper_evidence={"branch": "destination", "operation": "ik_planner"},
         start_joint_position=_last_state(transport_trajectory),
         allowed_axes=["Z"],
         explicit_direction={"x": 0.0, "y": 0.0, "z": -1.0},
@@ -324,9 +360,18 @@ def _run_impl(
     descend_trajectory = _resample(descend["trajectory"], values["trajectory_waypoint_count"])
     descend_validation = _validate(ctx, world_config, descend_trajectory, target_name, held=True)
     _tool(
-        ctx, "robot.execute_trajectory", "PLACEMENT_EXECUTION_FAILED", trajectory=descend_trajectory
+        ctx,
+        "robot.execute_trajectory",
+        "PLACEMENT_EXECUTION_FAILED",
+        _paper_evidence={"branch": "destination", "operation": "execution_state"},
+        trajectory=descend_trajectory,
     )
-    released = _tool(ctx, "robot.open_gripper", "RELEASE_FAILED")
+    released = _tool(
+        ctx,
+        "robot.open_gripper",
+        "RELEASE_FAILED",
+        _paper_evidence={"branch": "destination", "operation": "drop_release"},
+    )
     if not isinstance(released.get("position"), int | float) or released["position"] <= 0:
         raise PaperManipulationError("RELEASE_FAILED")
     try:
@@ -334,6 +379,7 @@ def _run_impl(
             ctx,
             "curobo.plan_directed_linear",
             "RETREAT_PLANNING_FAILED",
+            _paper_evidence={"branch": "destination", "operation": "ik_planner"},
             start_joint_position=_last_state(descend_trajectory),
             allowed_axes=["Z"],
             explicit_direction={"x": 0.0, "y": 0.0, "z": 1.0},
@@ -352,6 +398,7 @@ def _run_impl(
             ctx,
             "robot.execute_trajectory",
             "RETREAT_EXECUTION_FAILED",
+            _paper_evidence={"branch": "destination", "operation": "execution_state"},
             trajectory=retreat_trajectory,
         )
     except PaperManipulationError as error:
@@ -399,6 +446,14 @@ def _run_impl(
         ],
         "fallback_used": False,
         "preset_trace": preset_trace,
+        "paper_outcome": {
+            "status": "success",
+            "failure_code": None,
+            "source": "canonical_script",
+        },
+        "semantic_evidence": [
+            {"kind": "drop_release", "branch": "destination"},
+        ],
     }
     result["terminal_result_json"] = _canonical(result)
     return result
@@ -429,6 +484,7 @@ def run(
         code, released = error.code, error.released
     except Exception:
         code, released = "PAPER_MANIPULATION_INTERNAL_ERROR", False
+    failure_code = _PAPER_FAILURE_CODE[code]
     failure = {
         "success": False,
         "error_code": code,
@@ -445,6 +501,12 @@ def run(
         "decision_path": [],
         "fallback_used": False,
         "preset_trace": {},
+        "paper_outcome": {
+            "status": "failure",
+            "failure_code": failure_code,
+            "source": "canonical_script",
+        },
+        "semantic_evidence": [],
     }
     failure["terminal_result_json"] = _canonical(failure)
     return failure

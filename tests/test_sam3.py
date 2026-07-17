@@ -124,14 +124,14 @@ def test_segment_text_schema(tool_registry):
     assert schema.inputs["query"].required
     assert schema.inputs["max_results"].required is False
     assert schema.inputs["max_results"].default == 5
-    assert set(schema.outputs) == {"masks", "scores", "boxes", "evidence"}
+    assert set(schema.outputs) == {"masks", "scores", "boxes", "evidence", "paper_outcome"}
 
 
 def test_segment_box_schema(tool_registry):
     schema = tool_registry.get("sam3.segment_box").schema
     assert set(schema.inputs) == {"image", "box", "pixel_x", "pixel_y", "use_point"}
     assert schema.inputs["use_point"].default is False
-    assert set(schema.outputs) == {"masks", "scores", "evidence"}
+    assert set(schema.outputs) == {"masks", "scores", "evidence", "paper_outcome"}
 
 
 def test_tracker_schemas(tool_registry):
@@ -173,6 +173,53 @@ def test_invalid_image_shape_rejected_before_model_load(tool_registry, sam3_modu
         mod._to_pil(np.zeros((4, 4), dtype=np.uint8))
     pil = mod._to_pil(np.zeros((4, 4, 3), dtype=np.uint8))
     assert pil.size == (4, 4)
+
+
+def test_positive_score_all_zero_masks_are_typed_empty_segmentation(
+    sam3_module, monkeypatch
+):
+    artifact = {
+        "requested_model": "facebook/sam3",
+        "resolved_revision": "a" * 40,
+        "weights_sha256": "sha256:" + "b" * 64,
+    }
+    monkeypatch.setattr(sam3_module, "_image_model_artifact", artifact, raising=False)
+
+    result = sam3_module._sorted_segment_result(
+        np.zeros((2, 8, 8), dtype=np.uint8),
+        np.asarray([0.99, 0.75]),
+        evidence_input={"request": "synthetic"},
+    )
+
+    assert result["masks"] == []
+    assert result["scores"] == []
+    assert result["paper_outcome"] == {
+        "status": "failure",
+        "failure_code": "segmentation_empty_mask",
+        "source": "service",
+    }
+
+
+def test_loaded_image_model_identity_is_reused_without_per_call_rehash(
+    sam3_module, monkeypatch
+):
+    artifact = {
+        "requested_model": "facebook/sam3",
+        "resolved_revision": "a" * 40,
+        "weights_sha256": "sha256:" + "b" * 64,
+    }
+    monkeypatch.setattr(sam3_module, "_image_model_artifact", artifact, raising=False)
+    monkeypatch.setattr(
+        sam3_module,
+        "_validated_paper_model",
+        lambda: pytest.fail("per-call evidence must not rehash the loaded checkpoint"),
+    )
+
+    first = sam3_module._segment_evidence({"call": 1}, {"masks": [], "scores": []})
+    second = sam3_module._segment_evidence({"call": 2}, {"masks": [], "scores": []})
+
+    assert first["weights_sha256"] == artifact["weights_sha256"]
+    assert second["weights_sha256"] == artifact["weights_sha256"]
 
 
 def test_sam3_checked_manifest_matches_paper_identity(sam3_module):
@@ -278,6 +325,7 @@ def test_sam3_image_singleton_loads_only_the_validated_checkpoint(
     monkeypatch.setitem(sys.modules, "sam3.model.sam3_image_processor", processor_module)
     monkeypatch.setattr(sam3_module, "_image_model", None)
     monkeypatch.setattr(sam3_module, "_image_processor", None)
+    monkeypatch.setattr(sam3_module, "_image_model_artifact", None)
 
     sam3_module._get_model(device="cpu")
 
@@ -289,6 +337,11 @@ def test_sam3_image_singleton_loads_only_the_validated_checkpoint(
     }
     assert checkpoint_path.parent == Path("/proc/self/fd")
     assert checkpoint_path.name.isdigit()
+    assert sam3_module._image_model_artifact == {
+        "requested_model": "facebook/sam3",
+        "resolved_revision": _SYNTHETIC_REVISION,
+        "weights_sha256": _sha256(_SYNTHETIC_FILES["sam3.pt"]),
+    }
 
 
 def test_sam3_tracker_singleton_loads_only_the_validated_checkpoint(
@@ -355,6 +408,7 @@ def test_sam3_image_loader_keeps_attested_inode_across_path_replacement(
     monkeypatch.setitem(sys.modules, "sam3.model.sam3_image_processor", processor_module)
     monkeypatch.setattr(sam3_module, "_image_model", None)
     monkeypatch.setattr(sam3_module, "_image_processor", None)
+    monkeypatch.setattr(sam3_module, "_image_model_artifact", None)
 
     with pytest.raises(ToolError, match="sam3.pt.*changed"):
         sam3_module._get_model(device="cpu")
@@ -362,6 +416,7 @@ def test_sam3_image_loader_keeps_attested_inode_across_path_replacement(
     assert loaded == [_SYNTHETIC_FILES["sam3.pt"]]
     assert sam3_module._image_model is None
     assert sam3_module._image_processor is None
+    assert sam3_module._image_model_artifact is None
 
 
 def test_sam3_tracker_rejects_checkpoint_mutated_during_load(sam3_module, monkeypatch, tmp_path):

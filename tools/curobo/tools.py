@@ -21,7 +21,9 @@ gRPC server.
 from __future__ import annotations
 
 import hashlib
+import json
 import logging
+import platform
 import re
 import threading
 import traceback
@@ -104,6 +106,57 @@ def paper_service_capability() -> dict[str, Any]:
         "uv_lock_sha256": lock_sha256,
         "missing_required_paths": missing,
         "probe_error_type": probe_error_type,
+    }
+
+
+def _paper_digest(value: Any) -> str:
+    encoded = json.dumps(
+        value,
+        sort_keys=True,
+        separators=(",", ":"),
+        default=lambda item: item.tolist() if hasattr(item, "tolist") else repr(item),
+    ).encode()
+    return f"sha256:{hashlib.sha256(encoded).hexdigest()}"
+
+
+def _algorithm_evidence(
+    effective_call: dict[str, Any], output: dict[str, Any]
+) -> AlgorithmServiceEvidence:
+    lock_bytes = Path(__file__).with_name("uv.lock").read_bytes()
+    packages = tomllib.loads(lock_bytes.decode("utf-8"))["package"]
+    package = next(item for item in packages if item["name"] == "nvidia-curobo")
+    commit = str(package["source"]["git"]).rsplit("#", 1)[-1]
+    return {
+        "kind": "algorithm_service",
+        "source_commit": _validate_git_object_id(commit),
+        "uv_lock_sha256": _validate_digest(
+            f"sha256:{hashlib.sha256(lock_bytes).hexdigest()}"
+        ),
+        "config_sha256": _paper_digest(effective_call),
+        "runtime_environment_sha256": _paper_digest(
+            {"python": platform.python_version(), "numpy": np.__version__}
+        ),
+        "input_sha256": _paper_digest(effective_call),
+        "output_sha256": _paper_digest(output),
+        "fallback_used": False,
+    }
+
+
+def _paper_result(
+    output: dict[str, Any],
+    *,
+    effective_call: dict[str, Any],
+    success: bool,
+    failure_code: str,
+) -> dict[str, Any]:
+    return {
+        **output,
+        "evidence": _algorithm_evidence(effective_call, output),
+        "paper_outcome": {
+            "status": "success" if success else "failure",
+            "failure_code": None if success else failure_code,
+            "source": "service",
+        },
     }
 
 
@@ -241,15 +294,36 @@ class PlanGraspResult(TypedDict):
     goalset_index: int  # which grasp pose was reached
 
 
+class PaperOutcome(TypedDict):
+    status: Literal["success", "failure"]
+    failure_code: str | None
+    source: Literal["service"]
+
+
+class EvidencedPlanGraspResult(PlanGraspResult):
+    evidence: AlgorithmServiceEvidence
+    paper_outcome: PaperOutcome
+
+
 class PlanResult(TypedDict):
     success: bool
     trajectory: Trajectory | None
+
+
+class EvidencedPlanResult(PlanResult):
+    evidence: AlgorithmServiceEvidence
+    paper_outcome: PaperOutcome
 
 
 class PlanLinearResult(TypedDict):
     success: bool
     trajectory: Trajectory | None
     failure_reason: str
+
+
+class EvidencedPlanLinearResult(PlanLinearResult):
+    evidence: AlgorithmServiceEvidence
+    paper_outcome: PaperOutcome
 
 
 class PlanGraspMotionResult(TypedDict):
@@ -272,11 +346,21 @@ class BatchFeasibilityResult(TypedDict):
     corridor_collision_fraction: list[float]  # 0.0=clear, 1.0=fully blocked
 
 
+class EvidencedBatchFeasibilityResult(BatchFeasibilityResult):
+    evidence: AlgorithmServiceEvidence
+    paper_outcome: PaperOutcome
+
+
 class ValidateResult(TypedDict):
     success: bool
     failure_reason: str  # empty if success
     first_collision_waypoint: int  # -1 if none / success
     collision_status_detail: str  # validator-specific diagnostic detail
+
+
+class EvidencedValidateResult(ValidateResult):
+    evidence: AlgorithmServiceEvidence
+    paper_outcome: PaperOutcome
 
 
 # ---------------------------------------------------------------------------
@@ -312,7 +396,7 @@ def plan_to_grasp_poses(
     collision_activation_distance: float = 0.001,
     ignore_obstacle_names: list[str] | None = None,
     debug_out_dir: str | None = None,
-) -> PlanGraspResult:
+) -> EvidencedPlanGraspResult:
     """Grasp poses are in the robot-base frame; with
     ``grasp_pose_is_fingertip=True`` (default) positions are fingertip-centre
     and converted to the panda_hand frame solver-side. Pass the target's mesh
@@ -350,11 +434,41 @@ def plan_to_grasp_poses(
         _cuda_cleanup(impl, "_motion_gen_cache", e)
         raise PlanningFailed(f"plan_to_grasp_poses failed: {e}") from e
 
-    return {
+    output = {
         "success": bool(success),
         "trajectory": _traj_out(trajectory) if success else None,
         "goalset_index": int(goalset_index) if goalset_index is not None else 0,
     }
+    return _paper_result(
+        output,
+        effective_call={
+            "operation": "plan_to_grasp_poses",
+            "world_config": world_config,
+            "start_joint_position": start_joint_position,
+            "grasp_poses": grasp_poses,
+            "robot_file": robot_file,
+            "max_attempts": max_attempts,
+            "use_cuda_graph": use_cuda_graph,
+            "position_threshold": position_threshold,
+            "rotation_threshold": rotation_threshold,
+            "position_threshold_z": position_threshold_z,
+            "grasp_pose_is_fingertip": grasp_pose_is_fingertip,
+            "grasp_z_clearance": grasp_z_clearance,
+            "num_ik_seeds": num_ik_seeds,
+            "relax_orientation": relax_orientation,
+            "use_grasp_approach": use_grasp_approach,
+            "grasp_approach_offset": grasp_approach_offset,
+            "grasp_approach_linear_axis": grasp_approach_linear_axis,
+            "grasp_approach_tstep_fraction": grasp_approach_tstep_fraction,
+            "use_world_collision": use_world_collision,
+            "robot_collision_sphere_buffer": robot_collision_sphere_buffer,
+            "collision_activation_distance": collision_activation_distance,
+            "ignore_obstacle_names": ignore_obstacle_names,
+            "debug_out_dir": debug_out_dir,
+        },
+        success=bool(success),
+        failure_code="motion_plan_failed",
+    )
 
 
 @tool(
@@ -381,7 +495,7 @@ def plan_with_grasped_object(
     link_name: str = "attached_object",
     remove_obstacles_from_world: bool = False,
     debug_out_dir: str | None = None,
-) -> PlanResult:
+) -> EvidencedPlanResult:
     """``object_name`` must name a mesh in ``world_config``; it is attached
     to the robot at the start configuration and collision-checked against
     the remaining scene during transport."""
@@ -413,10 +527,36 @@ def plan_with_grasped_object(
         _cuda_cleanup(impl, "_motion_gen_cache", e)
         raise PlanningFailed(f"plan_with_grasped_object failed: {e}") from e
 
-    return {
+    output = {
         "success": bool(success),
         "trajectory": _traj_out(trajectory) if success else None,
     }
+    return _paper_result(
+        output,
+        effective_call={
+            "operation": "plan_with_grasped_object",
+            "world_config": world_config,
+            "start_joint_position": start_joint_position,
+            "target_pose": target_pose,
+            "object_name": object_name,
+            "robot_file": robot_file,
+            "max_attempts": max_attempts,
+            "use_cuda_graph": use_cuda_graph,
+            "position_threshold": position_threshold,
+            "rotation_threshold": rotation_threshold,
+            "position_threshold_z": position_threshold_z,
+            "num_ik_seeds": num_ik_seeds,
+            "use_world_collision": use_world_collision,
+            "robot_collision_sphere_buffer": robot_collision_sphere_buffer,
+            "collision_activation_distance": collision_activation_distance,
+            "surface_sphere_radius": surface_sphere_radius,
+            "link_name": link_name,
+            "remove_obstacles_from_world": remove_obstacles_from_world,
+            "debug_out_dir": debug_out_dir,
+        },
+        success=bool(success),
+        failure_code="transport_failed",
+    )
 
 
 @tool(
@@ -430,7 +570,7 @@ def plan_linear(
     start_joint_position: JointState,
     robot_file: str = "franka.yml",
     hold_vec_weight: list[float] | None = None,
-) -> PlanLinearResult:
+) -> EvidencedPlanLinearResult:
     """``hold_vec_weight`` is the PoseCostMetric 6-vector
     [rx, ry, rz, x, y, z]: 1.0 = hold (constrain), 0.0 = free; e.g.
     [1,1,1,1,0,1] holds orientation + X,Z so motion is along Y only.
@@ -450,11 +590,24 @@ def plan_linear(
         _cuda_cleanup(impl, "_motion_gen_cache", e)
         raise PlanningFailed(f"plan_linear failed: {e}") from e
 
-    return {
+    output = {
         "success": bool(success),
         "trajectory": _traj_out(trajectory) if success else None,
         "failure_reason": reason or "",
     }
+    return _paper_result(
+        output,
+        effective_call={
+            "operation": "plan_linear",
+            "start_pose": start_pose,
+            "end_pose": end_pose,
+            "start_joint_position": start_joint_position,
+            "robot_file": robot_file,
+            "hold_vec_weight": list(hold_vec_weight) if hold_vec_weight else None,
+        },
+        success=bool(success),
+        failure_code="motion_plan_failed",
+    )
 
 
 @tool(
@@ -473,7 +626,7 @@ def plan_directed_linear(
     orientation_mode: str = "LOCK",
     orientation_target: Quaternion | None = None,
     robot_file: str = "franka.yml",
-) -> PlanLinearResult:
+) -> EvidencedPlanLinearResult:
     """FK(start_joint_position) is computed internally; ``start_pose`` is a
     hint only. ``allowed_axes`` ⊆ ["X","Y","Z"] are free to move (others held
     at FK values). ``endpoint_mode``: PROJECT_TO_TARGET | DISTANCE |
@@ -514,11 +667,29 @@ def plan_directed_linear(
         _cuda_cleanup(impl, "_motion_gen_cache", e)
         raise PlanningFailed(f"plan_directed_linear failed: {e}") from e
 
-    return {
+    output = {
         "success": bool(success),
         "trajectory": _traj_out(trajectory) if success else None,
         "failure_reason": reason or "",
     }
+    return _paper_result(
+        output,
+        effective_call={
+            "operation": "plan_directed_linear",
+            "start_joint_position": start_joint_position,
+            "start_pose": start_pose,
+            "target_pose": target_pose,
+            "allowed_axes": list(allowed_axes) if allowed_axes else None,
+            "explicit_direction": explicit_direction,
+            "distance": distance,
+            "endpoint_mode": endpoint_mode or "PROJECT_TO_TARGET",
+            "orientation_mode": orientation_mode or "LOCK",
+            "orientation_target": orientation_target,
+            "robot_file": robot_file,
+        },
+        success=bool(success),
+        failure_code="motion_plan_failed",
+    )
 
 
 @tool(
@@ -690,7 +861,7 @@ def batch_grasp_feasibility(
     robot_collision_sphere_buffer: float | None = None,
     robot_file: str = "franka.yml",
     ignore_obstacle_names: list[str] | None = None,
-) -> BatchFeasibilityResult:
+) -> EvidencedBatchFeasibilityResult:
     """All result vectors align with the input ``grasp_poses`` order so
     callers can filter without losing rank. Put the target object in
     ``ignore_obstacle_names`` — the gripper is meant to close on it. NOTE:
@@ -724,12 +895,43 @@ def batch_grasp_feasibility(
         _cuda_cleanup(impl, "_collision_aware_ik_cache", e)
         raise PlanningFailed(f"batch_grasp_feasibility failed: {e}") from e
 
-    return {
+    output = {
         "feasible": [bool(x) for x in feasible],
         "grasp_ik_ok": [bool(x) for x in grasp_ok],
         "approach_ik_ok": [bool(x) for x in approach_ok],
         "corridor_collision_fraction": [float(x) for x in corridor_frac],
     }
+    corridor_blocked = any(
+        not is_feasible and grasp_ik and approach_ik and collision_fraction > 0.0
+        for is_feasible, grasp_ik, approach_ik, collision_fraction in zip(
+            output["feasible"],
+            output["grasp_ik_ok"],
+            output["approach_ik_ok"],
+            output["corridor_collision_fraction"],
+            strict=True,
+        )
+    )
+    return _paper_result(
+        output,
+        effective_call={
+            "operation": "batch_grasp_feasibility",
+            "world_config": world_config,
+            "start_state": start_state,
+            "grasp_poses": grasp_poses,
+            "grasp_pose_is_fingertip": grasp_pose_is_fingertip,
+            "approach_offset_m": approach_offset_m,
+            "num_corridor_samples": num_corridor_samples,
+            "num_ik_seeds": num_ik_seeds,
+            "position_threshold": position_threshold,
+            "rotation_threshold": rotation_threshold,
+            "collision_activation_distance": collision_activation_distance,
+            "robot_collision_sphere_buffer": robot_collision_sphere_buffer,
+            "robot_file": robot_file,
+            "ignore_obstacle_names": ignore_obstacle_names,
+        },
+        success=any(output["feasible"]),
+        failure_code="trajectory_invalid" if corridor_blocked else "ik_unsolved",
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -750,7 +952,7 @@ def validate_joint_trajectory_robot(
     robot_collision_sphere_buffer: float = -0.01,
     collision_activation_distance: float = 0.01,
     ignore_obstacle_names: list[str] | None = None,
-) -> ValidateResult:
+) -> EvidencedValidateResult:
     """Checks every waypoint with pinned-v0.8 joint-bound, self-collision,
     and scene-collision primitives against the perception-built world."""
     impl = _impl()
@@ -775,12 +977,27 @@ def validate_joint_trajectory_robot(
         raise PlanningFailed(f"validate_joint_trajectory_robot failed: {e}") from e
 
     detail = meta.get("motion_gen_status", "") if meta else ""
-    return {
+    output = {
         "success": bool(ok),
         "failure_reason": "" if ok else (reason or "collision"),
         "first_collision_waypoint": -1 if ok or idx is None else int(idx),
         "collision_status_detail": str(detail),
     }
+    return _paper_result(
+        output,
+        effective_call={
+            "operation": "validate_joint_trajectory_robot",
+            "world_config": world_config,
+            "trajectory": trajectory,
+            "robot_file": robot_file,
+            "use_cuda_graph": use_cuda_graph,
+            "robot_collision_sphere_buffer": robot_collision_sphere_buffer,
+            "collision_activation_distance": collision_activation_distance,
+            "ignore_obstacle_names": list(ignore_obstacle_names) if ignore_obstacle_names else None,
+        },
+        success=bool(ok),
+        failure_code="trajectory_invalid",
+    )
 
 
 @tool(
@@ -799,7 +1016,7 @@ def validate_joint_trajectory_grasped(
     surface_sphere_radius: float = 0.001,
     link_name: str = "attached_object",
     remove_obstacles_from_world: bool = False,
-) -> ValidateResult:
+) -> EvidencedValidateResult:
     """Fits and attaches ``object_name`` at the first waypoint, validates every
     row with pinned-v0.8 collision primitives, and always detaches afterward."""
     impl = _impl()
@@ -836,9 +1053,27 @@ def validate_joint_trajectory_grasped(
             f"attached_sphere_count={meta.get('attached_sphere_count')};"
             f"attached_sphere_capacity={meta['attached_sphere_capacity']}"
         )
-    return {
+    output = {
         "success": bool(ok),
         "failure_reason": "" if ok else (reason or "collision"),
         "first_collision_waypoint": -1 if ok or idx is None else int(idx),
         "collision_status_detail": str(detail),
     }
+    return _paper_result(
+        output,
+        effective_call={
+            "operation": "validate_joint_trajectory_grasped",
+            "world_config": world_config,
+            "trajectory": trajectory,
+            "object_name": object_name,
+            "robot_file": robot_file,
+            "use_cuda_graph": use_cuda_graph,
+            "robot_collision_sphere_buffer": robot_collision_sphere_buffer,
+            "collision_activation_distance": collision_activation_distance,
+            "surface_sphere_radius": surface_sphere_radius,
+            "link_name": link_name,
+            "remove_obstacles_from_world": remove_obstacles_from_world,
+        },
+        success=bool(ok),
+        failure_code="trajectory_invalid",
+    )

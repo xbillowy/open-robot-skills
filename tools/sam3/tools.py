@@ -124,17 +124,25 @@ _DRIFT_MAX_CONSECUTIVE = 5
 # ---------------------------------------------------------------------------
 
 
+class PaperOutcome(TypedDict):
+    status: Literal["success", "failure"]
+    failure_code: str | None
+    source: Literal["service"]
+
+
 class SegmentTextResult(TypedDict):
     masks: list[Mask]  # uint8 [H, W], 0 background / 255 foreground
     scores: list[float]  # confidence per mask, best-first
     boxes: list[BoundingBox2D]  # tight boxes (text prompt only)
-    evidence: LearnedServiceEvidence | None
+    evidence: LearnedServiceEvidence
+    paper_outcome: PaperOutcome
 
 
 class SegmentResult(TypedDict):
     masks: list[Mask]
     scores: list[float]
-    evidence: LearnedServiceEvidence | None
+    evidence: LearnedServiceEvidence
+    paper_outcome: PaperOutcome
 
 
 class TrackerInitResult(TypedDict):
@@ -439,6 +447,29 @@ def _paper_artifact(manifest: Mapping[str, Any], revision: str) -> dict[str, str
     }
 
 
+def _paper_digest(value: Any) -> str:
+    encoded = json.dumps(
+        value,
+        sort_keys=True,
+        separators=(",", ":"),
+        default=lambda item: item.tolist() if hasattr(item, "tolist") else repr(item),
+    ).encode()
+    return f"sha256:{hashlib.sha256(encoded).hexdigest()}"
+
+
+def _segment_evidence(inputs: Mapping[str, Any], output: Mapping[str, Any]) -> LearnedServiceEvidence:
+    artifact = _image_model_artifact
+    if artifact is None:
+        raise _paper_artifact_error("SAM3 image model identity is not loaded")
+    return {
+        "kind": "learned_model",
+        **artifact,
+        "input_sha256": _paper_digest(inputs),
+        "output_sha256": _paper_digest(output),
+        "fallback_used": False,
+    }
+
+
 def _validated_paper_model() -> dict[str, str]:
     """Validate checked config/checkpoint bytes and return their attestation."""
 
@@ -495,6 +526,7 @@ def paper_model_artifact() -> dict[str, str]:
 _image_lock = threading.Lock()
 _image_model: Any = None
 _image_processor: Any = None
+_image_model_artifact: dict[str, str] | None = None
 
 _tracker_lock = threading.Lock()
 _tracker_predictor: Any = None
@@ -502,9 +534,10 @@ _tracker_predictor: Any = None
 
 def _get_model(device: str | None = None) -> tuple[Any, Any]:
     """Load the SAM3 image model + processor once (module-level singleton)."""
-    global _image_model, _image_processor
+    global _image_model, _image_model_artifact, _image_processor
     with _image_lock:
         if _image_model is None:
+            _image_model_artifact = None
             import torch
             from sam3.model.sam3_image_processor import Sam3Processor
             from sam3.model_builder import build_sam3_image_model
@@ -515,7 +548,7 @@ def _get_model(device: str | None = None) -> tuple[Any, Any]:
 
             dev = device or _DEVICE
             logger.info("Loading SAM3 model on %s ...", dev)
-            with _open_validated_checkpoint() as (_, checkpoint_path):
+            with _open_validated_checkpoint() as (artifact, checkpoint_path):
                 model = build_sam3_image_model(
                     enable_inst_interactivity=True,
                     checkpoint_path=checkpoint_path,
@@ -525,6 +558,7 @@ def _get_model(device: str | None = None) -> tuple[Any, Any]:
                 candidate_processor = Sam3Processor(candidate_model, confidence_threshold=0.0)
             _image_model = candidate_model
             _image_processor = candidate_processor
+            _image_model_artifact = artifact
             logger.info("SAM3 model loaded on %s.", dev)
         return _image_model, _image_processor
 
@@ -698,8 +732,19 @@ def segment_text(
     boxes_tensor = output.get("boxes")
     scores_tensor = output.get("scores")
 
-    if masks_tensor is None or boxes_tensor is None:
-        return {"masks": [], "scores": [], "boxes": [], "evidence": None}
+    if masks_tensor is None or boxes_tensor is None or scores_tensor is None:
+        empty = {"masks": [], "scores": [], "boxes": []}
+        return {
+            **empty,
+            "evidence": _segment_evidence(
+                {"image": image, "query": query, "max_results": max_results}, empty
+            ),
+            "paper_outcome": {
+                "status": "failure",
+                "failure_code": "segmentation_empty_mask",
+                "source": "service",
+            },
+        }
 
     masks_np = _to_numpy(masks_tensor)
     boxes_np = _to_numpy(boxes_tensor)
@@ -724,15 +769,28 @@ def segment_text(
 
     for i in indices:
         bool_mask = masks_np[i] > 0
+        if not np.count_nonzero(bool_mask):
+            continue
         masks_out.append(_mask_u8(bool_mask))
         scores_out.append(float(scores_np[i]))
         boxes_out.append(_box_dict(boxes_np[i]))
 
-    return {
+    result = {
         "masks": masks_out,
         "scores": scores_out,
         "boxes": boxes_out,
-        "evidence": None,
+    }
+    success = bool(masks_out)
+    return {
+        **result,
+        "evidence": _segment_evidence(
+            {"image": image, "query": query, "max_results": max_results}, result
+        ),
+        "paper_outcome": {
+            "status": "success" if success else "failure",
+            "failure_code": None if success else "segmentation_empty_mask",
+            "source": "service",
+        },
     }
 
 
@@ -770,7 +828,11 @@ def segment_point(
     except Exception as e:
         raise PerceptionFailed(f"SAM3 point prompt inference failed: {e}") from e
 
-    return _sorted_segment_result(masks, scores)
+    return _sorted_segment_result(
+        masks,
+        scores,
+        evidence_input={"image": image, "pixel_x": pixel_x, "pixel_y": pixel_y},
+    )
 
 
 @tool(
@@ -812,18 +874,54 @@ def segment_box(
     except Exception as e:
         raise PerceptionFailed(f"SAM3 box prompt inference failed: {e}") from e
 
-    return _sorted_segment_result(masks, scores)
+    return _sorted_segment_result(
+        masks,
+        scores,
+        evidence_input={
+            "image": image,
+            "box": box,
+            "pixel_x": pixel_x,
+            "pixel_y": pixel_y,
+            "use_point": use_point,
+        },
+    )
 
 
-def _sorted_segment_result(masks, scores) -> SegmentResult:
+def _sorted_segment_result(masks, scores, *, evidence_input: Mapping[str, Any] | None = None) -> SegmentResult:
     """Shared mask post-processing for the point/box prompt paths."""
     masks_np = np.asarray(masks)
     scores_np = np.asarray(scores)
 
     if masks_np.size == 0 or scores_np.size == 0:
-        return {"masks": [], "scores": [], "evidence": None}
+        output = {"masks": [], "scores": []}
+        return {
+            **output,
+            "evidence": _segment_evidence(evidence_input or {}, output),
+            "paper_outcome": {
+                "status": "failure",
+                "failure_code": "segmentation_empty_mask",
+                "source": "service",
+            },
+        }
 
-    # Sort by score descending
+    nonempty = np.asarray(
+        [bool(np.count_nonzero(np.asarray(mask) > 0)) for mask in masks_np], dtype=bool
+    )
+    masks_np = masks_np[nonempty]
+    scores_np = scores_np[nonempty]
+    if masks_np.size == 0 or scores_np.size == 0:
+        output = {"masks": [], "scores": []}
+        return {
+            **output,
+            "evidence": _segment_evidence(evidence_input or {}, output),
+            "paper_outcome": {
+                "status": "failure",
+                "failure_code": "segmentation_empty_mask",
+                "source": "service",
+            },
+        }
+
+    # Sort non-empty masks by score descending.
     sort_idx = np.argsort(scores_np)[::-1]
     masks_np = masks_np[sort_idx]
     scores_np = scores_np[sort_idx]
@@ -840,7 +938,16 @@ def _sorted_segment_result(masks, scores) -> SegmentResult:
         masks_out.append(_mask_u8(bool_mask))
         scores_out.append(float(scores_np[i]))
 
-    return {"masks": masks_out, "scores": scores_out, "evidence": None}
+    output = {"masks": masks_out, "scores": scores_out}
+    return {
+        **output,
+        "evidence": _segment_evidence(evidence_input or {}, output),
+        "paper_outcome": {
+            "status": "success",
+            "failure_code": None,
+            "source": "service",
+        },
+    }
 
 
 # ---------------------------------------------------------------------------

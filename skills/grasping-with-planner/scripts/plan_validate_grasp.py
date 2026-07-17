@@ -39,6 +39,40 @@ class PaperManipulationError(RuntimeError):
         super().__init__(code)
 
 
+_SERVICE_TOOLS = frozenset(
+    {
+        "geometry.top_down_grasp_candidates",
+        "robot.get_observation",
+        "curobo.batch_grasp_feasibility",
+        "curobo.plan_to_grasp_poses",
+        "curobo.validate_joint_trajectory_robot",
+        "curobo.validate_joint_trajectory_grasped",
+    }
+)
+
+_PAPER_FAILURE_CODE = {
+    "SERVICE_UNAVAILABLE": "service_unavailable",
+    "GRASP_CANDIDATES_INSUFFICIENT": "no_valid_grasp_candidate",
+    "NO_FULLY_VALIDATED_GRASP": "no_valid_grasp_candidate",
+    "IK_UNSOLVED": "ik_unsolved",
+    "MOTION_PLAN_FAILED": "motion_plan_failed",
+    "TRAJECTORY_INVALID": "trajectory_invalid",
+    "GRASP_CANDIDATE_EVIDENCE_UNAVAILABLE": "service_unavailable",
+    "IK_EVIDENCE_UNAVAILABLE": "service_unavailable",
+    "GRASP_PLAN_EVIDENCE_UNAVAILABLE": "service_unavailable",
+    "ROBOT_VALIDATION_EVIDENCE_UNAVAILABLE": "service_unavailable",
+    "HELD_OBJECT_VALIDATION_EVIDENCE_UNAVAILABLE": "service_unavailable",
+    "TRAJECTORY_EMPTY": "trajectory_invalid",
+    "TARGET_LINEAGE_INVALID": "protocol_contract_violation",
+    "TARGET_MESH_MISSING": "protocol_contract_violation",
+    "PRESET_SCHEMA_INVALID": "protocol_contract_violation",
+    "PRESET_HASH_MISMATCH": "protocol_contract_violation",
+    "PRESET_PARAMETERS_INVALID": "protocol_contract_violation",
+    "UNDECLARED_TOOL_DISPATCH": "protocol_contract_violation",
+    "PAPER_MANIPULATION_INTERNAL_ERROR": "protocol_contract_violation",
+}
+
+
 class Output(TypedDict, total=False):
     success: bool
     error_code: str | None
@@ -158,8 +192,12 @@ def _tool(ctx: NodeContext, name: str, code: str, **kwargs: Any) -> dict[str, An
         if name == "curobo.validate_joint_trajectory_grasped":
             return ctx.tool("curobo.validate_joint_trajectory_grasped", **kwargs)
         raise PaperManipulationError("UNDECLARED_TOOL_DISPATCH")
+    except PaperManipulationError:
+        raise
     except Exception as error:
-        raise PaperManipulationError(code) from error
+        if name not in _SERVICE_TOOLS:
+            raise PaperManipulationError("UNDECLARED_TOOL_DISPATCH") from error
+        raise PaperManipulationError("SERVICE_UNAVAILABLE") from error
 
 
 def _resample(trajectory: dict[str, Any], count: int) -> dict[str, Any]:
@@ -225,6 +263,7 @@ def _run_impl(
         ctx,
         "geometry.top_down_grasp_candidates",
         "GRASP_CANDIDATE_GENERATION_FAILED",
+        _paper_evidence={"branch": "target", "operation": "grasp_candidates"},
         obb=target_obb,
     )
     candidate_evidence = _admitted(generated, "GRASP_CANDIDATE_EVIDENCE_UNAVAILABLE")
@@ -247,6 +286,7 @@ def _run_impl(
         ctx,
         "curobo.batch_grasp_feasibility",
         "IK_FEASIBILITY_FAILED",
+        _paper_evidence={"branch": "target", "operation": "ik_planner"},
         world_config=world_config,
         start_state=start_state,
         grasp_poses=candidates,
@@ -256,6 +296,9 @@ def _run_impl(
     )
     ik_evidence = _admitted(feasibility, "IK_EVIDENCE_UNAVAILABLE")
     feasible = feasibility.get("feasible", [])
+    grasp_ik_ok = feasibility.get("grasp_ik_ok", [])
+    approach_ik_ok = feasibility.get("approach_ik_ok", [])
+    corridor_collision_fraction = feasibility.get("corridor_collision_fraction", [])
     candidate_records: list[dict[str, Any]] = []
     admitted_candidates: list[dict[str, Any]] = []
     for index, candidate in enumerate(candidates):
@@ -266,14 +309,31 @@ def _run_impl(
             "retreat_pose": _offset_pose(candidate, values["lift_distance_m"]),
         }
         if index >= len(feasible) or not feasible[index]:
+            corridor_blocked = (
+                index < len(grasp_ik_ok)
+                and bool(grasp_ik_ok[index])
+                and index < len(approach_ik_ok)
+                and bool(approach_ik_ok[index])
+                and index < len(corridor_collision_fraction)
+                and float(corridor_collision_fraction[index]) > 0.0
+            )
             candidate_records.append(
-                {**record, "status": "rejected", "rejection_code": "IK_OR_APPROACH_INFEASIBLE"}
+                {
+                    **record,
+                    "status": "rejected",
+                    "rejection_code": (
+                        "APPROACH_CORRIDOR_COLLISION"
+                        if corridor_blocked
+                        else "IK_OR_APPROACH_INFEASIBLE"
+                    ),
+                }
             )
             continue
         planned = _tool(
             ctx,
             "curobo.plan_to_grasp_poses",
             "GRASP_PLANNING_FAILED",
+            _paper_evidence={"branch": "target", "operation": "ik_planner"},
             world_config=world_config,
             start_joint_position=start_state,
             grasp_poses=[candidate],
@@ -295,6 +355,10 @@ def _run_impl(
             ctx,
             "curobo.validate_joint_trajectory_robot",
             "ROBOT_TRAJECTORY_VALIDATION_FAILED",
+            _paper_evidence={
+                "branch": "target",
+                "operation": "robot_trajectory_validation",
+            },
             world_config=world_config,
             trajectory=trajectory,
             ignore_obstacle_names=[target_name],
@@ -310,6 +374,7 @@ def _run_impl(
             ctx,
             "curobo.validate_joint_trajectory_grasped",
             "HELD_OBJECT_TRAJECTORY_VALIDATION_FAILED",
+            _paper_evidence={"branch": "target", "operation": "held_collision"},
             world_config=world_config,
             trajectory=retreat_trajectory,
             object_name=target_name,
@@ -369,9 +434,32 @@ def _run_impl(
             ],
             "fallback_used": False,
             "preset_trace": preset_trace,
+            "paper_outcome": {
+                "status": "success",
+                "failure_code": None,
+                "source": "canonical_script",
+            },
+            "semantic_evidence": [
+                {"kind": "grasp_rejections", "branch": "target"},
+            ],
         }
         result["validated_grasp_json"] = _canonical(result)
         return result
+    rejection_codes = {
+        record.get("rejection_code")
+        for record in candidate_records
+        if record.get("status") == "rejected"
+    }
+    if rejection_codes == {"IK_OR_APPROACH_INFEASIBLE"}:
+        raise PaperManipulationError("IK_UNSOLVED")
+    if rejection_codes & {
+        "APPROACH_CORRIDOR_COLLISION",
+        "ROBOT_COLLISION_INVALID",
+        "HELD_OBJECT_COLLISION_INVALID",
+    }:
+        raise PaperManipulationError("TRAJECTORY_INVALID")
+    if "GRASP_PLANNING_FAILED" in rejection_codes:
+        raise PaperManipulationError("MOTION_PLAN_FAILED")
     raise PaperManipulationError("NO_FULLY_VALIDATED_GRASP")
 
 
@@ -391,6 +479,7 @@ def run(
         code = error.code
     except Exception:
         code = "PAPER_MANIPULATION_INTERNAL_ERROR"
+    failure_code = _PAPER_FAILURE_CODE[code]
     return {
         "success": False,
         "error_code": code,
@@ -413,4 +502,10 @@ def run(
         "fallback_used": False,
         "preset_trace": {},
         "validated_grasp_json": "{}",
+        "paper_outcome": {
+            "status": "failure",
+            "failure_code": failure_code,
+            "source": "canonical_script",
+        },
+        "semantic_evidence": [],
     }

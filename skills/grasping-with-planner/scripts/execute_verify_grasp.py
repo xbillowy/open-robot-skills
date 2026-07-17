@@ -29,6 +29,31 @@ class PaperManipulationError(RuntimeError):
         super().__init__(code)
 
 
+_PAPER_FAILURE_CODE = {
+    "SERVICE_UNAVAILABLE": "service_unavailable",
+    "VLM_SERVICE_ERROR": "vlm_service_error",
+    "EXTERNAL_CAMERA_UNAVAILABLE": "service_unavailable",
+    "VLM_EVIDENCE_UNAVAILABLE": "vlm_service_error",
+    "TARGET_NOT_HELD": "grasp_not_held",
+    "POST_LIFT_TARGET_NOT_HELD": "post_lift_hold_lost",
+    "LIFT_TRAJECTORY_INVALID": "trajectory_invalid",
+    "LIFT_PLANNING_FAILED": "motion_plan_failed",
+    "LIFT_PLAN_EVIDENCE_UNAVAILABLE": "service_unavailable",
+    "ROBOT_VALIDATION_EVIDENCE_UNAVAILABLE": "service_unavailable",
+    "HELD_OBJECT_VALIDATION_EVIDENCE_UNAVAILABLE": "service_unavailable",
+    "TRAJECTORY_EMPTY": "trajectory_invalid",
+    "VALIDATED_GRASP_INVALID": "protocol_contract_violation",
+    "COLLISION_WORLD_STALE": "protocol_contract_violation",
+    "PLANNED_START_STATE_STALE": "protocol_contract_violation",
+    "POST_LIFT_POSE_UNAVAILABLE": "protocol_contract_violation",
+    "PRESET_SCHEMA_INVALID": "protocol_contract_violation",
+    "PRESET_HASH_MISMATCH": "protocol_contract_violation",
+    "PRESET_PARAMETERS_INVALID": "protocol_contract_violation",
+    "UNDECLARED_TOOL_DISPATCH": "protocol_contract_violation",
+    "PAPER_MANIPULATION_INTERNAL_ERROR": "protocol_contract_violation",
+}
+
+
 class Output(TypedDict, total=False):
     success: bool
     error_code: str | None
@@ -142,8 +167,11 @@ def _tool(ctx: NodeContext, name: str, code: str, **kwargs: Any) -> dict[str, An
         if name == "curobo.validate_joint_trajectory_grasped":
             return ctx.tool("curobo.validate_joint_trajectory_grasped", **kwargs)
         raise PaperManipulationError("UNDECLARED_TOOL_DISPATCH")
+    except PaperManipulationError:
+        raise
     except Exception as error:
-        raise PaperManipulationError(code) from error
+        service_code = "VLM_SERVICE_ERROR" if name == "vlm.query" else "SERVICE_UNAVAILABLE"
+        raise PaperManipulationError(service_code) from error
 
 
 def _visual_hold(
@@ -159,13 +187,17 @@ def _visual_hold(
         )
     ]
     if not exterior:
-        raise PaperManipulationError(code)
+        raise PaperManipulationError("EXTERNAL_CAMERA_UNAVAILABLE")
     result = _tool(
         ctx,
         "vlm.query",
         code,
         prompt=f"Is the robot visibly holding {target_name}? Answer exactly YES or NO.",
         image=exterior[0]["rgb"],
+        _paper_evidence={
+            "branch": "target",
+            "operation": "post_lift_hold" if "POST_LIFT" in code else "held_state",
+        },
     )
     evidence = result.get("evidence")
     if (
@@ -174,7 +206,7 @@ def _visual_hold(
         or not DIGEST.fullmatch(str(evidence.get("request_sha256", "")))
         or not DIGEST.fullmatch(str(evidence.get("response_sha256", "")))
     ):
-        raise PaperManipulationError(code)
+        raise PaperManipulationError("VLM_EVIDENCE_UNAVAILABLE")
     if str(result.get("text", "")).strip().upper() != "YES":
         raise PaperManipulationError(code)
     return evidence
@@ -242,6 +274,7 @@ def _run_impl(
         ctx,
         "robot.execute_trajectory",
         "GRASP_EXECUTION_FAILED",
+        _paper_evidence={"branch": "target", "operation": "execution_state"},
         trajectory=validated_grasp["trajectory"],
     )
     _tool(ctx, "robot.close_gripper", "GRASP_CLOSE_FAILED")
@@ -251,6 +284,7 @@ def _run_impl(
         ctx,
         "curobo.plan_directed_linear",
         "LIFT_PLANNING_FAILED",
+        _paper_evidence={"branch": "target", "operation": "ik_planner"},
         start_joint_position=closed["arms"][0]["joint_state"],
         allowed_axes=["Z"],
         explicit_direction={"x": 0.0, "y": 0.0, "z": 1.0},
@@ -266,6 +300,10 @@ def _run_impl(
         ctx,
         "curobo.validate_joint_trajectory_robot",
         "ROBOT_TRAJECTORY_VALIDATION_FAILED",
+        _paper_evidence={
+            "branch": "target",
+            "operation": "robot_trajectory_validation",
+        },
         world_config=world_config,
         trajectory=trajectory,
         ignore_obstacle_names=[target_name],
@@ -275,6 +313,7 @@ def _run_impl(
         ctx,
         "curobo.validate_joint_trajectory_grasped",
         "HELD_OBJECT_TRAJECTORY_VALIDATION_FAILED",
+        _paper_evidence={"branch": "target", "operation": "held_collision"},
         world_config=world_config,
         trajectory=trajectory,
         object_name=target_name,
@@ -282,7 +321,13 @@ def _run_impl(
     held_evidence = _admitted(held_validation, "HELD_OBJECT_VALIDATION_EVIDENCE_UNAVAILABLE")
     if not robot_validation.get("success") or not held_validation.get("success"):
         raise PaperManipulationError("LIFT_TRAJECTORY_INVALID")
-    _tool(ctx, "robot.execute_trajectory", "LIFT_EXECUTION_FAILED", trajectory=trajectory)
+    _tool(
+        ctx,
+        "robot.execute_trajectory",
+        "LIFT_EXECUTION_FAILED",
+        _paper_evidence={"branch": "target", "operation": "execution_state"},
+        trajectory=trajectory,
+    )
     post_lift = _tool(ctx, "robot.get_observation", "POST_LIFT_OBSERVATION_FAILED")
     post_lift_evidence = _visual_hold(ctx, post_lift, target_name, "POST_LIFT_TARGET_NOT_HELD")
     arm = post_lift["arms"][0]
@@ -315,6 +360,15 @@ def _run_impl(
         ],
         "fallback_used": False,
         "preset_trace": preset_trace,
+        "paper_outcome": {
+            "status": "success",
+            "failure_code": None,
+            "source": "canonical_script",
+        },
+        "semantic_evidence": [
+            {"kind": "held_object_state", "branch": "target"},
+            {"kind": "post_lift_hold", "branch": "target"},
+        ],
     }
     result["held_grasp_json"] = _canonical(result)
     return result
@@ -336,6 +390,7 @@ def run(
         code = error.code
     except Exception:
         code = "PAPER_MANIPULATION_INTERNAL_ERROR"
+    failure_code = _PAPER_FAILURE_CODE[code]
     return {
         "success": False,
         "error_code": code,
@@ -350,4 +405,10 @@ def run(
         "fallback_used": False,
         "preset_trace": {},
         "held_grasp_json": "{}",
+        "paper_outcome": {
+            "status": "failure",
+            "failure_code": failure_code,
+            "source": "canonical_script",
+        },
+        "semantic_evidence": [],
     }

@@ -131,7 +131,13 @@ def test_plan_to_grasp_poses_schema(tool_registry):
     assert schema.inputs["collision_activation_distance"].default == pytest.approx(0.001)
     assert schema.inputs["grasp_pose_is_fingertip"].default is True
     assert schema.inputs["use_world_collision"].default is True
-    assert set(schema.outputs) == {"success", "trajectory", "goalset_index"}
+    assert set(schema.outputs) == {
+        "success",
+        "trajectory",
+        "goalset_index",
+        "evidence",
+        "paper_outcome",
+    }
 
 
 def test_validate_schema(tool_registry):
@@ -144,6 +150,8 @@ def test_validate_schema(tool_registry):
         "failure_reason",
         "first_collision_waypoint",
         "collision_status_detail",
+        "evidence",
+        "paper_outcome",
     }
 
 
@@ -186,6 +194,185 @@ def test_curobo_evidence_is_algorithmic_without_fake_model_fields(curobo_module)
     assert fields["kind"]
     assert "weights_sha256" not in fields
     assert "resolved_revision" not in fields
+
+
+@pytest.mark.parametrize(
+    ("tool_name", "base", "variants"),
+    [
+        (
+            "plan_to_grasp_poses",
+            {
+                "world_config": {"meshes": [_cube_mesh("target", [0, 0, 0], 0.1)]},
+                "start_joint_position": {"positions": [0.0] * 7},
+                "grasp_poses": [_pose(0.1, 0.2, 0.3)],
+            },
+            {
+                "robot_file": "other.yml",
+                "position_threshold": 0.02,
+                "rotation_threshold": 0.08,
+                "position_threshold_z": 0.02,
+                "use_cuda_graph": True,
+                "grasp_pose_is_fingertip": False,
+                "grasp_z_clearance": 0.02,
+                "relax_orientation": True,
+                "use_grasp_approach": True,
+                "grasp_approach_offset": 0.07,
+                "grasp_approach_linear_axis": 1,
+                "grasp_approach_tstep_fraction": 0.5,
+                "use_world_collision": False,
+                "robot_collision_sphere_buffer": -0.02,
+                "collision_activation_distance": 0.02,
+                "ignore_obstacle_names": ["target"],
+            },
+        ),
+        (
+            "plan_directed_linear",
+            {"start_joint_position": {"positions": [0.0] * 7}},
+            {
+                "robot_file": "other.yml",
+                "allowed_axes": ["Z"],
+                "explicit_direction": {"x": 0.0, "y": 0.0, "z": 1.0},
+                "distance": 0.2,
+                "endpoint_mode": "DISTANCE",
+                "orientation_mode": "TARGET_AT_END",
+                "orientation_target": {"w": 1.0, "x": 0.0, "y": 0.0, "z": 0.0},
+            },
+        ),
+        (
+            "plan_with_grasped_object",
+            {
+                "world_config": {"meshes": [_cube_mesh("target", [0, 0, 0], 0.1)]},
+                "start_joint_position": {"positions": [0.0] * 7},
+                "target_pose": _pose(0.1, 0.2, 0.3),
+                "object_name": "target",
+            },
+            {
+                "robot_file": "other.yml",
+                "max_attempts": 3,
+                "use_cuda_graph": True,
+                "position_threshold": 0.02,
+                "rotation_threshold": 0.08,
+                "position_threshold_z": 0.02,
+                "num_ik_seeds": 48,
+                "use_world_collision": False,
+                "robot_collision_sphere_buffer": -0.02,
+                "collision_activation_distance": 0.02,
+                "surface_sphere_radius": 0.002,
+                "link_name": "held",
+                "remove_obstacles_from_world": True,
+                "debug_out_dir": "/tmp/curobo-test",
+            },
+        ),
+        (
+            "plan_linear",
+            {
+                "start_pose": _pose(0.1, 0.2, 0.3),
+                "end_pose": _pose(0.1, 0.2, 0.4),
+                "start_joint_position": {"positions": [0.0] * 7},
+            },
+            {"robot_file": "other.yml", "hold_vec_weight": [1, 1, 1, 0, 0, 1]},
+        ),
+        (
+            "batch_grasp_feasibility",
+            {
+                "world_config": {"meshes": [_cube_mesh("target", [0, 0, 0], 0.1)]},
+                "start_state": {"positions": [0.0] * 7},
+                "grasp_poses": [_pose(0.1, 0.2, 0.3)],
+            },
+            {
+                "robot_file": "other.yml",
+                "grasp_pose_is_fingertip": False,
+                "num_corridor_samples": 9,
+                "position_threshold": 0.02,
+                "rotation_threshold": 0.08,
+                "collision_activation_distance": 0.02,
+                "robot_collision_sphere_buffer": -0.02,
+                "ignore_obstacle_names": ["target"],
+            },
+        ),
+        (
+            "validate_joint_trajectory_robot",
+            {
+                "world_config": {"meshes": [_cube_mesh("target", [0, 0, 0], 0.1)]},
+                "trajectory": {"waypoints": [{"positions": [0.0] * 7}]},
+            },
+            {
+                "robot_file": "other.yml",
+                "use_cuda_graph": True,
+                "robot_collision_sphere_buffer": -0.02,
+                "collision_activation_distance": 0.02,
+                "ignore_obstacle_names": ["target"],
+            },
+        ),
+        (
+            "validate_joint_trajectory_grasped",
+            {
+                "world_config": {"meshes": [_cube_mesh("target", [0, 0, 0], 0.1)]},
+                "trajectory": {"waypoints": [{"positions": [0.0] * 7}]},
+                "object_name": "target",
+            },
+            {
+                "robot_file": "other.yml",
+                "use_cuda_graph": True,
+                "robot_collision_sphere_buffer": -0.02,
+                "collision_activation_distance": 0.02,
+                "surface_sphere_radius": 0.002,
+                "link_name": "held",
+                "remove_obstacles_from_world": True,
+            },
+        ),
+    ],
+)
+def test_paper_evidence_hashes_every_effective_behavior_parameter(
+    curobo_module, monkeypatch, tool_name, base, variants
+):
+    fake = SimpleNamespace(
+        plan_to_grasp_poses=lambda *args, **kwargs: (False, None, 0),
+        plan_directed_linear=lambda *args, **kwargs: (False, None, "blocked"),
+        plan_with_grasped_object=lambda *args, **kwargs: (False, None),
+        plan_linear=lambda *args, **kwargs: (False, None, "blocked"),
+        batch_grasp_feasibility=lambda *args, **kwargs: ([False], [False], [False], [1.0]),
+        validate_joint_trajectory_robot_world=lambda *args, **kwargs: (
+            False,
+            "collision",
+            0,
+            {},
+        ),
+        validate_joint_trajectory_grasped_object=lambda *args, **kwargs: (
+            False,
+            "collision",
+            0,
+            {},
+        ),
+    )
+    monkeypatch.setattr(curobo_module, "_impl", lambda: fake)
+    function = getattr(curobo_module, tool_name)
+    baseline = function(**base)["evidence"]["input_sha256"]
+
+    for parameter, value in variants.items():
+        changed = function(**base, **{parameter: value})["evidence"]["input_sha256"]
+        assert changed != baseline, f"{tool_name}.{parameter} is absent from effective evidence"
+
+
+def test_batch_feasibility_collision_is_not_reported_as_ik_failure(
+    curobo_module, monkeypatch
+):
+    fake = SimpleNamespace(
+        batch_grasp_feasibility=lambda *args, **kwargs: ([False], [True], [True], [1.0])
+    )
+    monkeypatch.setattr(curobo_module, "_impl", lambda: fake)
+
+    result = curobo_module.batch_grasp_feasibility(
+        world_config={"meshes": [_cube_mesh("scene", [0, 0, 0], 0.1)]},
+        start_state={"positions": _FRANKA_HOME},
+        grasp_poses=[_pose(0.4, 0.0, 0.2)],
+    )
+
+    assert result["paper_outcome"] == {
+        "status": "failure",
+        "failure_code": "trajectory_invalid",
+        "source": "service",
+    }
 
 
 def test_curobo_paper_capability_reports_pinned_metadata(curobo_module, monkeypatch):

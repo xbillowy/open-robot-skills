@@ -31,6 +31,43 @@ class PaperManipulationError(RuntimeError):
         super().__init__(code)
 
 
+_SERVICE_FAILURE_CODE = {
+    "grounding-dino.detect": "DETECTOR_SERVICE_ERROR",
+    "vlm.query": "VLM_SERVICE_ERROR",
+    "sam3.segment_box": "SEGMENTATION_SERVICE_ERROR",
+    "robot.get_observation": "SERVICE_UNAVAILABLE",
+    "geometry.mask_to_world_points": "SERVICE_UNAVAILABLE",
+    "geometry.filter_and_compute_obb": "SERVICE_UNAVAILABLE",
+}
+
+_PAPER_FAILURE_CODE = {
+    "DETECTOR_SERVICE_ERROR": "detector_service_error",
+    "VLM_SERVICE_ERROR": "vlm_service_error",
+    "SEGMENTATION_SERVICE_ERROR": "segmentation_service_error",
+    "SERVICE_UNAVAILABLE": "service_unavailable",
+    "DETECTION_CANDIDATES_INSUFFICIENT": "detector_no_candidate",
+    "VLM_DISAMBIGUATION_FAILED": "vlm_no_valid_selection",
+    "SEGMENTATION_EMPTY": "segmentation_empty_mask",
+    "DEPTH_POINTS_EMPTY": "depth_invalid",
+    "OBB_FIT_FAILED": "obb_invalid",
+    "DETECTION_EVIDENCE_UNAVAILABLE": "detector_service_error",
+    "VLM_EVIDENCE_UNAVAILABLE": "vlm_service_error",
+    "SEGMENTATION_EVIDENCE_UNAVAILABLE": "segmentation_service_error",
+    "DEPTH_EVIDENCE_UNAVAILABLE": "service_unavailable",
+    "OBB_EVIDENCE_UNAVAILABLE": "service_unavailable",
+    "PRESET_SCHEMA_INVALID": "protocol_contract_violation",
+    "PRESET_HASH_MISMATCH": "protocol_contract_violation",
+    "PRESET_PARAMETERS_INVALID": "protocol_contract_violation",
+    "SEMANTIC_ROLE_INVALID": "protocol_contract_violation",
+    "RGBD_OBSERVATION_UNAVAILABLE": "service_unavailable",
+    "EXTERIOR_RGBD_UNAVAILABLE": "service_unavailable",
+    "DETECTION_BOX_INVALID": "detector_no_candidate",
+    "VLM_CROP_TOURNAMENT_FAILED": "protocol_contract_violation",
+    "UNDECLARED_TOOL_DISPATCH": "protocol_contract_violation",
+    "PAPER_MANIPULATION_INTERNAL_ERROR": "protocol_contract_violation",
+}
+
+
 class Output(TypedDict, total=False):
     success: bool
     error_code: str | None
@@ -43,6 +80,10 @@ class Output(TypedDict, total=False):
     decision_path: list[str]
     fallback_used: bool
     preset_trace: dict[str, Any]
+    paper_outcome: dict[str, Any]
+    semantic_evidence: list[dict[str, Any]]
+    observation: dict[str, Any]
+    mask: Any
 
 
 def _json_default(value: Any) -> Any:
@@ -134,8 +175,21 @@ def _evidence(result: dict[str, Any], kind: str, code: str) -> dict[str, Any]:
     return evidence
 
 
-def _tool(ctx: NodeContext, name: str, code: str, **kwargs: Any) -> dict[str, Any]:
+def _tool(
+    ctx: NodeContext,
+    name: str,
+    code: str,
+    *,
+    paper_branch: str | None = None,
+    paper_operation: str | None = None,
+    **kwargs: Any,
+) -> dict[str, Any]:
     try:
+        if paper_branch is not None and paper_operation is not None:
+            kwargs["_paper_evidence"] = {
+                "branch": paper_branch,
+                "operation": paper_operation,
+            }
         if name == "robot.get_observation":
             return ctx.tool("robot.get_observation", **kwargs)
         if name == "grounding-dino.detect":
@@ -149,8 +203,10 @@ def _tool(ctx: NodeContext, name: str, code: str, **kwargs: Any) -> dict[str, An
         if name == "geometry.filter_and_compute_obb":
             return ctx.tool("geometry.filter_and_compute_obb", **kwargs)
         raise PaperManipulationError("UNDECLARED_TOOL_DISPATCH")
+    except PaperManipulationError:
+        raise
     except Exception as error:
-        raise PaperManipulationError(code) from error
+        raise PaperManipulationError(_SERVICE_FAILURE_CODE[name]) from error
 
 
 def _selected_index(text: str, candidate_count: int) -> int:
@@ -237,7 +293,13 @@ def _run_impl(
         raise PaperManipulationError("RGBD_OBSERVATION_UNAVAILABLE")
     camera_index, camera = _exterior_camera(cameras)
     detected = _tool(
-        ctx, "grounding-dino.detect", "DETECTION_FAILED", image=camera["rgb"], query=query
+        ctx,
+        "grounding-dino.detect",
+        "DETECTION_FAILED",
+        paper_branch=semantic_role,
+        paper_operation="detection",
+        image=camera["rgb"],
+        query=query,
     )
     detector_evidence = _evidence(detected, "learned_model", "DETECTION_EVIDENCE_UNAVAILABLE")
     candidates = detected.get("detections", [])
@@ -256,12 +318,20 @@ def _run_impl(
         prompt=f"Select exactly one crop label for {semantic_role} '{query}': "
         + ", ".join(chr(65 + i) for i in range(len(candidates))),
         image=crop_sheet,
+        paper_branch=semantic_role,
+        paper_operation="vlm_selection",
     )
     vlm_evidence = _evidence(tournament, "vlm", "VLM_EVIDENCE_UNAVAILABLE")
     selected_index = _selected_index(str(tournament.get("text", "")), len(candidates))
     selected = candidates[selected_index]
     segmented = _tool(
-        ctx, "sam3.segment_box", "SEGMENTATION_FAILED", image=camera["rgb"], box=selected["box"]
+        ctx,
+        "sam3.segment_box",
+        "SEGMENTATION_FAILED",
+        paper_branch=semantic_role,
+        paper_operation="segmentation",
+        image=camera["rgb"],
+        box=selected["box"],
     )
     segment_evidence = _evidence(segmented, "learned_model", "SEGMENTATION_EVIDENCE_UNAVAILABLE")
     masks = segmented.get("masks", [])
@@ -275,12 +345,19 @@ def _run_impl(
         depth=camera["depth"],
         intrinsics=camera["intrinsics"],
         camera_pose=camera["pose"],
+        paper_branch=semantic_role,
+        paper_operation="depth_obb",
     )
     depth_evidence = _evidence(projected, "algorithm_service", "DEPTH_EVIDENCE_UNAVAILABLE")
     if depth_evidence.get("valid_depth_count", 0) <= 0 or not projected.get("points"):
         raise PaperManipulationError("DEPTH_POINTS_EMPTY")
     fitted = _tool(
-        ctx, "geometry.filter_and_compute_obb", "OBB_FIT_FAILED", points=projected["points"]
+        ctx,
+        "geometry.filter_and_compute_obb",
+        "OBB_FIT_FAILED",
+        paper_branch=semantic_role,
+        paper_operation="depth_obb",
+        points=projected["points"],
     )
     obb_evidence = _evidence(fitted, "algorithm_service", "OBB_EVIDENCE_UNAVAILABLE")
     obb = fitted.get("obb")
@@ -324,6 +401,14 @@ def _run_impl(
             "obb": obb_evidence,
         },
         "preset_trace": preset_trace,
+        "paper_outcome": {
+            "status": "success",
+            "failure_code": None,
+            "source": "canonical_script",
+        },
+        "semantic_evidence": [
+            {"kind": "vlm_choice", "branch": semantic_role},
+        ],
         "fallback_used": False,
         "decision_path": [
             "observe_rgbd",
@@ -348,6 +433,10 @@ def _run_impl(
         "decision_path": lineage["decision_path"],
         "fallback_used": False,
         "preset_trace": preset_trace,
+        "paper_outcome": lineage["paper_outcome"],
+        "semantic_evidence": lineage["semantic_evidence"],
+        "observation": observation,
+        "mask": masks[0],
     }
 
 
@@ -360,6 +449,7 @@ def run(
         code = error.code
     except Exception:
         code = "PAPER_MANIPULATION_INTERNAL_ERROR"
+    failure_code = _PAPER_FAILURE_CODE[code]
     return {
         "success": False,
         "error_code": code,
@@ -372,4 +462,12 @@ def run(
         "decision_path": [],
         "fallback_used": False,
         "preset_trace": {},
+        "paper_outcome": {
+            "status": "failure",
+            "failure_code": failure_code,
+            "source": "canonical_script",
+        },
+        "semantic_evidence": [],
+        "observation": {},
+        "mask": None,
     }
