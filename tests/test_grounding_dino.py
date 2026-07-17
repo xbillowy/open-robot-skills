@@ -124,6 +124,53 @@ def test_grounding_dino_prefetch_uses_checked_revision(monkeypatch, grounding_di
     ]
 
 
+def test_grounding_dino_loader_never_resolves_checked_artifact_remotely(
+    monkeypatch, grounding_dino_module
+):
+    calls: list[tuple[str, str, dict[str, object]]] = []
+
+    class FakeModel:
+        def to(self, device):
+            calls.append(("model.to", device, {}))
+            return self
+
+        def eval(self):
+            calls.append(("model.eval", "", {}))
+
+    class FakeLoader:
+        def __init__(self, kind: str, result: object):
+            self.kind = kind
+            self.result = result
+
+        def from_pretrained(self, model_name: str, **kwargs):
+            calls.append((self.kind, model_name, kwargs))
+            return self.result
+
+    fake_transformers = SimpleNamespace(
+        AutoProcessor=FakeLoader("processor", object()),
+        AutoModelForZeroShotObjectDetection=FakeLoader("model", FakeModel()),
+    )
+    monkeypatch.setitem(sys.modules, "transformers", fake_transformers)
+    monkeypatch.setattr(
+        grounding_dino_module,
+        "paper_model_artifact",
+        lambda *, verify_local=False: {"verified": verify_local},
+    )
+    monkeypatch.setattr(grounding_dino_module, "_model", None)
+    monkeypatch.setattr(grounding_dino_module, "_processor", None)
+
+    grounding_dino_module._get_model()
+
+    expected_selection = {
+        "revision": "12bdfa3120f3e7ec7b434d90674b3396eccf88eb",
+        "local_files_only": True,
+    }
+    assert calls[:2] == [
+        ("processor", "IDEA-Research/grounding-dino-base", expected_selection),
+        ("model", "IDEA-Research/grounding-dino-base", expected_selection),
+    ]
+
+
 def test_grounding_dino_threshold_substitution_is_fallback(grounding_dino_module):
     evidence = grounding_dino_module._learned_evidence({}, {}, fallback_used=True)
     assert evidence["fallback_used"] is True

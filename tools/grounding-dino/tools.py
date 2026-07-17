@@ -213,9 +213,15 @@ def _get_model() -> tuple[Any, Any]:
 
             paper_model_artifact(verify_local=True)
             logger.info("Loading Grounding DINO model: %s on %s ...", _MODEL_NAME, _DEVICE)
-            _processor = AutoProcessor.from_pretrained(_MODEL_NAME, revision=_MODEL_REVISION)
+            _processor = AutoProcessor.from_pretrained(
+                _MODEL_NAME,
+                revision=_MODEL_REVISION,
+                local_files_only=True,
+            )
             model = AutoModelForZeroShotObjectDetection.from_pretrained(
-                _MODEL_NAME, revision=_MODEL_REVISION
+                _MODEL_NAME,
+                revision=_MODEL_REVISION,
+                local_files_only=True,
             )
             model = model.to(_DEVICE)
             model.eval()
