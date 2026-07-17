@@ -72,15 +72,36 @@ def _seal_synthetic_manifest(
 
 @pytest.fixture(scope="module")
 def sam3_module():
+    patch = pytest.MonkeyPatch()
+    package_paths = {
+        "gap_skills": None,
+        "gap_skills.tools": None,
+        "gap_skills.tools.sam3": ROOT / "tools/sam3",
+    }
+    for dotted, path in package_paths.items():
+        parent, _, leaf = dotted.rpartition(".")
+        package = sys.modules.get(dotted)
+        if package is None:
+            package = ModuleType(dotted)
+            package.__package__ = dotted
+            if path is not None:
+                package.__path__ = [str(path)]
+            patch.setitem(sys.modules, dotted, package)
+        if parent:
+            patch.setattr(sys.modules[parent], leaf, package, raising=False)
+
     name = "gap_skills.tools.sam3.tools"
-    sys.modules.pop(name, None)
+    patch.delitem(sys.modules, name, raising=False)
     _PENDING_TOOLS[:] = [e for e in _PENDING_TOOLS if e["name"] not in EXPECTED_TOOLS]
     spec = importlib.util.spec_from_file_location(name, ROOT / "tools/sam3/tools.py")
     assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)
-    sys.modules[name] = module
+    patch.setitem(sys.modules, name, module)
     spec.loader.exec_module(module)
-    return module
+    try:
+        yield module
+    finally:
+        patch.undo()
 
 
 @pytest.fixture(scope="module")
@@ -154,18 +175,48 @@ def test_invalid_image_shape_rejected_before_model_load(tool_registry, sam3_modu
     assert pil.size == (4, 4)
 
 
-def test_sam3_paper_artifact_is_unavailable_without_checked_weights(sam3_module):
+def test_sam3_checked_manifest_matches_paper_identity(sam3_module):
     fields = typing.get_type_hints(sam3_module.LearnedServiceEvidence)
     assert "weights_sha256" in fields
-    with pytest.raises(ToolError, match="paper|artifact|weights"):
-        sam3_module.paper_model_artifact()
+    manifest = json.loads((ROOT / "tools/sam3/paper_model_manifest.json").read_text())
+    assert manifest == {
+        "schema_version": 1,
+        "requested_model": "facebook/sam3",
+        "resolved_revision": "3c879f39826c281e95690f02c7821c4de09afae7",
+        "loader_revision": "b26a5f330e05d321afb39d01d3d4881f258f65ff",
+        "files": {
+            "config.json": {
+                "sha256": (
+                    "sha256:4616385e4b21f2e5e22c875b65679185cbccfa95de42542b9166f7dc3d57160f"
+                ),
+                "size_bytes": 25843,
+            },
+            "sam3.pt": {
+                "sha256": (
+                    "sha256:9999e2341ceef5e136daa386eecb55cb414446a00ac2b55eb2dfd2f7c3cf8c9e"
+                ),
+                "size_bytes": 3450062241,
+            },
+        },
+    }
+
+
+@pytest.mark.gpu
+def test_sam3_live_paper_artifact_matches_checked_weights(sam3_module):
+    assert sam3_module.paper_model_artifact() == {
+        "requested_model": "facebook/sam3",
+        "resolved_revision": "3c879f39826c281e95690f02c7821c4de09afae7",
+        "weights_sha256": (
+            "sha256:9999e2341ceef5e136daa386eecb55cb414446a00ac2b55eb2dfd2f7c3cf8c9e"
+        ),
+    }
 
 
 def test_sam3_seals_and_validates_an_immutable_synthetic_snapshot(
     sam3_module, monkeypatch, tmp_path
 ):
     production_manifest = ROOT / "tools/sam3/paper_model_manifest.json"
-    assert not production_manifest.exists()
+    production_authority = production_manifest.read_bytes()
     manifest, _ = _seal_synthetic_manifest(sam3_module, monkeypatch, tmp_path)
 
     assert sam3_module.paper_model_artifact() == {
@@ -184,7 +235,7 @@ def test_sam3_seals_and_validates_an_immutable_synthetic_snapshot(
             for name, data in sorted(_SYNTHETIC_FILES.items())
         },
     }
-    assert not production_manifest.exists(), "synthetic tests must not mint production authority"
+    assert production_manifest.read_bytes() == production_authority
 
 
 def _fake_torch_module() -> ModuleType:
@@ -492,6 +543,7 @@ def test_sam3_manifest_sealer_cli_writes_only_the_requested_path(sam3_module, tm
     _, snapshot = _synthetic_hf_snapshot(tmp_path)
     output = tmp_path / "explicit-output.json"
     production_manifest = ROOT / "tools/sam3/paper_model_manifest.json"
+    production_authority = production_manifest.read_bytes()
 
     assert (
         sam3_module._manifest_sealer_main(["--snapshot", str(snapshot), "--output", str(output)])
@@ -502,7 +554,7 @@ def test_sam3_manifest_sealer_cli_writes_only_the_requested_path(sam3_module, tm
         _SYNTHETIC_REVISION
     )
     assert str(output.resolve()) in capsys.readouterr().out
-    assert not production_manifest.exists()
+    assert production_manifest.read_bytes() == production_authority
 
 
 @pytest.mark.parametrize("invalid", ["a" * 64, "sha256:abc", "SHA256:" + "a" * 64])

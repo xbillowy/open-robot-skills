@@ -1,0 +1,16 @@
+{
+  "files": {
+    "config.json": {
+      "sha256": "sha256:4616385e4b21f2e5e22c875b65679185cbccfa95de42542b9166f7dc3d57160f",
+      "size_bytes": 25843
+    },
+    "sam3.pt": {
+      "sha256": "sha256:9999e2341ceef5e136daa386eecb55cb414446a00ac2b55eb2dfd2f7c3cf8c9e",
+      "size_bytes": 3450062241
+    }
+  },
+  "loader_revision": "b26a5f330e05d321afb39d01d3d4881f258f65ff",
+  "requested_model": "facebook/sam3",
+  "resolved_revision": "3c879f39826c281e95690f02c7821c4de09afae7",
+  "schema_version": 1
+}

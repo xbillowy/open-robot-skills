@@ -53,14 +53,20 @@ CUDA-only in practice.
 
 ## Paper model admission
 
-Paper admission is currently **unavailable** until
-`paper_model_manifest.json` is created from locally downloaded, authorized
-bytes and checked into this bundle. Its absence is intentional and
-`paper_model_artifact()` fails closed; no revision or digest is inferred from
-the mutable model name or public metadata. Image and tracker singleton creation
-also fails closed without this authority; neither builder may silently download
+Paper admission is bound to the checked `paper_model_manifest.json` committed
+with this bundle. `paper_model_artifact()` validates the exact local bytes and
+fails closed on any missing file or identity drift; no revision or digest is
+inferred from the mutable model name. Image and tracker singleton creation also
+fails closed without this authority, and neither builder may silently download
 from an unpinned revision. Tool results still carry `evidence: null` until the
 paper evidence plumbing promotes this validated identity.
+
+The admitted identity is:
+
+- `requested_model`: `facebook/sam3`
+- `resolved_revision`: `3c879f39826c281e95690f02c7821c4de09afae7`
+- `sam3.pt` SHA256:
+  `9999e2341ceef5e136daa386eecb55cb414446a00ac2b55eb2dfd2f7c3cf8c9e`
 
 The checked-manifest pipeline binds all of the following:
 
