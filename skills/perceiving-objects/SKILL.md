@@ -1,253 +1,91 @@
 ---
 name: perceiving-objects
 description: >
-  Fast single-path 3D object perception. Runs Grounding-DINO broad
-  detection, a pairwise VLM crop tournament to identify the target box,
-  SAM3 box segmentation, and depth back-projection to a world-frame point
-  cloud, finished by geometry.filter_and_compute_obb for a clean oriented
-  bounding box, mask, and cloud. Multi-camera rigs get a verified
-  wrist-camera fallback gate. Use when a manipulation workflow needs to
-  localize one named object quickly — uncluttered scenes with visually
-  distinct targets, latency-bound loops, or platforms deploying only
-  DINO + VLM + SAM3 + geometry.
+  Paper-replication perception cell for role-bound target or destination
+  localization with DINO candidates, VLM disambiguation, SAM3 segmentation,
+  depth reconstruction, and evidenced OBB fitting. Use when generating the
+  sealed manipulation workflow for the paper setting.
 license: MIT
 compatibility: requires gap>=0.1
 metadata:
   category: perception
-  tags: [perception, dino, vlm, sam3, single-method]
+  tags: [perception, paper-replication, dino, vlm, sam3]
 gap:
   allowed_tools:
     - robot.get_observation
     - grounding-dino.detect
     - vlm.query
-    - vlm.query_yes_no
     - sam3.segment_box
-    - sam3.segment_text
     - geometry.mask_to_world_points
-    - geometry.exclude_robot_points
     - geometry.filter_and_compute_obb
   exit_conditions:
-    found: Target detected; OBB and mask bound in subgraph outputs.
-    not_found: Target not visible in any view. In clean-all-items loops route to done; in normal pick-and-place, route to abort.
+    done: Role-bound perception and lineage evidence produced.
+    rejected: Required perception evidence was rejected.
+    error: The paper perception cell raised an execution error.
   required_inputs:
     query: str
     semantic_role: str
     preset_json: str
   produces_outputs:
-    "<name>_obb": OrientedBoundingBox
-    "<name>_mask": Mask
-    "<name>_cloud": PointCloud
     target_obb: OrientedBoundingBox
+    target_mask: Mask
+    target_observation: Observation
+    target_lineage_json: str
     destination_obb: OrientedBoundingBox
-    lineage_json: str
+    destination_lineage_json: str
   errors:
-    - "NOT_FOUND: Object not detected in any camera view."
+    - "NOT_FOUND: Object not detected in the exterior observation."
   hard_rules:
-    - perception_pipeline_invariants.md#emit-both-obb-and-mask
-    - geometry_calling_conventions.md#obb-field-binding
+    - "Use only perceive_disambiguate_segment.py."
+    - "Run separate target and destination cells; never reuse lineage_json across roles."
+    - "Bind the generic script lineage_json to the matching role-specific output name."
+    - "Do not add perceive_dino_vlm, wrist fallback, native state, fixed geometry, or fallback nodes."
   canonical_scripts:
     - perceive_dino_vlm: scripts/perceive_dino_vlm.py
     - perceive_disambiguate_segment: scripts/perceive_disambiguate_segment.py
-  prompts:
-    vlm_pairwise: prompts/vlm_pairwise.md
-  references:
-    - title: Perception pipeline invariants (emit obb + mask + cloud)
-      path: references/perception_pipeline_invariants.md
-    - title: Geometry tool calling conventions (output field binding)
-      path: references/geometry_calling_conventions.md
   examples:
-    - title: Canonical perception subgraph (observe → perceive → filter_obb)
+    - title: Canonical target-role paper perception cell
       path: examples/canonical_subgraph.json
+    - title: Canonical destination-role paper perception cell
+      path: examples/canonical_destination_subgraph.json
   streaming: false
 ---
 
 # perceiving-objects
 
-## Paper-replication v1 contract
+## Purpose
 
-`skills/perceiving-objects/scripts/perceive_disambiguate_segment.py` is the
-only paper-admitted perception path. Invoke it separately with the required
-`semantic_role` literal `target` and `destination`; the two role-bound lineage
-hashes are not interchangeable. It performs one exterior RGB-D observation,
-broad Grounding-DINO candidates, a VLM crop tournament, SAM3 box segmentation,
-depth back-projection, and evidenced OBB fitting. Every stage rejects missing
-or fallback evidence. It never uses a top-1 detector shortcut, wrist view,
-native state, fixed geometry, or fallback path.
+This dedicated paper cell performs exactly one exterior RGB-D observation,
+broad Grounding-DINO candidate detection, VLM crop disambiguation, SAM3 box
+segmentation, depth back-projection, and evidenced OBB fitting. Missing or
+fallback evidence fails closed.
 
-The required sealed `recast.paper_manipulation.v1` preset is the sole source of
-all five manipulation parameters. Results carry `success`, stable
-`error_code`, the preset hash, and per-parameter runtime value, mapping,
-evidence level, and paper locator. Perception error codes cover preset/schema,
-RGB-D observation, detection/candidate count, VLM selection, segmentation,
-depth, and OBB failures.
-`preset_json` and `lineage_json` are strict canonical-JSON UTF-8 strings; the
-script rejects noncanonical or non-object envelopes at its boundary.
+## Contract
 
-Single-path perception: detect → disambiguate (pairwise crop tournament)
-→ segment → fuse to 3D → extract OBB. Each DINO detection is cropped and
-upscaled, and the target is found via binary "A or B?" comparisons of
-crop pairs — far more reliable on small targets than a one-shot
-Set-of-Marks letter pick (~30% → 97% on the LIBERO-PosVar object-ID
-study).
+Inputs are exactly `query`, `semantic_role`, and canonical
+`recast.paper_manipulation.v1` `preset_json`. Invoke one instance with role
+`target` and another with role `destination`.
 
-Multi-camera handling uses a **`safe` wrist-fallback gate** (not blind
-KD-tree fusion): identification defaults to the exterior view; the
-wrist (eye-in-hand) view is consulted ONLY when the exterior pick fails
-its own close-up verify AND the wrist pick passes its own. On the
-4-suite / 200-frame regression study this was the only zero-regression
-policy (+2.5% net, 0/189 frames regressed; blind fuse/verify→wrist/
-wrist-only all regressed). See `perceive_dino_vlm.run` docstring.
+The target instance publishes `target_obb`, `target_mask`,
+`target_observation`, and `target_lineage_json`. The destination instance
+publishes `destination_obb` and `destination_lineage_json`. Each role-specific
+lineage output aliases that instance's `perceive.lineage_json`.
 
-On the verified-exterior path the wrist views still contribute **cloud
-geometry** (never identity): wrist clouds of the same object — gated by
-the multiview intersection check, with a geometry-seeded SAM fallback
-(exterior cloud projected into the wrist frame) — are fused into the
-output cloud so the OBB recovers the top face / far side a single front
-view misses. A lone front view yields a sliver OBB biased toward the
-camera by half the object depth, and that off-centre pinch is the
-measured slip-during-transport failure mode on tall bottles/cartons.
-
-## When to use
-
-- Uncluttered scenes with visually distinct targets.
-- Platforms where only DINO + VLM + SAM3 + geometry are deployed.
-- The default single-target 3D perception skill.
-
-## When NOT to use
-
-- Cluttered scenes with many similar nearby distractors: strengthen the
-  pairwise tournament by passing `object_description` shape/appearance hints
-  (see the note above) rather than relying on the bare label alone.
-- Clean-all-items / multi-item loops that need a clean "no match" loop
-  terminator. Prefer `perceiving-objects-oneshot`.
-
-## Recommended subgraph state flow
-
-3 states:
+## Exact graph
 
 ```text
-observe → perceive → filter_obb
+START → perceive_disambiguate_segment
+          ├─ success=True  → done → END
+          └─ success=False → rejected → END
+exception → error
 ```
 
-State details:
+Use `examples/canonical_subgraph.json` for target and
+`examples/canonical_destination_subgraph.json` for destination. Their only
+script is `scripts/perceive_disambiguate_segment.py`.
 
-> **About `object_name` below:** it is a literal Python string — the natural
-> noun phrase for the object you are perceiving, drawn from this subgraph's
-> description (e.g. `"alphabet soup can"`, `"basket"`, `"red bowl"`). It is
-> a constant per subgraph instance, NOT a binding. **DO NOT** write
-> `Ref("in.object_name")` or any other `Ref(...)`; the coordinator does
-> not declare `object_name` as a subgraph input. Write the string directly,
-> e.g. `"object_name": "basket"`.
->
-> **About `object_description` (wire it whenever the task gives hints):**
-> also a literal Python string. When the task/workflow description carries
-> shape or appearance hints for the target (e.g. an "Object context" block
-> with `shape_hint` / `expected_label`, or adjectives in the instruction),
-> pass them through verbatim, e.g.
-> `"object_description": "small rectangular box, blue and white packaging,
-> ~5 cm wide"`. The description is injected into BOTH the pairwise
-> tournament prompt ("It looks like: …") and the close-up verification
-> question ("It should look like: …"). This is what disambiguates
-> look-alike packaging (several LIBERO grocery items are small blue/white
-> boxes) and keeps the verify gate from rejecting a correct pick whose
-> rendered asset reads as a generic box — a rejection forces the
-> wrist-camera fallback, whose single top-down view degrades the OBB
-> height and downstream grasps. Omit it (default `""`) only when the task
-> provides no hints.
+## Prohibitions
 
-1. **`observe`** — `type: tool`, `tool: "robot.get_observation"`,
-   `inputs: {}`. Connector tool; flat name only.
-2. **`perceive`** — `type: script`, file `scripts/<sg>/perceive_dino_vlm.py`
-   from this bundle. Inputs:
-   `cameras=Ref("observe.cameras")`,
-   `object_name="basket"` (replace with the actual target noun phrase
-   from this subgraph's description),
-   `object_description="..."` (the task's shape/appearance hints — see the
-   note above; strongly recommended whenever hints exist),
-   plus any optional fields (`dino_prompt`, etc.).
-   Returns `{found, cloud, mask, score}`.
-3. **`filter_obb`** — `type: tool`,
-   `tool: "geometry.filter_and_compute_obb"`,
-   `inputs={"points": Ref("perceive.cloud")}`. Returns `{"obb": <OrientedBoundingBox>}`.
-
-### Wiring the exit (HARD)
-
-Use the linear edge `filter_obb → found → END`. When the target isn't
-found, `perceive` returns an empty cloud and `filter_obb` raises on it,
-so the subgraph's `on_error: "not_found"` catches that path
-automatically. Do **NOT** add any conditional edges on `perceive` — the
-linear path plus `set_on_error` is sufficient.
-
-✅ Correct (the literal `gap.builder` calls you should emit):
-
-```python
-sg.add_node("perceive", type="script",
-            script="scripts/<sg>/perceive_dino_vlm.py",
-            inputs={"cameras": Ref("observe.cameras"),
-                    "object_name": "small blue and white cream cheese",
-                    # from the task's Object context / shape_hint block:
-                    "object_description": ("small rectangular box, blue "
-                                           "and white packaging, ~5 cm wide")})
-
-sg.add_node("filter_obb", type="tool",
-            tool="geometry.filter_and_compute_obb",
-            inputs={"points": Ref("perceive.cloud")})
-
-# add_exit() creates the success-marker noop node AND registers the
-# exit value. Do NOT also call sg.add_node("found", type="noop") — that
-# would conflict with the node add_exit created.
-sg.add_exit("found")
-
-sg.add_edge("perceive", "filter_obb")
-sg.add_edge("filter_obb", "found")
-sg.add_edge("found", END)
-
-sg.set_on_error("not_found")
-```
-
-Bind the subgraph outputs (ALL THREE — required, no exceptions):
-
-```python
-sg.set_outputs(
-    target_obb=Ref("filter_obb.obb"),
-    target_mask=Ref("perceive.mask"),
-    target_cloud=Ref("perceive.cloud"),
-)
-```
-
-(Replace `target_*` with this subgraph's actual name prefix — e.g.
-`container_obb`, `container_mask`, `container_cloud` when authoring
-the container subgraph.)
-
-All three bindings walk into a field of the producing node's output
-dict: `geometry.filter_and_compute_obb` returns `{"obb": ...}` (bind
-`Ref("filter_obb.obb")`, NOT a bare `Ref("filter_obb")`), while
-`<name>_mask` and `<name>_cloud` walk into fields of `perceive`'s
-output dict. `perceive_dino_vlm.py` already produces all three;
-emitting them unconditionally lets downstream subgraphs that need any
-of them (e.g. learned-grasp skills require `<name>_cloud`) wire up
-without you having to anticipate which skill they'll use.
-
-## Hard rules
-
-1. Subgraph-level outputs MUST emit ALL THREE: `<name>_obb`,
-   `<name>_mask`, AND `<name>_cloud`. The cloud is the fused world-frame
-   point cloud needed by learned-grasp skills; emit it unconditionally
-   so the downstream agent can wire it without round-tripping. See
-   `references/perception_pipeline_invariants.md`.
-2. `geometry.filter_and_compute_obb` returns `{"obb": OrientedBoundingBox}`;
-   bind via `Ref("filter_obb.obb")` (walk into the `obb` field).
-   See `references/geometry_calling_conventions.md`.
-
-## Required end states
-
-| End state | Meaning |
-|---|---|
-| `found` | OBB + mask bound; route to next subgraph (typically a grasp skill). |
-| `not_found` | Route to `abort` (or to `done` in clean-all-items loops). |
-
-
-## See also
-
-- `prompts/vlm_pairwise.md` — the pairwise-tournament VLM prompt template.
-- `scripts/perceive_dino_vlm.py` — the canonical perception script.
+Do not emit observation, detector, generic perception, wrist-camera, geometry
+shortcut, fallback, or retry nodes. Do not publish generic `lineage_json`
+across cells, and never substitute one role's lineage for the other.

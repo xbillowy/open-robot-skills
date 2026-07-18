@@ -605,10 +605,13 @@ def test_skill_frontmatter_declares_all_canonical_json_bindings() -> None:
 
     registry = load_skills(ROOT)
     expected = {
-        "perceiving-objects": ({"preset_json": "str"}, {"lineage_json": "str"}),
+        "perceiving-objects": (
+            {"preset_json": "str"},
+            {"target_lineage_json": "str", "destination_lineage_json": "str"},
+        ),
         "grasping-with-planner": (
             {"target_lineage_json": "str", "preset_json": "str"},
-            {"validated_grasp_json": "str", "held_grasp_json": "str"},
+            {"held_grasp_json": "str", "world_config": "WorldConfig"},
         ),
         "transporting-objects": (
             {

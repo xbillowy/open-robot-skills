@@ -30,10 +30,8 @@
     }
   },
   "outputs": {
-    "target_obb": {"$ref": "perceive.target_obb"},
-    "target_mask": {"$ref": "perceive.mask"},
-    "target_observation": {"$ref": "perceive.observation"},
-    "target_lineage_json": {"$ref": "perceive.lineage_json"}
+    "destination_obb": {"$ref": "perceive.destination_obb"},
+    "destination_lineage_json": {"$ref": "perceive.lineage_json"}
   },
   "exit": {"router_field": null, "success_values": ["done", "rejected"]},
   "on_error": "error"

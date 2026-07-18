@@ -1,29 +1,45 @@
 {
   "skill": "transporting-objects",
-  "inputs": {"container_obb": "OrientedBoundingBox"},
+  "inputs": {
+    "held_grasp_json": "str",
+    "target_lineage_json": "str",
+    "destination_obb": "OrientedBoundingBox",
+    "destination_lineage_json": "str",
+    "world_config": "WorldConfig",
+    "target_name": "str",
+    "preset_json": "str"
+  },
   "nodes": {
-    "transport_move": {
+    "transport": {
       "type": "script",
-      "script": "scripts/transport_descend_linear.py",
+      "script": "scripts/plan_validate_transport.py",
       "inputs": {
-        "container_obb": {"$ref": "in.container_obb"},
-        "place_offset": -0.06
+        "held_grasp_json": {"$ref": "in.held_grasp_json"},
+        "target_lineage_json": {"$ref": "in.target_lineage_json"},
+        "destination_obb": {"$ref": "in.destination_obb"},
+        "destination_lineage_json": {"$ref": "in.destination_lineage_json"},
+        "world_config": {"$ref": "in.world_config"},
+        "target_name": {"$ref": "in.target_name"},
+        "preset_json": {"$ref": "in.preset_json"}
       }
     },
-    "release": {
-      "type": "script",
-      "script": "scripts/place_release.py",
-      "inputs": {"place_position": {"$ref": "transport_move.place_position"}}
-    },
-    "placed": {"type": "noop"}
+    "done": {"type": "noop"},
+    "rejected": {"type": "noop"}
   },
   "edges": [
-    ["START", "transport_move"],
-    ["transport_move", "release"],
-    ["release", "placed"],
-    ["placed", "END"]
+    ["START", "transport"],
+    ["done", "END"],
+    ["rejected", "END"]
   ],
-  "outputs": {"place_position": {"$ref": "transport_move.place_position"}},
-  "exit": {"router_field": null, "success_values": ["placed"]},
-  "on_error": "blocked"
+  "conditional_edges": {
+    "transport": {
+      "router_field": "success",
+      "mapping": {"True": "done", "False": "rejected"}
+    }
+  },
+  "outputs": {
+    "terminal_result_json": {"$ref": "transport.terminal_result_json"}
+  },
+  "exit": {"router_field": null, "success_values": ["done", "rejected"]},
+  "on_error": "error"
 }

@@ -152,12 +152,23 @@ def test_perception_bundles_discover_with_valid_frontmatter(skills_registry):
         assert 0 < len(desc) <= 1024
         assert "use when" in desc.lower()
         assert set(info.canonical_scripts) == scripts
-        assert {"found", "not_found"} <= set(info.meta.exit_conditions)
+        expected_exits = (
+            {"done", "rejected", "error"}
+            if bundle == "perceiving-objects"
+            else {"found", "not_found"}
+        )
+        assert expected_exits <= set(info.meta.exit_conditions)
         assert info.meta.streaming is False
         # produces_outputs use gap.types schema names, never proto-era names.
         assert info.meta.produces_outputs
         for type_name in info.meta.produces_outputs.values():
-            assert type_name in {"OrientedBoundingBox", "Mask", "PointCloud", "str"}
+            assert type_name in {
+                "OrientedBoundingBox",
+                "Mask",
+                "Observation",
+                "PointCloud",
+                "str",
+            }
 
 
 def test_perception_allowed_tools_all_exist(skills_registry):

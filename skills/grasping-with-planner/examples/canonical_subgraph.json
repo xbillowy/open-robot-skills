@@ -1,51 +1,69 @@
 {
   "skill": "grasping-with-planner",
-  "inputs": {"target_obb": "OrientedBoundingBox"},
+  "inputs": {
+    "target_obb": "OrientedBoundingBox",
+    "target_mask": "Mask",
+    "target_observation": "Observation",
+    "target_lineage_json": "str",
+    "target_name": "str",
+    "preset_json": "str"
+  },
   "nodes": {
-    "open": {
-      "type": "tool",
-      "tool": "robot.open_gripper",
-      "inputs": {"settle_steps": 40}
-    },
-    "compute_grasp": {
-      "type": "tool",
-      "tool": "geometry.top_down_grasp_candidates",
-      "inputs": {"obb": {"$ref": "in.target_obb"}, "z_offset": -0.03}
-    },
-    "goto_grasp": {
+    "build_world": {
       "type": "script",
-      "script": "scripts/grasp_descend_linear.py",
+      "script": "scripts/build_world.py",
       "inputs": {
-        "grasp_pose": {"$ref": "compute_grasp.candidates.poses.0"},
-        "candidate_poses": {"$ref": "compute_grasp.candidates.poses"},
+        "observation": {"$ref": "in.target_observation"},
+        "target_mask": {"$ref": "in.target_mask"},
         "target_obb": {"$ref": "in.target_obb"},
-        "hover_z": 0.2
+        "target_name": {"$ref": "in.target_name"}
       }
     },
-    "observe": {
-      "type": "tool",
-      "tool": "robot.get_observation"
+    "plan": {
+      "type": "script",
+      "script": "scripts/plan_validate_grasp.py",
+      "inputs": {
+        "target_obb": {"$ref": "in.target_obb"},
+        "target_lineage_json": {"$ref": "in.target_lineage_json"},
+        "world_config": {"$ref": "build_world.config"},
+        "target_name": {"$ref": "in.target_name"},
+        "preset_json": {"$ref": "in.preset_json"}
+      }
     },
-    "close": {
-      "type": "tool",
-      "tool": "robot.close_gripper",
-      "inputs": {"settle_steps": 60}
+    "execute": {
+      "type": "script",
+      "script": "scripts/execute_verify_grasp.py",
+      "inputs": {
+        "validated_grasp_json": {"$ref": "plan.validated_grasp_json"},
+        "target_lineage_json": {"$ref": "in.target_lineage_json"},
+        "world_config": {"$ref": "build_world.config"},
+        "target_name": {"$ref": "in.target_name"},
+        "preset_json": {"$ref": "in.preset_json"}
+      }
     },
-    "grasped": {"type": "noop"}
+    "done": {"type": "noop"},
+    "rejected": {"type": "noop"}
   },
   "edges": [
-    ["START", "open"],
-    ["open", "compute_grasp"],
-    ["compute_grasp", "goto_grasp"],
-    ["goto_grasp", "observe"],
-    ["observe", "close"],
-    ["close", "grasped"],
-    ["grasped", "END"]
+    ["START", "build_world"],
+    ["build_world", "plan"],
+    ["done", "END"],
+    ["rejected", "END"]
   ],
-  "outputs": {
-    "ee_pose_at_grasp": {"$ref": "observe.arms.0.ee_pose"},
-    "grasp_pose": {"$ref": "compute_grasp.candidates.poses.0"}
+  "conditional_edges": {
+    "plan": {
+      "router_field": "success",
+      "mapping": {"True": "execute", "False": "rejected"}
+    },
+    "execute": {
+      "router_field": "success",
+      "mapping": {"True": "done", "False": "rejected"}
+    }
   },
-  "exit": {"router_field": null, "success_values": ["grasped"]},
-  "on_error": "failed"
+  "outputs": {
+    "held_grasp_json": {"$ref": "execute.held_grasp_json"},
+    "world_config": {"$ref": "build_world.config"}
+  },
+  "exit": {"router_field": null, "success_values": ["done", "rejected"]},
+  "on_error": "error"
 }
