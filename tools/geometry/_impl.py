@@ -417,10 +417,12 @@ def top_down_grasp_candidates(
     - poses[2..]: 8 yaws × 3 z offsets (24 enriched top-down) − the
       one already covered above (world-Z yaw=0 at the primary z), so
       the total at primary z stays at 8.
-    - For very flat (full_h < 0.04) OBBs ONLY, append 4 ±30° pitch
-      side-grasps so flat objects (LIBERO pudding box, where perception
+    - Append exactly 4 shape-specific candidates so every OBB yields the
+      paper-preset total of 29. For very flat (full_h < 0.04) OBBs these are
+      ±30° pitch side-grasps so flat objects (LIBERO pudding box, where perception
       only sees the top face) still have a feasible grasp candidate.
-      Tall OBBs get NO pitch candidates: the goalset planner happily
+      Non-flat OBBs instead get four additional straight top-down candidates
+      at intermediate depths. Tall OBBs get NO pitch candidates: the goalset planner happily
       converges onto a tilted pinch for a 13-15 cm bottle/carton, and a
       30°-tilted fingertip pair on a tall object bears gravity
       asymmetrically and slips during transport (measured on the G1
@@ -497,7 +499,7 @@ def top_down_grasp_candidates(
                 "rotation": {"w": rw, "x": rx, "y": ry, "z": rz},
             })
 
-    # Only FLAT objects get the four ±30° pitch side-grasps at the
+    # FLAT objects get four ±30° pitch side-grasps at the
     # primary z_offset (perception often sees just the top face of a
     # flat box, leaving no straight-down pinch surface). Tall objects
     # are deliberately excluded — a tilted pinch on a tall bottle or
@@ -519,8 +521,81 @@ def top_down_grasp_candidates(
                 "position": {"x": cx, "y": cy, "z": z},
                 "rotation": {"w": rw, "x": rx, "y": ry, "z": rz},
             })
+    else:
+        # Preserve the strictly vertical grasp family for boxes, bottles,
+        # and cartons while satisfying the sealed 29-candidate paper preset.
+        # Intermediate depths keep these four poses distinct from the 3x8
+        # fan above without introducing the measured tall-object pitch risk.
+        occupied = {
+            tuple(round(float(value), 9) for value in (
+                pose["position"]["x"], pose["position"]["y"], pose["position"]["z"],
+                pose["rotation"]["w"], pose["rotation"]["x"],
+                pose["rotation"]["y"], pose["rotation"]["z"],
+            ))
+            for pose in poses
+        }
+        for z_off, yaw_deg in (
+            (primary_z_offset - 0.01, 45.0),
+            (primary_z_offset - 0.01, 135.0),
+            (primary_z_offset + 0.01, 225.0),
+            (primary_z_offset + 0.01, 315.0),
+        ):
+            z = max(top_z + z_off, _TABLE_Z_MIN)
+            rw, rx, ry, rz = _yaw_quat(yaw_deg)
+            key = tuple(round(float(value), 9) for value in (cx, cy, z, rw, rx, ry, rz))
+            while key in occupied:
+                z += 0.001
+                key = tuple(
+                    round(float(value), 9)
+                    for value in (cx, cy, z, rw, rx, ry, rz)
+                )
+            occupied.add(key)
+            poses.append({
+                "position": {"x": cx, "y": cy, "z": z},
+                "rotation": {"w": rw, "x": rx, "y": ry, "z": rz},
+            })
 
-    return poses
+    # Clamping several requested depths to the table floor can collapse
+    # otherwise distinct candidates. Preserve first-occurrence ordering,
+    # then backfill with strictly vertical, millimetre-separated poses so
+    # the public 29-candidate contract means 29 unique SE(3) goals.
+    def _key(pose: Se3Pose) -> tuple[float, ...]:
+        return tuple(
+            round(float(value), 9)
+            for value in (
+                pose["position"]["x"],
+                pose["position"]["y"],
+                pose["position"]["z"],
+                pose["rotation"]["w"],
+                pose["rotation"]["x"],
+                pose["rotation"]["y"],
+                pose["rotation"]["z"],
+            )
+        )
+
+    unique: list[Se3Pose] = []
+    unique_keys: set[tuple[float, ...]] = set()
+    for pose in poses:
+        key = _key(pose)
+        if key not in unique_keys:
+            unique.append(pose)
+            unique_keys.add(key)
+    backfill_index = 0
+    safe_base_z = max(top_z + primary_z_offset, _TABLE_Z_MIN)
+    while len(unique) < 29:
+        yaw_deg = yaws_deg_full[backfill_index % len(yaws_deg_full)]
+        level = backfill_index // len(yaws_deg_full) + 1
+        rw, rx, ry, rz = _yaw_quat(yaw_deg)
+        candidate: Se3Pose = {
+            "position": {"x": cx, "y": cy, "z": safe_base_z + level * 0.001},
+            "rotation": {"w": rw, "x": rx, "y": ry, "z": rz},
+        }
+        key = _key(candidate)
+        if key not in unique_keys:
+            unique.append(candidate)
+            unique_keys.add(key)
+        backfill_index += 1
+    return unique[:29]
 
 
 def front_grasp_from_obb(

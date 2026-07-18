@@ -293,12 +293,23 @@ def _gt_obb():
     }
 
 
+def _pose_key(pose: dict) -> tuple[float, ...]:
+    return tuple(
+        round(float(value), 9)
+        for value in (
+            *pose["position"].values(),
+            *pose["rotation"].values(),
+        )
+    )
+
+
 def test_top_down_grasp_candidates_above_obb(tool_registry):
     out = tool_registry.invoke("geometry.top_down_grasp_candidates", obb=_gt_obb(), z_offset=-0.01)
     poses = out["candidates"]["poses"]
 
-    # 6 cm cube: neither tall (>0.08) nor flat (<0.04) → 2 legacy + 23 fan.
-    assert len(poses) == 25
+    # 6 cm cube: 2 legacy + 23 fan + 4 vertical completion candidates.
+    assert len(poses) == 29
+    assert len({_pose_key(pose) for pose in poses}) == 29
 
     top_z = _CUBE_CENTER[2] + _CUBE_SIZE[2] / 2.0  # 0.06
     primary = poses[0]
@@ -348,7 +359,8 @@ def test_top_down_grasp_candidates_tall_obb_strictly_top_down(tool_registry):
     winning acceptance pipeline."""
     out = tool_registry.invoke("geometry.top_down_grasp_candidates", obb=_obb_with_height(0.14))
     poses = out["candidates"]["poses"]
-    assert len(poses) == 25  # 2 legacy + 23 yaw/depth fan, no pitch grasps
+    assert len(poses) == 29  # 2 legacy + 23 fan + 4 vertical completion candidates
+    assert len({_pose_key(pose) for pose in poses}) == 29
     for pose in poses:
         assert _is_straight_down(pose["rotation"]), (
             "tall OBB produced a non-vertical grasp candidate"
@@ -361,8 +373,22 @@ def test_top_down_grasp_candidates_flat_obb_keeps_pitch_grasps(tool_registry):
     out = tool_registry.invoke("geometry.top_down_grasp_candidates", obb=_obb_with_height(0.03))
     poses = out["candidates"]["poses"]
     assert len(poses) == 29  # 25 top-down + 4 pitched side-grasps
+    assert len({_pose_key(pose) for pose in poses}) == 29
     pitched = [p for p in poses if not _is_straight_down(p["rotation"], tol_deg=5.0)]
     assert len(pitched) == 4
+
+
+def test_top_down_grasp_candidates_remain_unique_after_table_clamp(tool_registry):
+    out = tool_registry.invoke(
+        "geometry.top_down_grasp_candidates",
+        obb=_obb_with_height(0.14),
+        z_offset=-1.0,
+    )
+    poses = out["candidates"]["poses"]
+
+    assert len(poses) == 29
+    assert len({_pose_key(pose) for pose in poses}) == 29
+    assert all(pose["position"]["z"] >= -0.05 for pose in poses)
 
 
 def test_top_down_grasp_from_obb_clamps_to_table(tool_registry):

@@ -569,7 +569,7 @@ def top_down_grasp_from_obb(obb: OrientedBoundingBox, z_offset: float = 0.0) -> 
 
 @tool(
     name="geometry.top_down_grasp_candidates",
-    summary="Fan out top-down grasp candidates (canonical primary+alt first, then 8 yaws x 3 depths, plus pitched side-grasps for flat boxes only).",
+    summary="Fan out 29 grasp candidates (canonical primary+alt, yaw/depth fan, then shape-safe completion).",
     tags=("planning",),
 )
 def top_down_grasp_candidates(
