@@ -49,6 +49,8 @@ gap:
     - waypoint_move_carve: scripts/waypoint_move_carve.py
     - perceive_placement_zone: scripts/perceive_placement_zone.py
     - plan_validate_transport: scripts/plan_validate_transport.py
+  prompts:
+    vlm_select_zone: prompts/vlm_select_zone.md
   examples:
     - title: Canonical paper validated held-object transport cell
       path: examples/canonical_subgraph.json

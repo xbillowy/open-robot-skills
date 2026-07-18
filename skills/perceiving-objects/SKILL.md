@@ -43,6 +43,8 @@ gap:
   canonical_scripts:
     - perceive_dino_vlm: scripts/perceive_dino_vlm.py
     - perceive_disambiguate_segment: scripts/perceive_disambiguate_segment.py
+  prompts:
+    vlm_pairwise: prompts/vlm_pairwise.md
   examples:
     - title: Canonical target-role paper perception cell
       path: examples/canonical_subgraph.json
