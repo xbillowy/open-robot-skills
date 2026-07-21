@@ -1086,10 +1086,11 @@ def build_world_config(
         above_table = merged[:, 2] >= table_z
         merged = merged[above_table]
 
-    # ----- Step 5: Mark object points (consumed by scene-mesh exclusion) -----
-    # Per-object meshes are no longer emitted from this pipeline. We keep
-    # the mask → world-point projection here only to flag which points
-    # the scene background mesh in step 6 should exclude.
+    # ----- Step 5: Build named object meshes and mark their scene points -----
+    # Named meshes are required by held-object collision checking: CuRobo
+    # excludes the target during approach, then attaches the same geometry
+    # during lift and transport. The background scene mesh must still omit
+    # these points so the target is not represented twice.
     collision_meshes: list[dict] = []
     mesh_names: list[str] = []
     object_point_indices: set[int] = set()
@@ -1144,13 +1145,48 @@ def build_world_config(
             )
             continue
 
+        object_name = str(entry.get("name") or "").strip()
+        if not object_name:
+            logger.warning("build_world_config: object mask has no name, skipping")
+            continue
+
+        obj_pcd = o3d.geometry.PointCloud()
+        obj_pcd.points = o3d.utility.Vector3dVector(
+            pts_world_obj.astype(np.float64)
+        )
+        try:
+            object_mesh, _ = obj_pcd.compute_convex_hull(joggle_inputs=True)
+            object_mesh.compute_vertex_normals()
+            object_vertices = np.asarray(object_mesh.vertices).astype(np.float32)
+            object_faces = np.asarray(object_mesh.triangles).astype(np.int32)
+            if len(object_vertices) > 0 and len(object_faces) > 0:
+                collision_meshes.append(
+                    {
+                        "name": object_name,
+                        "vertices": object_vertices,
+                        "faces": object_faces,
+                        "pose": {
+                            "position": {"x": 0.0, "y": 0.0, "z": 0.0},
+                            "rotation": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0,
+                            },
+                        },
+                    }
+                )
+                mesh_names.append(object_name)
+        except Exception as exc:
+            logger.warning(
+                "build_world_config: object convex hull failed for '%s': %s",
+                object_name,
+                exc,
+            )
+
         # Mark these world points as "consumed" so step 6's scene
         # background mesh doesn't double-cover the object.
         if len(merged) > 0:
-            obj_pcd = o3d.geometry.PointCloud()
-            obj_pcd.points = o3d.utility.Vector3dVector(
-                pts_world_obj.astype(np.float64)
-            )
             merged_pcd = o3d.geometry.PointCloud()
             merged_pcd.points = o3d.utility.Vector3dVector(
                 merged.astype(np.float64)

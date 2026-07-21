@@ -189,6 +189,30 @@ def test_empty_world_reconstruction_is_fallback(monkeypatch, tool_registry):
     assert out["evidence"]["fallback_used"] is True
 
 
+def test_world_reconstruction_emits_named_mesh_for_object_mask(
+    scene, tool_registry, geometry_extras
+):
+    obs, gt = scene
+    out = tool_registry.invoke(
+        "geometry.build_world_config",
+        cameras=obs["cameras"],
+        object_masks=[
+            {
+                "name": "cube",
+                "mask": gt["cube"]["mask"].astype(np.uint8) * 255,
+                "camera_index": 0,
+            }
+        ],
+    )
+
+    meshes = {mesh["name"]: mesh for mesh in out["config"]["meshes"]}
+    assert "cube" in meshes
+    assert meshes["cube"]["vertices"].shape[1] == 3
+    assert meshes["cube"]["faces"].shape[1] == 3
+    assert len(meshes["cube"]["vertices"]) > 0
+    assert len(meshes["cube"]["faces"]) > 0
+
+
 @pytest.mark.parametrize("invalid", ["main", "a" * 39, "a" * 41, "g" * 40])
 def test_geometry_rejects_non_object_source_commits(geometry_module, invalid):
     with pytest.raises(ValueError, match="Git object ID"):
