@@ -314,6 +314,26 @@ class NegativeResultContext(FakeContext):
         return super().tool(name, **kwargs)
 
 
+class PerceptionContractContext(FakeContext):
+    def __init__(
+        self,
+        detections: list[dict[str, Any]],
+        vlm_responses: list[str],
+    ) -> None:
+        super().__init__()
+        self.detections = detections
+        self.vlm_responses = iter(vlm_responses)
+
+    def tool(self, name: str, **kwargs: Any) -> dict[str, Any]:
+        if name == "grounding-dino.detect":
+            self.calls.append((name, kwargs))
+            return {"detections": self.detections, "evidence": _learned()}
+        if name == "vlm.query":
+            self.calls.append((name, kwargs))
+            return {"text": next(self.vlm_responses), "evidence": _vlm()}
+        return super().tool(name, **kwargs)
+
+
 def _happy_artifacts() -> tuple[dict[str, ModuleType], dict[str, Any]]:
     modules = {
         "perceive": _module("skills/perceiving-objects/scripts/perceive_disambiguate_segment.py"),
@@ -675,6 +695,164 @@ def test_missing_learned_evidence_fails_closed_with_stable_code() -> None:
     ctx.tool = tool  # type: ignore[method-assign]
     result = module.run(ctx, query="mug", semantic_role="target", preset_json=PRESET_JSON)
     _assert_failure(result, "SEGMENTATION_EVIDENCE_UNAVAILABLE")
+
+
+def test_perception_single_candidate_is_vlm_validated_not_rejected() -> None:
+    module = _module("skills/perceiving-objects/scripts/perceive_disambiguate_segment.py")
+    ctx = PerceptionContractContext(
+        [{"box": [1, 1, 10, 10], "label": "object", "score": 0.84}],
+        ["YES — candidate A is the basket."],
+    )
+
+    result = module.run(ctx, query="basket_1", semantic_role="destination", preset_json=PRESET_JSON)
+
+    assert result["success"] is True
+    assert result["lineage_record"]["selected_candidate_index"] == 0
+    assert "single_candidate_validation" in result["decision_path"]
+    assert [name for name, _ in ctx.calls].count("vlm.query") == 1
+    detection = next(kwargs for name, kwargs in ctx.calls if name == "grounding-dino.detect")
+    assert detection["query"] == "object."
+    selection = next(kwargs for name, kwargs in ctx.calls if name == "vlm.query")
+    assert "basket_1" not in selection["prompt"]
+    assert "'basket'" in selection["prompt"]
+
+
+def test_perception_uses_pairwise_tournament_and_parses_explanatory_labels() -> None:
+    module = _module("skills/perceiving-objects/scripts/perceive_disambiguate_segment.py")
+    detections = [
+        {"box": [1 + 6 * index, 1, 6 + 6 * index, 10], "label": "object", "score": 0.9}
+        for index in range(4)
+    ]
+    ctx = PerceptionContractContext(
+        detections,
+        [
+            "The better match is **B**.",
+            "The correct label is A.",
+            "After comparing both crops, the answer is **B**.",
+        ],
+    )
+
+    result = module.run(ctx, query="alphabet_soup_1", semantic_role="target", preset_json=PRESET_JSON)
+
+    assert result["success"] is True
+    assert result["lineage_record"]["selected_candidate_index"] == 2
+    assert "pairwise_crop_tournament" in result["decision_path"]
+    vlm_calls = [kwargs for name, kwargs in ctx.calls if name == "vlm.query"]
+    assert len(vlm_calls) == 3
+    assert all(call["image"].shape == (396, 792, 3) for call in vlm_calls)
+
+
+def test_perception_drops_small_contained_fragment_before_tournament() -> None:
+    module = _module("skills/perceiving-objects/scripts/perceive_disambiguate_segment.py")
+    ctx = PerceptionContractContext(
+        [
+            {"box": [1, 1, 20, 20], "label": "object", "score": 0.9},
+            {"box": [5, 5, 8, 8], "label": "label", "score": 0.95},
+            {"box": [21, 1, 30, 10], "label": "object", "score": 0.8},
+        ],
+        ["A"],
+    )
+
+    result = module.run(ctx, query="mug_1", semantic_role="target", preset_json=PRESET_JSON)
+
+    assert result["success"] is True
+    lineage = result["lineage_record"]
+    assert len(lineage["detector_candidates_raw"]) == 3
+    assert len(lineage["detector_candidates"]) == 2
+    assert lineage["candidate_filtering"] == [
+        {"candidate_index": 1, "contained_in_candidate_index": 0, "reason": "small_fragment"}
+    ]
+
+
+def test_perception_filters_invalid_box_without_discarding_valid_candidates() -> None:
+    module = _module("skills/perceiving-objects/scripts/perceive_disambiguate_segment.py")
+    ctx = PerceptionContractContext(
+        [
+            {"box": [-1, 1, 5, 5], "label": "invalid", "score": 0.99},
+            {"box": [1, 1, 10, 10], "label": "object", "score": 0.9},
+        ],
+        ["YES"],
+    )
+
+    result = module.run(ctx, query="basket_1", semantic_role="destination", preset_json=PRESET_JSON)
+
+    assert result["success"] is True
+    assert result["lineage_record"]["candidate_filtering"] == [
+        {"candidate_index": 0, "reason": "invalid_box"}
+    ]
+    assert result["lineage_record"]["selected_source_candidate_index"] == 1
+
+
+@pytest.mark.parametrize("text", ["A or B", "Either A or B", "not-a-label"])
+def test_perception_rejects_ambiguous_or_missing_pairwise_label(text: str) -> None:
+    module = _module("skills/perceiving-objects/scripts/perceive_disambiguate_segment.py")
+
+    with pytest.raises(module.PaperManipulationError, match="VLM_DISAMBIGUATION_FAILED"):
+        module._selected_index(text, 2)
+
+
+def test_perception_parser_rejects_conflicting_explicit_answers() -> None:
+    module = _module("skills/perceiving-objects/scripts/perceive_disambiguate_segment.py")
+
+    with pytest.raises(module.PaperManipulationError, match="VLM_DISAMBIGUATION_FAILED"):
+        module._selected_index("The answer is A. Correction: the answer is B.", 2)
+
+
+def test_perception_parser_accepts_structured_label() -> None:
+    module = _module("skills/perceiving-objects/scripts/perceive_disambiguate_segment.py")
+
+    assert module._selected_index('{"label":"B"}', 2) == 1
+
+
+@pytest.mark.parametrize(
+    "text",
+    ["**B**", "B is the better match.", "I choose B."],
+)
+def test_perception_parser_accepts_bounded_explicit_variants(text: str) -> None:
+    module = _module("skills/perceiving-objects/scripts/perceive_disambiguate_segment.py")
+
+    assert module._selected_index(text, 2) == 1
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "The answer is C. The answer is A.",
+        '{"label":"{\\"label\\":\\"B\\"}"}',
+    ],
+)
+def test_perception_parser_rejects_out_of_range_or_nested_answers(text: str) -> None:
+    module = _module("skills/perceiving-objects/scripts/perceive_disambiguate_segment.py")
+
+    with pytest.raises(module.PaperManipulationError, match="VLM_DISAMBIGUATION_FAILED"):
+        module._selected_index(text, 2)
+
+
+def test_perception_parser_accepts_preserved_task19_response() -> None:
+    module = _module("skills/perceiving-objects/scripts/perceive_disambiguate_segment.py")
+
+    assert (
+        module._selected_index(
+            "The correct label for the target 'alphabet_soup_1' is **D**.", 4
+        )
+        == 3
+    )
+
+
+def test_perception_rejects_low_confidence_segmentation() -> None:
+    module = _module("skills/perceiving-objects/scripts/perceive_disambiguate_segment.py")
+    result = module.run(
+        NegativeResultContext(
+            "sam3.segment_box",
+            {"masks": ["mask"], "scores": [0.1], "evidence": _learned()},
+        ),
+        query="mug",
+        semantic_role="target",
+        preset_json=PRESET_JSON,
+    )
+
+    _assert_failure(result, "SEGMENTATION_LOW_CONFIDENCE")
+    assert result["paper_outcome"]["failure_code"] == "segmentation_empty_mask"
 
 
 def test_detector_exception_is_mapped_to_stable_stage_code() -> None:
