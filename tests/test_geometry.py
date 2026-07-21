@@ -189,7 +189,7 @@ def test_empty_world_reconstruction_is_fallback(monkeypatch, tool_registry):
     assert out["evidence"]["fallback_used"] is True
 
 
-def test_world_reconstruction_emits_named_mesh_for_object_mask(
+def test_world_reconstruction_uses_object_mask_only_for_scene_exclusion(
     scene, tool_registry, geometry_extras
 ):
     obs, gt = scene
@@ -205,17 +205,66 @@ def test_world_reconstruction_emits_named_mesh_for_object_mask(
         ],
     )
 
-    meshes = {mesh["name"]: mesh for mesh in out["config"]["meshes"]}
-    assert "cube" in meshes
-    assert meshes["cube"]["vertices"].shape[1] == 3
-    assert meshes["cube"]["faces"].shape[1] == 3
-    assert len(meshes["cube"]["vertices"]) > 0
-    assert len(meshes["cube"]["faces"]) > 0
-    assert np.allclose(meshes["cube"]["vertices"].mean(axis=0), np.zeros(3), atol=1e-6)
-    assert not np.allclose(
-        [meshes["cube"]["pose"]["position"][axis] for axis in "xyz"],
-        np.zeros(3),
+    mesh_names = [mesh["name"] for mesh in out["config"]["meshes"]]
+    assert "cube" not in mesh_names
+    assert "cube" not in out["mesh_names"]
+
+
+def test_world_reconstruction_applies_every_non_target_mask_to_scene(
+    tool_registry, geometry_extras
+):
+    obs, gt = make_test_observation(
+        [
+            ("left", (-0.08, 0.0, 0.03), _CUBE_SIZE),
+            ("middle", (0.0, 0.0, 0.03), _CUBE_SIZE),
+            ("right", (0.08, 0.0, 0.03), _CUBE_SIZE),
+        ],
+        image_hw=_IMAGE_HW,
     )
+    common_kwargs = {
+        "cameras": obs["cameras"],
+        "noise_eps": 0.2,
+        "mesh_alpha": 0.2,
+        "table_z_threshold": 0.001,
+    }
+    unmasked = tool_registry.invoke(
+        "geometry.build_world_config",
+        object_masks=[],
+        **common_kwargs,
+    )
+    out = tool_registry.invoke(
+        "geometry.build_world_config",
+        object_masks=[
+            {
+                "name": name,
+                "mask": gt[name]["mask"].astype(np.uint8) * 255,
+                "camera_index": 0,
+            }
+            for name in ("left", "right")
+        ],
+        **common_kwargs,
+    )
+
+    assert out["mesh_names"] == ["scene"]
+    scene_mesh = out["config"]["meshes"][0]
+    assert scene_mesh["name"] == "scene"
+    vertices = np.asarray(scene_mesh["vertices"])
+    unmasked_vertices = np.asarray(unmasked["config"]["meshes"][0]["vertices"])
+    assert len(vertices) > 0
+
+    def points_in_object(vertices, center_x):
+        return np.count_nonzero(
+            (np.abs(vertices[:, 0] - center_x) <= 0.035)
+            & (np.abs(vertices[:, 1]) <= 0.035)
+            & (vertices[:, 2] >= 0.001)
+            & (vertices[:, 2] <= 0.065)
+        )
+
+    for center_x in (-0.08, 0.08):
+        before = points_in_object(unmasked_vertices, center_x)
+        after = points_in_object(vertices, center_x)
+        assert before > 0
+        assert after < before * 0.1
 
 
 def test_world_reconstruction_uses_target_obb_for_named_attachment_mesh(
@@ -237,7 +286,7 @@ def test_world_reconstruction_uses_target_obb_for_named_attachment_mesh(
         cameras=obs["cameras"],
         object_masks=[
             {
-                "name": "cube",
+                "name": "receptacle",
                 "mask": gt["cube"]["mask"].astype(np.uint8) * 255,
                 "camera_index": 0,
             },
@@ -254,6 +303,8 @@ def test_world_reconstruction_uses_target_obb_for_named_attachment_mesh(
     target_meshes = [mesh for mesh in out["config"]["meshes"] if mesh["name"] == "cube"]
     assert len(target_meshes) == 1
     assert out["mesh_names"].count("cube") == 1
+    assert all(mesh["name"] != "receptacle" for mesh in out["config"]["meshes"])
+    assert "receptacle" not in out["mesh_names"]
     mesh = target_meshes[0]
     assert mesh["vertices"].shape == (8, 3)
     assert mesh["faces"].shape == (12, 3)

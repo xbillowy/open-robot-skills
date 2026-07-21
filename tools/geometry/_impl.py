@@ -1120,11 +1120,12 @@ def build_world_config(
         above_table = merged[:, 2] >= table_z
         merged = merged[above_table]
 
-    # ----- Step 5: Build named object meshes and mark their scene points -----
-    # Named meshes are required by held-object collision checking: CuRobo
-    # excludes the target during approach, then attaches the same geometry
-    # during lift and transport. The background scene mesh must still omit
-    # these points so the target is not represented twice.
+    # ----- Step 5: Build the attachment mesh and mark masked scene points -----
+    # Only the grasp target receives a named mesh: CuRobo excludes it during
+    # approach, then attaches the same OBB geometry during lift and transport.
+    # Other masks (including the destination receptacle) only remove points
+    # from the background scene. Emitting a solid receptacle hull would make a
+    # valid drop pose inside it collide by construction.
     collision_meshes: list[dict] = []
     mesh_names: list[str] = []
     object_point_indices: set[int] = set()
@@ -1192,38 +1193,6 @@ def build_world_config(
             if object_name not in mesh_names:
                 collision_meshes.append(_obb_attachment_mesh(object_name, target_obb))
                 mesh_names.append(object_name)
-        else:
-            try:
-                object_mesh, _ = obj_pcd.compute_convex_hull(joggle_inputs=True)
-                object_mesh.compute_vertex_normals()
-                object_vertices = np.asarray(object_mesh.vertices).astype(np.float32)
-                object_faces = np.asarray(object_mesh.triangles).astype(np.int32)
-                if len(object_vertices) > 0 and len(object_faces) > 0:
-                    object_center = object_vertices.mean(axis=0)
-                    collision_meshes.append(
-                        {
-                            "name": object_name,
-                            "vertices": object_vertices - object_center,
-                            "faces": object_faces,
-                            "pose": {
-                                "position": {
-                                    "x": float(object_center[0]),
-                                    "y": float(object_center[1]),
-                                    "z": float(object_center[2]),
-                                },
-                                "rotation": {
-                                    "w": 1.0, "x": 0.0, "y": 0.0, "z": 0.0,
-                                },
-                            },
-                        }
-                    )
-                    mesh_names.append(object_name)
-            except Exception as exc:
-                logger.warning(
-                    "build_world_config: object convex hull failed for '%s': %s",
-                    object_name,
-                    exc,
-                )
 
         # Mark these world points as "consumed" so step 6's scene
         # background mesh doesn't double-cover the object.

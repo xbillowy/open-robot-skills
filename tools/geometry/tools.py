@@ -664,8 +664,10 @@ def build_world_config(
     """Pipeline: depth → merged world cloud → voxel downsample → optional
     FK-based robot-point exclusion → DBSCAN largest-cluster filter → table
     removal (when ``table_z_threshold`` != 0; typical -0.01) → alpha-shape
-    ``scene`` mesh, with ``object_masks`` (or a projected ``target_obb``)
-    points excluded so planners can ignore the grasp target by name.
+    ``scene`` mesh, with all ``object_masks`` (or a projected ``target_obb``)
+    points excluded. Only ``target_obb_name`` is emitted as a named OBB mesh
+    for held-object attachment; receptacle masks remain exclusion-only so a
+    drop pose inside a container is not treated as a solid-hull collision.
 
     ``robot_file`` is accepted for parity with the service request but the
     FK exclusion is Franka-only (simplified DH model); non-7-DOF joint
