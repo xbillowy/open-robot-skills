@@ -261,6 +261,30 @@ def _affirmative(text: str) -> bool:
     raise PaperManipulationError("VLM_DISAMBIGUATION_FAILED")
 
 
+def _contains_neither_phrase(text: str) -> bool:
+    token = " ".join(text.strip().upper().split())
+    return bool(re.search(r"\bNEITHER\s+(?:A\s+NOR\s+B|B\s+NOR\s+A)\b", token))
+
+
+def _explicit_neither(text: str) -> bool:
+    token = " ".join(text.strip().upper().split())
+    phrase = r"NEITHER\s+(?:A\s+NOR\s+B|B\s+NOR\s+A)\b"
+    if not re.search(rf"(?:^|[.!?]\s*){phrase}", token):
+        return False
+    if re.search(rf"\bNOT\s+{phrase}", token):
+        return False
+    explicit_label_claim = any(
+        re.search(pattern, token)
+        for pattern in (
+            r"\b(?:ANSWER|LABEL|MATCH|CHOICE)\b[^.!?\n]*?\bIS\s*\**[A-Z]\**",
+            r"\b(?:ANSWER|LABEL|MATCH|CHOICE)\s*:\s*\**[A-Z]\**",
+            r"\bI\s+(?:CHOOSE|PICK|SELECT)\s+\**[A-Z]\**",
+            r"(?<![A-Z0-9_])\**[A-Z]\**\s+IS\s+(?:THE\s+)?(?:BETTER|CORRECT|CLOSER)",
+        )
+    )
+    return not explicit_label_claim
+
+
 def _semantic_query(query: str) -> str:
     normalized = re.sub(r"_\d+$", "", query.strip()).replace("_", " ")
     return " ".join(normalized.split()) or query
@@ -430,15 +454,27 @@ def _disambiguate(
                 prompt=(
                     f"The image contains two object crops labeled A and B. Exactly one is the "
                     f"better match for {semantic_role} '{object_name}'. Which one is it? "
-                    "Answer with just A or B."
+                    "If neither is exact, choose the closer visual match. Never answer neither; "
+                    "answer with just A or B."
                 ),
                 image=crop_sheet,
                 paper_branch=semantic_role,
                 paper_operation="vlm_selection",
             )
             evidence_records.append(_evidence(response, "vlm", "VLM_EVIDENCE_UNAVAILABLE"))
-            local_index = _selected_index(str(response.get("text", "")), 2)
-            winner = (left, right)[local_index]
+            response_text = str(response.get("text", ""))
+            if _contains_neither_phrase(response_text):
+                if not _explicit_neither(response_text):
+                    raise PaperManipulationError("VLM_DISAMBIGUATION_FAILED")
+                winner = max(
+                    (left, right),
+                    key=lambda index: (float(candidates[index].get("score", 0.0)), -index),
+                )
+                selection_basis = "explicit_neither_detector_score_tiebreak"
+            else:
+                local_index = _selected_index(response_text, 2)
+                winner = (left, right)[local_index]
+                selection_basis = "vlm_label"
             next_round.append(winner)
             records.append(
                 {
@@ -446,7 +482,8 @@ def _disambiguate(
                     "match_index": match_index,
                     "candidate_indices": [left, right],
                     "selected_candidate_index": winner,
-                    "raw_response_sha256": _hash(response.get("text", "")),
+                    "selection_basis": selection_basis,
+                    "raw_response_sha256": _hash(response_text),
                 }
             )
         bracket = next_round

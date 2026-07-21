@@ -742,6 +742,52 @@ def test_perception_uses_pairwise_tournament_and_parses_explanatory_labels() -> 
     assert all(call["image"].shape == (396, 792, 3) for call in vlm_calls)
 
 
+def test_perception_pairwise_tournament_audits_explicit_neither_tiebreak() -> None:
+    module = _module("skills/perceiving-objects/scripts/perceive_disambiguate_segment.py")
+    detections = [
+        {"box": [1 + 6 * index, 1, 6 + 6 * index, 10], "label": "object", "score": score}
+        for index, score in enumerate((0.7, 0.8, 0.9, 0.6))
+    ]
+    ctx = PerceptionContractContext(
+        detections,
+        [
+            "B",
+            "Neither A nor B represents 'alphabet soup'.",
+            "B",
+        ],
+    )
+
+    result = module.run(ctx, query="alphabet_soup_1", semantic_role="target", preset_json=PRESET_JSON)
+
+    assert result["success"] is True
+    records = result["lineage_record"]["vlm_decision"]["tournament_records"]
+    assert records[1]["selected_candidate_index"] == 2
+    assert records[1]["selection_basis"] == "explicit_neither_detector_score_tiebreak"
+
+
+def test_perception_explicit_neither_parser_is_bounded() -> None:
+    module = _module("skills/perceiving-objects/scripts/perceive_disambiguate_segment.py")
+
+    assert module._explicit_neither("Neither A nor B represents the target.") is True
+    assert module._explicit_neither("A or B") is False
+    assert module._explicit_neither("Neither answer is convincing.") is False
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "Neither A nor B. The answer is C.",
+        "The answer is A. Actually, neither A nor B.",
+        "It is not neither A nor B.",
+    ],
+)
+def test_perception_rejects_conflicting_or_negated_neither(text: str) -> None:
+    module = _module("skills/perceiving-objects/scripts/perceive_disambiguate_segment.py")
+
+    assert module._contains_neither_phrase(text) is True
+    assert module._explicit_neither(text) is False
+
+
 def test_perception_drops_small_contained_fragment_before_tournament() -> None:
     module = _module("skills/perceiving-objects/scripts/perceive_disambiguate_segment.py")
     ctx = PerceptionContractContext(
