@@ -218,6 +218,61 @@ def test_world_reconstruction_emits_named_mesh_for_object_mask(
     )
 
 
+def test_world_reconstruction_uses_target_obb_for_named_attachment_mesh(
+    scene, tool_registry, geometry_extras
+):
+    obs, gt = scene
+    target_obb = {
+        "center": {"x": 0.31, "y": -0.02, "z": 0.08},
+        "extent": {"x": 0.03, "y": 0.02, "z": 0.04},
+        "orientation": {
+            "w": 0.7071067811865476,
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.7071067811865476,
+        },
+    }
+    out = tool_registry.invoke(
+        "geometry.build_world_config",
+        cameras=obs["cameras"],
+        object_masks=[
+            {
+                "name": "cube",
+                "mask": gt["cube"]["mask"].astype(np.uint8) * 255,
+                "camera_index": 0,
+            },
+            {
+                "name": "cube",
+                "mask": gt["cube"]["mask"].astype(np.uint8) * 255,
+                "camera_index": 0,
+            },
+        ],
+        target_obb=target_obb,
+        target_obb_name="cube",
+    )
+
+    target_meshes = [mesh for mesh in out["config"]["meshes"] if mesh["name"] == "cube"]
+    assert len(target_meshes) == 1
+    assert out["mesh_names"].count("cube") == 1
+    mesh = target_meshes[0]
+    assert mesh["vertices"].shape == (8, 3)
+    assert mesh["faces"].shape == (12, 3)
+    expected_vertices = np.asarray(
+        [
+            (x, y, z)
+            for x in (-0.03, 0.03)
+            for y in (-0.02, 0.02)
+            for z in (-0.04, 0.04)
+        ]
+    )
+    actual_vertices = mesh["vertices"]
+    actual_vertices = actual_vertices[np.lexsort(actual_vertices.T[::-1])]
+    expected_vertices = expected_vertices[np.lexsort(expected_vertices.T[::-1])]
+    assert np.allclose(actual_vertices, expected_vertices)
+    assert mesh["pose"]["position"] == target_obb["center"]
+    assert mesh["pose"]["rotation"] == target_obb["orientation"]
+
+
 @pytest.mark.parametrize("invalid", ["main", "a" * 39, "a" * 41, "g" * 40])
 def test_geometry_rejects_non_object_source_commits(geometry_module, invalid):
     with pytest.raises(ValueError, match="Git object ID"):

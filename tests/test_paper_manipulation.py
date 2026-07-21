@@ -274,6 +274,8 @@ class FakeContext:
             }
         if name == "geometry.compute_drop_position":
             return {"position": {"x": 0.6, "y": 0.2, "z": 0.15}, "evidence": _algorithm()}
+        if name == "geometry.build_world_config":
+            return {"config": {"meshes": []}, "mesh_names": []}
         if name == "robot.open_gripper":
             return {"position": 1.0}
         return {"success": True}
@@ -379,6 +381,28 @@ def _assert_failure(result: dict[str, Any], code: str, *, released: bool | None 
     assert result["error_code"] == code
     if released is not None:
         assert result["released"] is released
+
+
+def test_build_world_forwards_mask_and_obb_for_distinct_geometry_roles() -> None:
+    build_world = _module("skills/grasping-with-planner/scripts/build_world.py")
+    ctx = FakeContext()
+    observation = ctx.tool("robot.get_observation")
+    target_mask = np.ones((32, 32), dtype=np.uint8)
+
+    build_world.run(
+        ctx,
+        observation=observation,
+        target_mask=target_mask,
+        target_obb=OBB_TARGET,
+        target_name="red_mug",
+    )
+
+    kwargs = next(kwargs for name, kwargs in ctx.calls if name == "geometry.build_world_config")
+    assert kwargs["object_masks"] == [
+        {"name": "red_mug", "mask": target_mask, "camera_index": 0}
+    ]
+    assert kwargs["target_obb"] == OBB_TARGET
+    assert kwargs["target_obb_name"] == "red_mug"
 
 
 def test_paper_manipulation_exact_admitted_path_and_distinct_lineages() -> None:

@@ -197,6 +197,40 @@ def _transform_points(points: np.ndarray, T: np.ndarray) -> np.ndarray:
     return (T @ pts_h.T).T[:, :3].astype(np.float32)
 
 
+def _obb_attachment_mesh(name: str, obb: OrientedBoundingBox) -> dict:
+    """Represent an OBB as local geometry plus a world-frame pose."""
+    center, extent, _ = _obb_parts(obb)
+    rotation = obb["orientation"]
+    vertices = np.asarray(
+        [
+            [x, y, z]
+            for x in (-extent[0], extent[0])
+            for y in (-extent[1], extent[1])
+            for z in (-extent[2], extent[2])
+        ],
+        dtype=np.float32,
+    )
+    faces = np.asarray(
+        [
+            [0, 1, 3], [0, 3, 2], [4, 6, 7], [4, 7, 5],
+            [0, 4, 5], [0, 5, 1], [2, 3, 7], [2, 7, 6],
+            [0, 2, 6], [0, 6, 4], [1, 5, 7], [1, 7, 3],
+        ],
+        dtype=np.int32,
+    )
+    return {
+        "name": name,
+        "vertices": vertices,
+        "faces": faces,
+        "pose": {
+            "position": {
+                "x": float(center[0]), "y": float(center[1]), "z": float(center[2])
+            },
+            "rotation": dict(rotation),
+        },
+    }
+
+
 def _project_obb_to_mask(
     obb: OrientedBoundingBox,
     camera: CameraFrame,
@@ -1154,40 +1188,42 @@ def build_world_config(
         obj_pcd.points = o3d.utility.Vector3dVector(
             pts_world_obj.astype(np.float64)
         )
-        try:
-            object_mesh, _ = obj_pcd.compute_convex_hull(joggle_inputs=True)
-            object_mesh.compute_vertex_normals()
-            object_vertices = np.asarray(object_mesh.vertices).astype(np.float32)
-            object_faces = np.asarray(object_mesh.triangles).astype(np.int32)
-            if len(object_vertices) > 0 and len(object_faces) > 0:
-                object_center = object_vertices.mean(axis=0)
-                collision_meshes.append(
-                    {
-                        "name": object_name,
-                        "vertices": object_vertices - object_center,
-                        "faces": object_faces,
-                        "pose": {
-                            "position": {
-                                "x": float(object_center[0]),
-                                "y": float(object_center[1]),
-                                "z": float(object_center[2]),
-                            },
-                            "rotation": {
-                                "w": 1.0,
-                                "x": 0.0,
-                                "y": 0.0,
-                                "z": 0.0,
-                            },
-                        },
-                    }
-                )
+        if target_obb is not None and object_name == target_obb_name:
+            if object_name not in mesh_names:
+                collision_meshes.append(_obb_attachment_mesh(object_name, target_obb))
                 mesh_names.append(object_name)
-        except Exception as exc:
-            logger.warning(
-                "build_world_config: object convex hull failed for '%s': %s",
-                object_name,
-                exc,
-            )
+        else:
+            try:
+                object_mesh, _ = obj_pcd.compute_convex_hull(joggle_inputs=True)
+                object_mesh.compute_vertex_normals()
+                object_vertices = np.asarray(object_mesh.vertices).astype(np.float32)
+                object_faces = np.asarray(object_mesh.triangles).astype(np.int32)
+                if len(object_vertices) > 0 and len(object_faces) > 0:
+                    object_center = object_vertices.mean(axis=0)
+                    collision_meshes.append(
+                        {
+                            "name": object_name,
+                            "vertices": object_vertices - object_center,
+                            "faces": object_faces,
+                            "pose": {
+                                "position": {
+                                    "x": float(object_center[0]),
+                                    "y": float(object_center[1]),
+                                    "z": float(object_center[2]),
+                                },
+                                "rotation": {
+                                    "w": 1.0, "x": 0.0, "y": 0.0, "z": 0.0,
+                                },
+                            },
+                        }
+                    )
+                    mesh_names.append(object_name)
+            except Exception as exc:
+                logger.warning(
+                    "build_world_config: object convex hull failed for '%s': %s",
+                    object_name,
+                    exc,
+                )
 
         # Mark these world points as "consumed" so step 6's scene
         # background mesh doesn't double-cover the object.

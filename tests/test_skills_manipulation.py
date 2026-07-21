@@ -242,10 +242,12 @@ class TestGraspingWithPlanner:
             assert call.kwargs["pose"]["position"]["z"] == pytest.approx(expected_z)
         assert gtp[2].kwargs["pose"]["rotation"] == poses[0]["rotation"]
 
-        # build_world preferred the pixel-accurate mask path.
+        # The mask isolates scene points while the OBB supplies stable
+        # attachment geometry for held-object collision validation.
         bw = ctx.calls_to("geometry.build_world_config")[0].kwargs
         assert bw["object_masks"][0]["name"] == "target"
-        assert "target_obb" not in bw
+        assert bw["target_obb"] == self.TARGET_OBB
+        assert bw["target_obb_name"] == "target"
 
         # Planner kwargs carry the tuned constants verbatim.
         pk = ctx.calls_to("curobo.plan_to_grasp_poses")[0].kwargs

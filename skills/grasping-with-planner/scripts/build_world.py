@@ -5,21 +5,19 @@ collision meshes, excluding the robot body. Unwraps
 ``observation["arms"][0]["joint_state"]`` (the ``$ref`` DSL cannot index
 into repeated fields via bracket notation) and forwards the rest.
 
-Target isolation, in priority order:
+Target geometry has two distinct roles:
 
-1. ``target_mask`` (preferred): the pixel-accurate segmentation mask from
+1. ``target_mask``: the pixel-accurate segmentation mask from
    perception (e.g. SAM3 output via ``perceiving-*`` skills). Wrapped into
-   an object-mask entry ``{name: target_name, mask, camera_index: 0}``. The
-   target mesh captures the object's true silhouette so the rest of the
-   scene mesh is free of object leakage.
+   an object-mask entry ``{name: target_name, mask, camera_index: 0}`` so
+   target points are excluded from the background ``scene`` mesh.
 
-2. ``target_obb`` (fallback): the geometry bundle projects the OBB's 8
-   corners onto the first camera and fills the axis-aligned image-space
-   rectangle as a mask. Works when ``target_mask`` is unavailable but is
-   lossy for degenerate OBBs.
+2. ``target_obb``: supplies stable local-frame attachment geometry for
+   held-object collision validation. When no mask is available, the geometry
+   bundle also projects this OBB to derive a fallback exclusion mask.
 
-Pass BOTH when available — ``target_mask`` wins for isolation, and the
-OBB remains available elsewhere (top_down_grasp_candidates, etc.).
+Pass BOTH when available: the mask isolates the target from the scene, while
+the OBB represents the uniquely named object attached by CuRobo.
 """
 
 from typing import TypedDict
@@ -49,10 +47,8 @@ def run(
         kwargs["robot_joint_state"] = observation["arms"][0]["joint_state"]
 
     if target_mask is not None:
-        kwargs["object_masks"] = [
-            {"name": target_name, "mask": target_mask, "camera_index": 0}
-        ]
-    elif target_obb is not None:
+        kwargs["object_masks"] = [{"name": target_name, "mask": target_mask, "camera_index": 0}]
+    if target_obb is not None:
         kwargs["target_obb"] = target_obb
         kwargs["target_obb_name"] = target_name
 
