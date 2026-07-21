@@ -1160,13 +1160,18 @@ def build_world_config(
             object_vertices = np.asarray(object_mesh.vertices).astype(np.float32)
             object_faces = np.asarray(object_mesh.triangles).astype(np.int32)
             if len(object_vertices) > 0 and len(object_faces) > 0:
+                object_center = object_vertices.mean(axis=0)
                 collision_meshes.append(
                     {
                         "name": object_name,
-                        "vertices": object_vertices,
+                        "vertices": object_vertices - object_center,
                         "faces": object_faces,
                         "pose": {
-                            "position": {"x": 0.0, "y": 0.0, "z": 0.0},
+                            "position": {
+                                "x": float(object_center[0]),
+                                "y": float(object_center[1]),
+                                "z": float(object_center[2]),
+                            },
                             "rotation": {
                                 "w": 1.0,
                                 "x": 0.0,

@@ -211,6 +211,11 @@ def test_world_reconstruction_emits_named_mesh_for_object_mask(
     assert meshes["cube"]["faces"].shape[1] == 3
     assert len(meshes["cube"]["vertices"]) > 0
     assert len(meshes["cube"]["faces"]) > 0
+    assert np.allclose(meshes["cube"]["vertices"].mean(axis=0), np.zeros(3), atol=1e-6)
+    assert not np.allclose(
+        [meshes["cube"]["pose"]["position"][axis] for axis in "xyz"],
+        np.zeros(3),
+    )
 
 
 @pytest.mark.parametrize("invalid", ["main", "a" * 39, "a" * 41, "g" * 40])
