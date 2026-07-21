@@ -1016,6 +1016,7 @@ def validate_joint_trajectory_grasped(
     surface_sphere_radius: float = 0.001,
     link_name: str = "attached_object",
     remove_obstacles_from_world: bool = False,
+    max_initial_attached_object_world_contact_waypoints: int = 0,
 ) -> EvidencedValidateResult:
     """Fits and attaches ``object_name`` at the first waypoint, validates every
     row with pinned-v0.8 collision primitives, and always detaches afterward."""
@@ -1024,6 +1025,11 @@ def validate_joint_trajectory_grasped(
         raise ToolError("curobo.validate_joint_trajectory_grasped", "object_name is required")
     if not trajectory.get("waypoints"):
         raise ToolError("curobo.validate_joint_trajectory_grasped", "trajectory has no waypoints")
+    if max_initial_attached_object_world_contact_waypoints < 0:
+        raise ToolError(
+            "curobo.validate_joint_trajectory_grasped",
+            "max_initial_attached_object_world_contact_waypoints must be non-negative",
+        )
 
     try:
         with _LOCK:
@@ -1038,6 +1044,9 @@ def validate_joint_trajectory_grasped(
                 surface_sphere_radius=surface_sphere_radius,
                 link_name=link_name,
                 remove_obstacles_from_world=remove_obstacles_from_world,
+                max_initial_attached_object_world_contact_waypoints=(
+                    max_initial_attached_object_world_contact_waypoints
+                ),
             )
     except Exception as e:
         logger.error(
@@ -1052,6 +1061,13 @@ def validate_joint_trajectory_grasped(
         detail = (
             f"attached_sphere_count={meta.get('attached_sphere_count')};"
             f"attached_sphere_capacity={meta['attached_sphere_capacity']}"
+        )
+    admitted_contact = int(meta.get("initial_world_contact_waypoints", 0)) if meta else 0
+    if admitted_contact:
+        detail = (
+            f"{detail};initial_world_contact_waypoints={admitted_contact}"
+            if detail
+            else f"initial_world_contact_waypoints={admitted_contact}"
         )
     failure_components = meta.get("failure_components", []) if meta else []
     if idx is not None and 0 <= int(idx) < len(failure_components):
@@ -1081,6 +1097,9 @@ def validate_joint_trajectory_grasped(
             "surface_sphere_radius": surface_sphere_radius,
             "link_name": link_name,
             "remove_obstacles_from_world": remove_obstacles_from_world,
+            "max_initial_attached_object_world_contact_waypoints": (
+                max_initial_attached_object_world_contact_waypoints
+            ),
         },
         success=bool(ok),
         failure_code="trajectory_invalid",

@@ -145,6 +145,7 @@ def test_validate_schema(tool_registry):
     assert {"world_config", "trajectory", "object_name"} <= set(schema.inputs)
     assert schema.inputs["link_name"].default == "attached_object"
     assert schema.inputs["surface_sphere_radius"].default == pytest.approx(0.001)
+    assert schema.inputs["max_initial_attached_object_world_contact_waypoints"].default == 0
     assert set(schema.outputs) == {
         "success",
         "failure_reason",
@@ -153,6 +154,60 @@ def test_validate_schema(tool_registry):
         "evidence",
         "paper_outcome",
     }
+
+
+@pytest.mark.parametrize(
+    ("valid_waypoints", "failure_components", "limit", "expected_success", "admitted"),
+    [
+        ([False, True], [["world_collision"], []], 0, False, 0),
+        ([False, False, True, True], [["world_collision"], ["world_collision"], [], []], 2, True, 2),
+        ([False, False, True], [["world_collision"], ["world_collision"], []], 1, False, 0),
+        ([False, True], [["self_collision", "world_collision"], []], 1, False, 0),
+        ([False, True, False], [["world_collision"], [], ["world_collision"]], 1, False, 0),
+        ([False, False], [["world_collision"], ["world_collision"]], 2, False, 0),
+    ],
+)
+def test_initial_world_contact_admission_is_bounded_and_prefix_only(
+    curobo_impl_module,
+    valid_waypoints,
+    failure_components,
+    limit,
+    expected_success,
+    admitted,
+):
+    result = curobo_impl_module._admit_initial_world_contact_prefix(
+        False,
+        "collision_or_joint_limit",
+        0,
+        {
+            "valid_waypoints": valid_waypoints,
+            "failure_components": failure_components,
+        },
+        max_initial_attached_object_world_contact_waypoints=limit,
+        robot_only_trajectory_valid=True,
+    )
+
+    assert result[0] is expected_success
+    assert result[3]["initial_world_contact_waypoints"] == admitted
+
+
+def test_initial_world_contact_admission_requires_robot_only_clearance(
+    curobo_impl_module,
+):
+    result = curobo_impl_module._admit_initial_world_contact_prefix(
+        False,
+        "collision_or_joint_limit",
+        0,
+        {
+            "valid_waypoints": [False, True],
+            "failure_components": [["world_collision"], []],
+        },
+        max_initial_attached_object_world_contact_waypoints=1,
+        robot_only_trajectory_valid=False,
+    )
+
+    assert result[0] is False
+    assert result[3]["initial_world_contact_waypoints"] == 0
 
 
 def test_trajectory_converters_roundtrip(curobo_module):
@@ -319,6 +374,7 @@ def test_curobo_evidence_is_algorithmic_without_fake_model_fields(curobo_module)
                 "surface_sphere_radius": 0.002,
                 "link_name": "held",
                 "remove_obstacles_from_world": True,
+                "max_initial_attached_object_world_contact_waypoints": 2,
             },
         ),
     ],
@@ -379,6 +435,40 @@ def test_held_validation_reports_first_failure_components(curobo_module, monkeyp
         "attached_sphere_count=32;attached_sphere_capacity=32;"
         "first_failure_components=world_collision"
     )
+
+
+def test_held_validation_forwards_and_reports_admitted_initial_contact(
+    curobo_module, monkeypatch
+):
+    captured = {}
+
+    def fake_validate(*args, **kwargs):
+        captured.update(kwargs)
+        return (
+            True,
+            "",
+            None,
+            {
+                "attached_sphere_count": 32,
+                "attached_sphere_capacity": 32,
+                "initial_world_contact_waypoints": 2,
+            },
+        )
+
+    monkeypatch.setattr(
+        curobo_module,
+        "_impl",
+        lambda: SimpleNamespace(validate_joint_trajectory_grasped_object=fake_validate),
+    )
+    result = curobo_module.validate_joint_trajectory_grasped(
+        world_config={"meshes": [_cube_mesh("target", [0, 0, 0], 0.1)]},
+        trajectory={"waypoints": [{"positions": [0.0] * 7}]},
+        object_name="target",
+        max_initial_attached_object_world_contact_waypoints=2,
+    )
+
+    assert captured["max_initial_attached_object_world_contact_waypoints"] == 2
+    assert "initial_world_contact_waypoints=2" in result["collision_status_detail"]
 
 
 def test_batch_feasibility_collision_is_not_reported_as_ik_failure(

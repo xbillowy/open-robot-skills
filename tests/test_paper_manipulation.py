@@ -554,6 +554,16 @@ def test_paper_manipulation_exact_admitted_path_and_distinct_lineages() -> None:
         call["collision_activation_distance"] == pytest.approx(0.001)
         for call in held_validation_calls
     )
+    assert (
+        held_validation_calls[0][
+            "max_initial_attached_object_world_contact_waypoints"
+        ]
+        == 4
+    )
+    assert all(
+        call.get("max_initial_attached_object_world_contact_waypoints", 0) == 0
+        for call in held_validation_calls[1:]
+    )
     candidate_call = next(
         kwargs for name, kwargs in ctx.calls if name == "geometry.top_down_grasp_candidates"
     )

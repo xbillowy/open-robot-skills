@@ -607,6 +607,65 @@ def _v2_trajectory_result(checker, joint_waypoints: np.ndarray):
     )
 
 
+def _admit_initial_world_contact_prefix(
+    ok: bool,
+    reason: str,
+    index: int | None,
+    metadata: dict[str, Any],
+    *,
+    max_initial_attached_object_world_contact_waypoints: int,
+    robot_only_trajectory_valid: bool,
+) -> tuple[bool, str, int | None, dict[str, Any]]:
+    """Admit a bounded initial attached-object/world overlap after attachment.
+
+    The aggregate world checker cannot distinguish support geometry from other
+    scene geometry. The admitted fact is therefore deliberately narrower than
+    a support-contact claim: the robot-only trajectory must be clear, attached
+    failures must begin at waypoint zero and contain only world collision, the
+    prefix must end within the configured bound, and all later waypoints must
+    be collision-free.
+    """
+    if max_initial_attached_object_world_contact_waypoints < 0:
+        raise ValueError(
+            "max_initial_attached_object_world_contact_waypoints must be non-negative"
+        )
+    meta = dict(metadata)
+    meta["max_initial_attached_object_world_contact_waypoints"] = (
+        max_initial_attached_object_world_contact_waypoints
+    )
+    meta["initial_world_contact_waypoints"] = 0
+    if (
+        ok
+        or max_initial_attached_object_world_contact_waypoints == 0
+        or not robot_only_trajectory_valid
+    ):
+        return ok, reason, index, meta
+
+    valid = meta.get("valid_waypoints")
+    components = meta.get("failure_components")
+    if not isinstance(valid, list) or not isinstance(components, list):
+        return ok, reason, index, meta
+    if not valid or len(valid) != len(components) or bool(valid[0]):
+        return ok, reason, index, meta
+
+    prefix = 0
+    while (
+        prefix < len(valid)
+        and not bool(valid[prefix])
+        and components[prefix] == ["world_collision"]
+    ):
+        prefix += 1
+    if (
+        0 < prefix <= max_initial_attached_object_world_contact_waypoints
+        and prefix < len(valid)
+        and all(bool(value) for value in valid[prefix:])
+    ):
+        meta["initial_world_contact_waypoints"] = prefix
+        meta["initial_world_contact_attribution"] = "attached_object_vs_world_aggregate"
+        return True, "", None, meta
+    return ok, reason, index, meta
+
+
 def _robot_joint_names(robot_cfg: RobotConfig) -> list[str]:
     """Resolve actuated joint names for :class:`JointState` construction."""
     joint_names = None
@@ -673,6 +732,7 @@ def validate_joint_trajectory_grasped_object(
     surface_sphere_radius: float = 0.001,
     link_name: str = "attached_object",
     remove_obstacles_from_world: bool = False,
+    max_initial_attached_object_world_contact_waypoints: int = 0,
 ) -> tuple[bool, str, int | None, dict[str, Any]]:
     """Collision check for each waypoint with the grasped object attached to the robot.
 
@@ -705,6 +765,9 @@ def validate_joint_trajectory_grasped_object(
         position=q[0:1, :dof],
         device_cfg=checker.device_cfg,
     )
+    robot_only_trajectory_valid = False
+    if max_initial_attached_object_world_contact_waypoints > 0:
+        robot_only_trajectory_valid = _v2_trajectory_result(checker, q)[0]
     try:
         manager.attach(
             start,
@@ -717,6 +780,16 @@ def validate_joint_trajectory_grasped_object(
             disable_obstacle_names=None,
         )
         ok, reason, idx, meta = _v2_trajectory_result(checker, q)
+        ok, reason, idx, meta = _admit_initial_world_contact_prefix(
+            ok,
+            reason,
+            idx,
+            meta,
+            max_initial_attached_object_world_contact_waypoints=(
+                max_initial_attached_object_world_contact_waypoints
+            ),
+            robot_only_trajectory_valid=robot_only_trajectory_valid,
+        )
         meta["object_name"] = object_name
         fit_result = getattr(manager, "_last_fit_result", None)
         meta["attached_sphere_capacity"] = _PAPER_ATTACHED_OBJECT_SPHERES
