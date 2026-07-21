@@ -215,6 +215,7 @@ def _validate(
             world_config=world_config,
             trajectory=trajectory,
             object_name=target_name,
+            collision_activation_distance=0.001,
         )
         evidence["held_object"] = _admitted(attached, "HELD_OBJECT_VALIDATION_EVIDENCE_UNAVAILABLE")
         if not attached.get("success"):

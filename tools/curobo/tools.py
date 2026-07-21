@@ -1053,6 +1053,14 @@ def validate_joint_trajectory_grasped(
             f"attached_sphere_count={meta.get('attached_sphere_count')};"
             f"attached_sphere_capacity={meta['attached_sphere_capacity']}"
         )
+    failure_components = meta.get("failure_components", []) if meta else []
+    if idx is not None and 0 <= int(idx) < len(failure_components):
+        components = failure_components[int(idx)]
+        if components:
+            component_detail = ",".join(str(component) for component in components)
+            detail = f"{detail};first_failure_components={component_detail}" if detail else (
+                f"first_failure_components={component_detail}"
+            )
     output = {
         "success": bool(ok),
         "failure_reason": "" if ok else (reason or "collision"),

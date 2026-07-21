@@ -544,6 +544,16 @@ def test_paper_manipulation_exact_admitted_path_and_distinct_lineages() -> None:
     ]
     assert "runner.check_success" not in names
     assert not any("native" in name or "wrist" in name or "fallback" in name for name in names)
+    held_validation_calls = [
+        kwargs
+        for name, kwargs in ctx.calls
+        if name == "curobo.validate_joint_trajectory_grasped"
+    ]
+    assert held_validation_calls
+    assert all(
+        call["collision_activation_distance"] == pytest.approx(0.001)
+        for call in held_validation_calls
+    )
     candidate_call = next(
         kwargs for name, kwargs in ctx.calls if name == "geometry.top_down_grasp_candidates"
     )

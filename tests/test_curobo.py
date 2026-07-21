@@ -354,6 +354,33 @@ def test_paper_evidence_hashes_every_effective_behavior_parameter(
         assert changed != baseline, f"{tool_name}.{parameter} is absent from effective evidence"
 
 
+def test_held_validation_reports_first_failure_components(curobo_module, monkeypatch):
+    fake = SimpleNamespace(
+        validate_joint_trajectory_grasped_object=lambda *args, **kwargs: (
+            False,
+            "collision_or_joint_limit",
+            0,
+            {
+                "attached_sphere_count": 32,
+                "attached_sphere_capacity": 32,
+                "failure_components": [["world_collision"]],
+            },
+        )
+    )
+    monkeypatch.setattr(curobo_module, "_impl", lambda: fake)
+
+    result = curobo_module.validate_joint_trajectory_grasped(
+        world_config={"meshes": [_cube_mesh("target", [0, 0, 0], 0.1)]},
+        trajectory={"waypoints": [{"positions": [0.0] * 7}]},
+        object_name="target",
+    )
+
+    assert result["collision_status_detail"] == (
+        "attached_sphere_count=32;attached_sphere_capacity=32;"
+        "first_failure_components=world_collision"
+    )
+
+
 def test_batch_feasibility_collision_is_not_reported_as_ik_failure(
     curobo_module, monkeypatch
 ):

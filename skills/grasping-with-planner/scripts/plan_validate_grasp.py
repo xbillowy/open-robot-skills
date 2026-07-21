@@ -378,6 +378,7 @@ def _run_impl(
             world_config=world_config,
             trajectory=retreat_trajectory,
             object_name=target_name,
+            collision_activation_distance=0.001,
         )
         held_evidence = _admitted(held_validation, "HELD_OBJECT_VALIDATION_EVIDENCE_UNAVAILABLE")
         if not held_validation.get("success"):
