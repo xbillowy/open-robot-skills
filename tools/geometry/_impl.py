@@ -10,6 +10,7 @@ importing this module stays cheap and the bundle loads without the
 
 from __future__ import annotations
 
+import hashlib
 import logging
 import math
 
@@ -683,7 +684,13 @@ def compute_obb(points: np.ndarray) -> OrientedBoundingBox:
 
     # Outlier removal via statistical filter (with tiny noise to avoid
     # degenerate cases)
-    points = points + np.random.normal(0, 0.0001, points.shape)
+    canonical_points = np.ascontiguousarray(points)
+    jitter_seed = int.from_bytes(
+        hashlib.sha256(canonical_points.tobytes(order="C")).digest()[:4],
+        "little",
+    )
+    jitter = np.random.RandomState(jitter_seed).normal(0, 0.0001, points.shape)
+    points = points + jitter
     pcd = o3d.geometry.PointCloud()
     pcd.points = o3d.utility.Vector3dVector(points.astype(np.float64))
     pcd, _ind = pcd.remove_statistical_outlier(nb_neighbors=20, std_ratio=2.0)
