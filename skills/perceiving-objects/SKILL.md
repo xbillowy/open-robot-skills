@@ -19,7 +19,7 @@ gap:
   allowed_tools:
     - robot.get_observation
     - grounding-dino.detect
-    - vlm.query
+    - vlm.query_batch
     - vlm.query_yes_no
     - sam3.segment_box
     - sam3.segment_text

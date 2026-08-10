@@ -10,6 +10,8 @@ from __future__ import annotations
 import base64
 import io
 import json
+import threading
+import time
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -134,6 +136,51 @@ def test_openrouter_text_only_query(vlm, monkeypatch):
     vlm.query(prompt="hello")
     content = captured["payload"]["messages"][0]["content"]
     assert content == [{"type": "text", "text": "hello"}]
+
+
+def test_query_batch_is_bounded_concurrent_and_ordered(vlm, image, monkeypatch):
+    lock = threading.Lock()
+    four_started = threading.Event()
+    active = 0
+    max_active = 0
+
+    def fake_query(prompt, image, images, provider, model):
+        nonlocal active, max_active
+        with lock:
+            active += 1
+            max_active = max(max_active, active)
+            if active == 4:
+                four_started.set()
+        assert four_started.wait(timeout=1.0)
+        time.sleep(0.01)
+        with lock:
+            active -= 1
+        return prompt
+
+    monkeypatch.setattr(vlm, "_query", fake_query)
+    prompts = [f"question-{i}" for i in range(6)]
+
+    out = vlm.query_batch(prompts=prompts, images=[image] * len(prompts))
+
+    assert out == {"results": [{"text": prompt} for prompt in prompts]}
+    assert max_active == 4
+
+
+def test_query_batch_fails_closed(vlm, image, monkeypatch):
+    def fake_query(prompt, image, images, provider, model):
+        if prompt == "bad":
+            raise ToolError("vlm", "provider failure")
+        return prompt
+
+    monkeypatch.setattr(vlm, "_query", fake_query)
+
+    with pytest.raises(ToolError, match="provider failure"):
+        vlm.query_batch(prompts=["ok", "bad"], images=[image, image])
+
+
+def test_query_batch_rejects_mismatched_lengths(vlm, image):
+    with pytest.raises(ValueError, match="one image per prompt"):
+        vlm.query_batch(prompts=["one", "two"], images=[image])
 
 
 def test_openrouter_backend_failure_raises_tool_error(vlm, monkeypatch):

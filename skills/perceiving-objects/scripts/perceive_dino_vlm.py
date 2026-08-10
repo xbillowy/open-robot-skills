@@ -382,17 +382,23 @@ def _tournament(
     bracket = list(range(len(crops)))
     while len(bracket) > 1:
         nxt: list[int] = []
+        round_slots: list[int | tuple[int, int]] = []
+        pairs: list[tuple[int, int]] = []
+        sheets: list[np.ndarray] = []
         for j in range(0, len(bracket), 2):
             if j + 1 >= len(bracket):
-                nxt.append(bracket[j])           # bye
+                round_slots.append(bracket[j])   # bye, kept in bracket position
                 continue
             a, b = bracket[j], bracket[j + 1]
-            sheet = _make_pair_sheet(crops[a], crops[b])
-            prompt = load_prompt(
-                __package__, "vlm_pairwise",
-                object_name=object_name,
-                object_description=object_description,
-            )
+            round_slots.append((a, b))
+            pairs.append((a, b))
+            sheets.append(_make_pair_sheet(crops[a], crops[b]))
+        prompt = load_prompt(
+            __package__, "vlm_pairwise",
+            object_name=object_name,
+            object_description=object_description,
+        )
+        if pairs:
             # Let VLM transport/auth errors propagate. The dev-era swallow
             # that picked `a` on any exception silently turned a missing
             # API key into "tournament picks the first bracket entry every
@@ -405,12 +411,25 @@ def _tournament(
             # hint before re-raising — without that the user sees only an
             # opaque "Could not resolve authentication method..." trace.
             try:
-                resp = ctx.tool("vlm.query", prompt=prompt, image=sheet)
+                batch = ctx.tool(
+                    "vlm.query_batch",
+                    prompts=[prompt] * len(pairs),
+                    images=sheets,
+                )
             except Exception as exc:
                 _maybe_warn_auth_once(exc)
                 raise
-            win = a if _parse_letter(resp["text"], 2) == 0 else b
-            nxt.append(win)
+            results = batch.get("results", [])
+            if len(results) != len(pairs):
+                raise RuntimeError("VLM tournament batch returned wrong result count")
+            responses = iter(results)
+            for slot in round_slots:
+                if isinstance(slot, int):
+                    nxt.append(slot)
+                    continue
+                a, b = slot
+                resp = next(responses)
+                nxt.append(a if _parse_letter(resp["text"], 2) == 0 else b)
         bracket = nxt
     return keep[bracket[0]]
 

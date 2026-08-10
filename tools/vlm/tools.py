@@ -41,6 +41,7 @@ All functions are synchronous — the gap runtime is threaded, not async.
 from __future__ import annotations
 
 import base64
+import concurrent.futures
 import io
 import logging
 import os
@@ -129,6 +130,10 @@ _TEMPERATURE = 0.0
 
 class QueryResult(TypedDict):
     text: str
+
+
+class QueryBatchResult(TypedDict):
+    results: list[QueryResult]
 
 
 class YesNoResult(TypedDict):
@@ -349,6 +354,42 @@ def query(
         ``{"text": <model response>}``.
     """
     return {"text": _query(prompt, image, images, provider, model)}
+
+
+@tool(
+    name="vlm.query_batch",
+    summary="Run one independent round of visual questions concurrently.",
+    tags=("perception", "guard_cost_input:prompts"),
+)
+def query_batch(
+    prompts: list[str],
+    images: list,
+    provider: str | None = None,
+    model: str | None = None,
+) -> QueryBatchResult:
+    """Run independent single-image queries concurrently, preserving order.
+
+    Callers must wait for the full result before constructing a dependent
+    next round. Any child failure fails the whole batch rather than fabricating
+    a result. Concurrency is bounded at four hosted-model requests.
+    """
+    if len(prompts) != len(images):
+        raise ValueError(
+            "vlm.query_batch requires one image per prompt "
+            f"(got {len(prompts)} prompts, {len(images)} images)"
+        )
+    if not prompts:
+        return {"results": []}
+
+    def _one(item: tuple[str, np.ndarray]) -> QueryResult:
+        prompt, image = item
+        return {"text": _query(prompt, image, None, provider, model)}
+
+    with concurrent.futures.ThreadPoolExecutor(
+        max_workers=min(4, len(prompts))
+    ) as pool:
+        results = list(pool.map(_one, zip(prompts, images, strict=True)))
+    return {"results": results}
 
 
 #: Appended to every ``query_yes_no`` prompt so the reply is machine-checkable.

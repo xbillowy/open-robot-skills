@@ -16,7 +16,6 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
-from gap_core.errors import PerceptionFailed, ToolError
 from gap.testing import FakeContext, make_test_observation
 
 # ---------------------------------------------------------------------------
@@ -224,7 +223,7 @@ def test_perceiving_objects_pairwise_tournament_picks_vlm_winner(
                 {"box": cube_box, "label": "object", "score": 0.7},
             ],
         },
-        "vlm.query": {"text": "B"},  # the pairwise prompt: A=decoy, B=cube
+        "vlm.query_batch": {"results": [{"text": "B"}]},
         "sam3.segment_box": {"masks": [_mask_u8(cube)], "scores": [0.92]},
         **_geometry_delegates(tool_registry),
     })
@@ -234,11 +233,60 @@ def test_perceiving_objects_pairwise_tournament_picks_vlm_winner(
     assert out["found"] is True
     # Exactly one pairwise comparison for 2 crops, and the VLM's pick (the
     # cube box) is what got segmented.
-    assert ctx.call_count("vlm.query") == 1
+    assert ctx.call_count("vlm.query_batch") == 1
     seg_calls = ctx.calls_to("sam3.segment_box")
     assert len(seg_calls) == 1
     assert seg_calls[0].kwargs["box"] == cube_box
     _assert_cloud_on_cube(out["cloud"]["points"])
+
+
+def test_perceiving_objects_tournament_batches_each_round(po_module):
+    rgb = np.zeros((240, 320, 3), dtype=np.uint8)
+    detections = [
+        {"box": {"x1": i * 35 + 1, "y1": 5, "x2": i * 35 + 30, "y2": 40}}
+        for i in range(8)
+    ]
+
+    class RoundContext:
+        def __init__(self):
+            self.round_sizes: list[int] = []
+
+        def tool(self, name, **kwargs):
+            assert name == "vlm.query_batch"
+            assert len(kwargs["prompts"]) == len(kwargs["images"])
+            self.round_sizes.append(len(kwargs["prompts"]))
+            return {"results": [{"text": "B"}] * len(kwargs["prompts"])}
+
+    ctx = RoundContext()
+    winner = po_module._tournament(ctx, rgb, detections, "target", "")
+
+    assert winner == 7
+    assert ctx.round_sizes == [4, 2, 1]
+
+
+def test_perceiving_objects_tournament_preserves_odd_bracket_order(po_module):
+    rgb = np.zeros((120, 240, 3), dtype=np.uint8)
+    detections = [
+        {"box": {"x1": i * 40 + 1, "y1": 5, "x2": i * 40 + 35, "y2": 45}}
+        for i in range(5)
+    ]
+
+    class RoundContext:
+        def __init__(self):
+            self.round_sizes: list[int] = []
+
+        def tool(self, name, **kwargs):
+            assert name == "vlm.query_batch"
+            self.round_sizes.append(len(kwargs["prompts"]))
+            # Always select A. The original serial bracket therefore keeps
+            # candidate 0 through [0, 2, 4] -> [0, 4] -> [0].
+            return {"results": [{"text": "A"}] * len(kwargs["prompts"])}
+
+    ctx = RoundContext()
+    winner = po_module._tournament(ctx, rgb, detections, "target", "")
+
+    assert winner == 0
+    assert ctx.round_sizes == [2, 1, 1]
 
 
 def test_perceiving_objects_not_found_returns_found_false(po_module, scene):
@@ -319,7 +367,7 @@ def _dual_cam_responses(tool_registry, cube_mask) -> dict:
                 {"box": _bbox_of(cube_mask), "label": "object", "score": 0.7},
             ],
         },
-        "vlm.query": {"text": "B"},
+        "vlm.query_batch": {"results": [{"text": "B"}]},
         "sam3.segment_box": {"masks": [_mask_u8(cube_mask)], "scores": [0.92]},
         **_geometry_delegates(tool_registry),
     }
@@ -349,8 +397,8 @@ def test_safe_gate_verified_exterior_pick_skips_wrist(
     assert ctx.call_count("grounding-dino.detect") == 1
     assert ctx.call_count("vlm.query_yes_no") == 1
     # The description is injected into the tournament prompt...
-    (pair_call,) = ctx.calls_to("vlm.query")
-    assert _DESC in pair_call.kwargs["prompt"]
+    (pair_call,) = ctx.calls_to("vlm.query_batch")
+    assert _DESC in pair_call.kwargs["prompts"][0]
     # ...and into the verify question, anchored on the described
     # shape/colors so the VLM does not reject on its category prior.
     (verify_call,) = ctx.calls_to("vlm.query_yes_no")

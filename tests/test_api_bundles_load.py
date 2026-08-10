@@ -20,13 +20,14 @@ ROOT = Path(__file__).resolve().parents[1]
 API_BUNDLES = ["gemini-er", "molmo", "vlm"]
 
 EXPECTED_TOOLS: dict[str, list[str]] = {
-    "vlm": ["vlm.query", "vlm.query_yes_no"],
+    "vlm": ["vlm.query", "vlm.query_batch", "vlm.query_yes_no"],
     "gemini-er": ["gemini-er.detect"],
     "molmo": ["molmo.point_prompt", "molmo.query", "molmo.query_yes_no"],
 }
 
 EXPECTED_INPUTS: dict[str, list[str]] = {
     "vlm.query": ["prompt", "image", "images", "provider", "model"],
+    "vlm.query_batch": ["prompts", "images", "provider", "model"],
     "vlm.query_yes_no": ["prompt", "image", "images", "provider", "model"],
     "gemini-er.detect": ["image", "query", "model"],
     "molmo.point_prompt": ["image", "query"],
@@ -36,6 +37,7 @@ EXPECTED_INPUTS: dict[str, list[str]] = {
 
 EXPECTED_OUTPUTS: dict[str, list[str]] = {
     "vlm.query": ["text"],
+    "vlm.query_batch": ["results"],
     "vlm.query_yes_no": ["answer", "text"],
     "gemini-er.detect": ["detections"],
     "molmo.point_prompt": ["pixel_x", "pixel_y", "found"],

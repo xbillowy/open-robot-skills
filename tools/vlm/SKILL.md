@@ -26,6 +26,7 @@ gap:
     protocol: stdio-msgpack
   tools:
     - vlm.query: Free-form visual question answering via a hosted VLM.
+    - vlm.query_batch: Run one independent round of visual questions concurrently.
     - vlm.query_yes_no: Yes/no visual question answering; coerces the model reply to a bool.
 ---
 
@@ -34,6 +35,11 @@ gap:
 API-backed vision-language Q&A. Zero GPU: every provider is a remote
 endpoint. Images are gap-native `uint8 [H, W, 3]` numpy arrays, PNG-encoded
 on the wire.
+
+`vlm.query_batch` accepts equally sized `prompts` and `images` lists. It runs
+up to four independent requests concurrently, returns results in input order,
+and fails the whole batch if any request fails. Dependent rounds remain the
+caller's responsibility.
 
 ## Providers
 
