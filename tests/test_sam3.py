@@ -24,6 +24,43 @@ def test_all_tools_registered(tool_registry):
         assert name in tool_registry
 
 
+def test_warmup_loads_image_model_without_running_inference(
+    skills_registry, monkeypatch,
+):
+    # RPC bundles are intentionally not imported into the benchmark process.
+    # Load this bundle module explicitly, matching the bundle server boundary.
+    import importlib.util
+    import sys
+
+    module_name = "gap_skills.tools.sam3.tools"
+    module_path = skills_registry.get("sam3").meta.bundle_dir / "tools.py"
+    spec = importlib.util.spec_from_file_location(module_name, module_path)
+    assert spec is not None and spec.loader is not None
+    mod = importlib.util.module_from_spec(spec)
+    sys.modules[module_name] = mod
+    spec.loader.exec_module(mod)
+    sentinel = object()
+    calls: list[str | None] = []
+
+    def _load(device: str | None = None):
+        calls.append(device)
+        return sentinel, sentinel
+
+    monkeypatch.setattr(mod, "_get_model", _load)
+
+    from gap_core.tools import ToolRegistry
+
+    registry = ToolRegistry()
+    registry.discover_pending()
+    assert "sam3.warmup" in registry
+
+    assert registry.invoke("sam3.warmup") == {
+        "loaded": True,
+        "device": mod._DEVICE,
+    }
+    assert calls == [None]
+
+
 def test_segment_text_schema(tool_registry):
     schema = tool_registry.get("sam3.segment_text").schema
     assert set(schema.inputs) == {"image", "query", "max_results"}
