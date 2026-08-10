@@ -14,6 +14,7 @@ gap:
     protocol: stdio-msgpack
     requires_gpu: true
   tools:
+    - sam3.warmup: Load the worker-local image model onto its configured device without running segmentation.
     - sam3.segment_text: Segment all instances matching a text description (masks, scores, boxes best-first).
     - sam3.segment_point: Segment the object at a pixel coordinate (multimask, best-first).
     - sam3.segment_box: Segment within a bounding box, optionally refined by a foreground point.
@@ -53,6 +54,8 @@ Model weights download on first model build. Device is taken from
 
 - **Lazy singletons**: the image model and the video predictor each load on
   first call and stay resident; importing the bundle never imports torch.
+  Benchmark workers may call `sam3.warmup` once after RPC startup to load the
+  same image-model singleton before the first scientific segmentation call.
 - `segment_text` caps results at `max_results=5` by default — cluttered
   scenes emit 100+ instances (~1 MB/mask at 720p) and downstream consumes
   only the top mask. Pass `max_results<=0` for everything.

@@ -146,6 +146,13 @@ _tracker_lock = threading.Lock()
 _tracker_predictor: Any = None
 
 
+class WarmupResult(TypedDict):
+    """Operational readiness result for eager worker-local model loading."""
+
+    loaded: bool
+    device: str
+
+
 def _get_model(device: str | None = None) -> tuple[Any, Any]:
     """Load the SAM3 image model + processor once (module-level singleton)."""
     global _image_model, _image_processor
@@ -167,6 +174,22 @@ def _get_model(device: str | None = None) -> tuple[Any, Any]:
             _image_processor = Sam3Processor(model, confidence_threshold=0.0)
             logger.info("SAM3 model loaded on %s.", dev)
         return _image_model, _image_processor
+
+
+@tool(
+    name="sam3.warmup",
+    summary="Load the worker-local SAM3 image model onto its configured device without running segmentation.",
+    tags=("infrastructure", "perception"),
+)
+def warmup() -> WarmupResult:
+    """Eagerly materialize the lazy image-model singleton.
+
+    Benchmark workers call this once after the RPC bundle boots, moving model
+    construction out of the first scientific ``segment_*`` subcall while
+    preserving inference inputs and outputs.
+    """
+    _get_model()
+    return {"loaded": True, "device": _DEVICE}
 
 
 def _get_tracker_predictor() -> Any:
