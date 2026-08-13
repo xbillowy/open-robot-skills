@@ -2,8 +2,8 @@
 name: curobo
 description: NVIDIA cuRobo motion planning — collision-free trajectories to
   grasp goalsets, transport with an attached object, constrained linear
-  moves, single-pose planning, geometric IK, batch grasp feasibility, and
-  joint-trajectory collision validation. Use when a workflow needs
+  moves, single-pose planning, and joint-trajectory collision validation.
+  Use when a workflow needs
   GPU-accelerated, collision-aware arm motion plans.
 license: MIT
 compatibility: requires gap>=0.1
@@ -21,8 +21,6 @@ gap:
     - curobo.plan_directed_linear: Constrained linear motion with axis/orientation holds.
     - curobo.plan_grasp_motion: Approach + grasp + lift sequence (three trajectories).
     - curobo.plan_to_pose: Collision-aware plan to a single TCP pose.
-    - curobo.solve_ik: Geometric IK for a single TCP pose (no world collision).
-    - curobo.batch_grasp_feasibility: Per-pose grasp/approach IK + corridor feasibility for a grasp batch.
     - curobo.validate_joint_trajectory_robot: Collision-validate joint waypoints (robot vs world + self).
     - curobo.validate_joint_trajectory_grasped: Same, with a grasped object attached at waypoint 0.
 ---
@@ -67,8 +65,8 @@ them per call corrupts CUDA graph state).
   (default) grasp positions are fingertip-pad centers and converted to the
   `panda_hand` frame solver-side (offset 0.1029 m along hand Z).
 - **Ignore the grasp target**: pass its mesh name in
-  `ignore_obstacle_names` for `plan_to_grasp_poses` /
-  `batch_grasp_feasibility` — closing on the target is not a collision.
+  `ignore_obstacle_names` for `plan_to_grasp_poses` — closing on the target
+  is not a collision.
 - `robot_collision_sphere_buffer` default −0.01 shrinks robot collision
   spheres 1 cm; reduces IK_FAIL against dense perception meshes. Negative
   is intentional.
@@ -77,13 +75,12 @@ them per call corrupts CUDA graph state).
   before raising `PlanningFailed`.
 - `use_cuda_graph` must stay False for the validators
   (`check_start_state` requirement) and for varying world/start setups.
-- **curobo version split**: `plan_to_grasp_poses`, `plan_grasp_motion`,
+- **cuRobo version**: `plan_to_grasp_poses`, `plan_grasp_motion`,
   `plan_directed_linear`, `plan_linear`, `plan_to_pose`,
   `plan_with_grasped_object` target curobo v0.8 (MotionPlanner API);
-  `solve_ik` and `batch_grasp_feasibility` are built on the v0.7
-  IKSolver API that v0.8 removed — on a v0.8-only install they raise
-  `PlanningFailed` ("not supported on cuRobo v0.8"); plan via the goalset
-  tools instead. The validators use the v0.7 MotionGen path too.
+  the removed v0.7-only `solve_ik` and `batch_grasp_feasibility` APIs are
+  intentionally not registered. Plan via the goalset tools instead. The
+  validators use the v0.7 MotionGen path too.
 - `validate_joint_trajectory_grasped` always invalidates the planner cache
   afterward so the attachment cannot leak; expect the next planning call to
   re-create the planner.

@@ -17,10 +17,13 @@ EXPECTED_TOOLS = {
     "curobo.plan_directed_linear",
     "curobo.plan_grasp_motion",
     "curobo.plan_to_pose",
-    "curobo.solve_ik",
-    "curobo.batch_grasp_feasibility",
     "curobo.validate_joint_trajectory_robot",
     "curobo.validate_joint_trajectory_grasped",
+}
+
+UNSUPPORTED_V08_TOOLS = {
+    "curobo.solve_ik",
+    "curobo.batch_grasp_feasibility",
 }
 
 _FRANKA_HOME = np.array([0.0, -0.785, 0.0, -2.356, 0.0, 1.571, 0.785])
@@ -37,6 +40,14 @@ def test_all_tools_registered(tool_registry):
     for name in EXPECTED_TOOLS:
         assert name in tool_registry
         assert "planning" in tool_registry.get(name).tags
+
+
+def test_v07_only_tools_are_not_advertised_on_v08(skills_registry):
+    info = skills_registry.get("curobo")
+    source = (info.bundle_dir / "tools.py").read_text(encoding="utf-8")
+    for name in UNSUPPORTED_V08_TOOLS:
+        assert name not in info.meta.tools
+        assert f'name="{name}"' not in source
 
 
 def test_plan_to_grasp_poses_schema(tool_registry):
@@ -120,15 +131,6 @@ def test_empty_trajectory_rejected_without_curobo(tool_registry):
             trajectory={"waypoints": [{"positions": _FRANKA_HOME}]},
             object_name="",
         )
-    with pytest.raises(ToolError):
-        tool_registry.invoke(
-            "curobo.batch_grasp_feasibility",
-            world_config={"meshes": []},
-            start_state={"positions": _FRANKA_HOME},
-            grasp_poses=[_pose(0.4, 0.0, 0.2)],
-        )
-
-
 @pytest.mark.gpu
 def test_plan_to_pose_gpu_smoke(tool_registry):
     torch = pytest.importorskip("torch")
