@@ -1,8 +1,8 @@
 ---
 name: curobo
 description: NVIDIA cuRobo motion planning — collision-free trajectories to
-  grasp goalsets, transport with an attached object, constrained linear
-  moves, single-pose planning, and joint-trajectory collision validation.
+  grasp goalsets, constrained linear moves, single-pose planning, and
+  joint-trajectory collision validation.
   Use when a workflow needs
   GPU-accelerated, collision-aware arm motion plans.
 license: MIT
@@ -16,7 +16,6 @@ gap:
     requires_gpu: true
   tools:
     - curobo.plan_to_grasp_poses: Collision-free trajectory to one of several grasp poses (goalset).
-    - curobo.plan_with_grasped_object: Transport plan with the grasped object attached to the gripper.
     - curobo.plan_linear: Straight Cartesian trajectory between two EE poses.
     - curobo.plan_directed_linear: Constrained linear motion with axis/orientation holds.
     - curobo.plan_grasp_motion: Approach + grasp + lift sequence (three trajectories).
@@ -37,8 +36,6 @@ float64[dof]}]`); worlds are gap `WorldConfig` dicts (build one with
 - Tabletop pick: `geometry.top_down_grasp_candidates` →
   `curobo.plan_to_grasp_poses` (pass the whole fan as the goalset; check
   `goalset_index` for which one was reached).
-- Transport after grasping: `curobo.plan_with_grasped_object` with the
-  object's mesh name from `build_world_config`.
 - Drawers/doors: `curobo.plan_grasp_motion` (approach → grasp → lift/pull
   with gripper commands interleaved), or `curobo.plan_directed_linear` for
   a pull along one axis with orientation locked.
@@ -76,11 +73,11 @@ them per call corrupts CUDA graph state).
 - `use_cuda_graph` must stay False for the validators
   (`check_start_state` requirement) and for varying world/start setups.
 - **cuRobo version**: `plan_to_grasp_poses`, `plan_grasp_motion`,
-  `plan_directed_linear`, `plan_linear`, `plan_to_pose`,
-  `plan_with_grasped_object` target curobo v0.8 (MotionPlanner API);
-  the removed v0.7-only `solve_ik` and `batch_grasp_feasibility` APIs are
-  intentionally not registered. Plan via the goalset tools instead. The
-  validators use the v0.7 MotionGen path too.
+  `plan_directed_linear`, `plan_linear`, and `plan_to_pose` target curobo
+  v0.8 (MotionPlanner API). The removed v0.7-only `solve_ik`,
+  `batch_grasp_feasibility`, and attached-object transport APIs are
+  intentionally not registered. Plan via the supported goalset/pose tools
+  instead. The validators use the v0.7 MotionGen path too.
 - `validate_joint_trajectory_grasped` always invalidates the planner cache
   afterward so the attachment cannot leak; expect the next planning call to
   re-create the planner.

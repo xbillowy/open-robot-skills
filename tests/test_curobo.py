@@ -12,7 +12,6 @@ import pytest
 
 EXPECTED_TOOLS = {
     "curobo.plan_to_grasp_poses",
-    "curobo.plan_with_grasped_object",
     "curobo.plan_linear",
     "curobo.plan_directed_linear",
     "curobo.plan_grasp_motion",
@@ -24,6 +23,7 @@ EXPECTED_TOOLS = {
 UNSUPPORTED_V08_TOOLS = {
     "curobo.solve_ik",
     "curobo.batch_grasp_feasibility",
+    "curobo.plan_with_grasped_object",
 }
 
 _FRANKA_HOME = np.array([0.0, -0.785, 0.0, -2.356, 0.0, 1.571, 0.785])

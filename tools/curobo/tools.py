@@ -289,68 +289,6 @@ def plan_to_grasp_poses(
 
 
 @tool(
-    name="curobo.plan_with_grasped_object",
-    summary="Plan a collision-free trajectory while holding a grasped object (attached to the gripper).",
-    tags=("planning",),
-)
-def plan_with_grasped_object(
-    world_config: WorldConfig,
-    start_joint_position: JointState,
-    target_pose: Se3Pose,
-    object_name: str,
-    robot_file: str = "franka.yml",
-    max_attempts: int = 8,
-    use_cuda_graph: bool = False,
-    position_threshold: float = 0.05,
-    rotation_threshold: float = 0.1,
-    position_threshold_z: float = 0.05,
-    num_ik_seeds: int = 128,
-    use_world_collision: bool = True,
-    robot_collision_sphere_buffer: float = -0.01,
-    collision_activation_distance: float = 0.01,
-    surface_sphere_radius: float = 0.001,
-    link_name: str = "attached_object",
-    remove_obstacles_from_world: bool = False,
-    debug_out_dir: str | None = None,
-) -> PlanResult:
-    """``object_name`` must name a mesh in ``world_config``; it is attached
-    to the robot at the start configuration and collision-checked against
-    the remaining scene during transport."""
-    impl = _impl()
-    try:
-        with _LOCK:
-            success, trajectory = impl.plan_with_grasped_object(
-                _world_ns(world_config),
-                _joints(start_joint_position),
-                _pose_tuple(target_pose),
-                object_name,
-                robot_file=robot_file,
-                max_attempts=max_attempts,
-                use_cuda_graph=use_cuda_graph,
-                position_threshold=position_threshold,
-                rotation_threshold=rotation_threshold,
-                position_threshold_z=position_threshold_z,
-                num_ik_seeds=num_ik_seeds,
-                use_world_collision=use_world_collision,
-                robot_collision_sphere_buffer=robot_collision_sphere_buffer,
-                collision_activation_distance=collision_activation_distance,
-                surface_sphere_radius=surface_sphere_radius,
-                link_name=link_name,
-                remove_obstacles_from_world=remove_obstacles_from_world,
-                debug_out_dir=debug_out_dir,
-            )
-    except Exception as e:
-        logger.error("plan_with_grasped_object failed: %s\n%s", e, traceback.format_exc())
-        _cuda_cleanup(impl, "_motion_gen_cache", e)
-        raise PlanningFailed(f"plan_with_grasped_object failed: {e}") from e
-
-    return {
-        "success": bool(success),
-        "trajectory": _traj_out(trajectory) if success else None,
-    }
-
-
-@tool(
     name="curobo.plan_linear",
     summary="Plan a straight Cartesian-space trajectory between two end-effector poses.",
     tags=("planning",),

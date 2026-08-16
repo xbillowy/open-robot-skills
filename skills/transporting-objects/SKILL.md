@@ -26,7 +26,6 @@ gap:
     - geometry.mask_to_world_points
     - geometry.filter_and_compute_obb
     - geometry.build_world_config
-    - curobo.plan_with_grasped_object
     - curobo.plan_directed_linear
     - grounding-dino.detect
     - vlm.query
@@ -51,7 +50,6 @@ gap:
     - descend_release_linear: scripts/descend_release_linear.py
     - lift_grasped: scripts/lift_grasped.py
     - waypoint_move: scripts/waypoint_move.py
-    - waypoint_move_carve: scripts/waypoint_move_carve.py
     - perceive_placement_zone: scripts/perceive_placement_zone.py
   prompts:
     vlm_select_zone: prompts/vlm_select_zone.md
@@ -79,9 +77,8 @@ moves the held object above the destination container and releases it.
 ## When NOT to use
 
 - Cluttered transport paths where the lifted object risks colliding with
-  other scene objects in transit — but see the `waypoint_move_carve`
-  variant below, which routes the lift/translate through
-  `curobo.plan_with_grasped_object` against a rebuilt collision world.
+  other scene objects in transit. The current cuRobo v0.8 bundle does not
+  advertise attached-object transport planning.
 
 ## Recommended subgraph state flow
 
@@ -330,17 +327,6 @@ State details:
    `drop_offset` node is present). Lifts to a safe height at the current
    XY, then moves laterally to above the drop XY.
 
-   **Variant — collision-aware lift/translate (`waypoint_move_carve`)**.
-   Same inputs (`drop_x`, `drop_y`) and same return shape, but the node
-   rebuilds the world from a fresh observation and routes through
-   `curobo.plan_with_grasped_object` instead of the connector's
-   `robot.go_to_pose_cartesian` (which is TCP-aware but not world-aware).
-   Use when a known obstacle sits on the transport path between the
-   grasp pose and the drop XY (an oven door, a shelf above the table, a
-   tall bottle the lift would clip). A repair pass may flip the
-   transport subgraph to this variant when the `transport` stage
-   pass-rate drops below the configured threshold — its hypothesis is
-   "free-space transport plowed through a perceived obstacle".
 3. **`release`** — `type: script`, file `scripts/<sg>/descend_release.py`.
    Inputs: `drop_position = Ref("compute_drop.drop_position")`
    (or `Ref("drop_offset.drop_position")` when `drop_offset` is present).
@@ -368,7 +354,7 @@ State details:
 - `references/clearance_constants.md` — the magic numbers.
 - `references/design_transport.md` — why no planner is needed for the
   default scope.
-- `scripts/{compute_drop_pose,drop_offset_pose,waypoint_move,waypoint_move_carve,descend_release,descend_release_linear,approach_above,lift_grasped,perceive_placement_zone}.py`
+- `scripts/{compute_drop_pose,drop_offset_pose,waypoint_move,descend_release,descend_release_linear,approach_above,lift_grasped,perceive_placement_zone}.py`
   — canonical scripts.
 - `prompts/vlm_select_zone.md` — VLM prompt template for the optional
   `perceive_zone` state.
