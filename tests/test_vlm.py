@@ -1,8 +1,9 @@
 """Tests for the vlm tool bundle — per-provider request shaping, all mocked.
 
 No network, no GPU: the openrouter provider (the default) is exercised
-through ``httpx.MockTransport``, and the vertex provider behind an import
-guard (skipped when google-genai is absent).
+through ``httpx.MockTransport``, as is the Gemini native REST relay; the
+vertex provider is exercised behind an import guard (skipped when
+google-genai is absent).
 """
 
 from __future__ import annotations
@@ -192,6 +193,79 @@ def test_openrouter_backend_failure_raises_tool_error(vlm, monkeypatch):
     def handler(request: httpx.Request) -> httpx.Response:
         attempts.append(request)
         return httpx.Response(503, json={"error": "overloaded"})
+
+    transport = httpx.MockTransport(handler)
+    monkeypatch.setattr(vlm, "_http_client", lambda: httpx.Client(transport=transport))
+
+    with pytest.raises(ToolError, match="unavailable after 3 attempts"):
+        vlm.query(prompt="q")
+    assert len(attempts) == 3
+
+
+# ---------------------------------------------------------------------------
+# gemini_rest provider — Google generateContent schema over an HTTP relay
+# ---------------------------------------------------------------------------
+
+
+def test_gemini_rest_shapes_native_multimodal_request(vlm, image, monkeypatch):
+    captured: dict = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        captured["url"] = str(request.url)
+        captured["api_key"] = request.headers.get("x-goog-api-key")
+        captured["authorization"] = request.headers.get("Authorization")
+        captured["payload"] = json.loads(request.content)
+        return httpx.Response(
+            200,
+            json={
+                "candidates": [{
+                    "content": {"parts": [{"text": "YES\nInside the basket."}]}
+                }]
+            },
+        )
+
+    transport = httpx.MockTransport(handler)
+    monkeypatch.setattr(vlm, "_http_client", lambda: httpx.Client(transport=transport))
+    monkeypatch.setenv("GAP_VLM_PROVIDER", "gemini_rest")
+    monkeypatch.setenv("GAP_VLM_BASE_URL", "https://relay.example/ai/genai")
+    monkeypatch.setenv("GAP_VLM_API_KEY", "relay-secret")
+    monkeypatch.setenv("GAP_VLM_MODEL", "gemini-3.6-flash")
+
+    out = vlm.query_yes_no(prompt="Is the target inside?", image=image)
+
+    assert out == {"answer": True, "text": "YES\nInside the basket."}
+    assert captured["url"] == (
+        "https://relay.example/ai/genai/v1beta/models/"
+        "gemini-3.6-flash:generateContent"
+    )
+    assert captured["api_key"] == "relay-secret"
+    assert captured["authorization"] is None
+    payload = captured["payload"]
+    assert payload["generationConfig"] == {
+        "temperature": 0.0,
+        "maxOutputTokens": 1024,
+    }
+    parts = payload["contents"][0]["parts"]
+    assert parts[0]["text"].startswith("Is the target inside?")
+    assert "YES or NO first" in parts[0]["text"]
+    assert parts[1]["inline_data"]["mime_type"] == "image/png"
+    raw = base64.b64decode(parts[1]["inline_data"]["data"])
+    np.testing.assert_array_equal(
+        np.asarray(Image.open(io.BytesIO(raw)).convert("RGB")), image,
+    )
+
+
+def test_gemini_rest_fails_closed_on_missing_candidate_text(vlm, monkeypatch):
+    monkeypatch.setenv("GAP_VLM_PROVIDER", "gemini_rest")
+    monkeypatch.setenv("GAP_VLM_BASE_URL", "https://relay.example/ai/genai")
+    monkeypatch.setenv("GAP_VLM_API_KEY", "relay-secret")
+    monkeypatch.setattr(vlm, "_BACKOFF_S", 0.0)
+
+    attempts = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        attempts.append(request)
+        return httpx.Response(200, json={"candidates": []})
 
     transport = httpx.MockTransport(handler)
     monkeypatch.setattr(vlm, "_http_client", lambda: httpx.Client(transport=transport))

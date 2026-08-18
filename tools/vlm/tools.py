@@ -22,6 +22,11 @@ a different provider/model than the agent.
   any other OpenAI-compatible server, e.g. a local vLLM). Key from
   ``GAP_VLM_API_KEY`` (else ``OPENROUTER_API_KEY``); model from
   ``GAP_VLM_MODEL`` (else ``GAP_LLM_MODEL`` else :data:`DEFAULT_MODEL`).
+- ``gemini_rest`` — Google's native ``generateContent`` REST schema through
+  a compatible relay. ``GAP_VLM_BASE_URL`` is required and is extended with
+  ``/v1beta/models/<model>:generateContent``. The API key comes from
+  ``GAP_VLM_API_KEY`` and is sent only as ``x-goog-api-key``. Images use
+  native inline PNG parts rather than OpenAI data-URL blocks.
 - ``vertex`` — Vertex AI via ``google-genai`` (Gemini models). Lazy
   import; install the vertex extra
   (``pip install "graph-as-policy[vertex]"``). Config:
@@ -32,7 +37,7 @@ a different provider/model than the agent.
 
 Generation config: perception callers (the pairwise tournament, the
 yes/no verify gate) are binary judgments that depend on deterministic
-decoding, so both providers pin ``temperature: 0.0`` + ``max_tokens:
+decoding, so all providers pin ``temperature: 0.0`` + ``max_tokens:
 1024`` with 3 retries + exponential backoff.
 
 All functions are synchronous — the gap runtime is threaded, not async.
@@ -230,6 +235,83 @@ def _query_openrouter(prompt: str, images: list[np.ndarray], model: str | None) 
 
 
 # ---------------------------------------------------------------------------
+# Provider: gemini_rest (Google generateContent schema through an HTTP relay)
+# ---------------------------------------------------------------------------
+
+
+def _query_gemini_rest(
+    prompt: str, images: list[np.ndarray], model: str | None
+) -> str:
+    base_url = _envstr("GAP_VLM_BASE_URL")
+    model = _resolve_model(model)
+    api_key = _envstr("GAP_VLM_API_KEY")
+    if not base_url:
+        raise ToolError(
+            "vlm",
+            "gemini_rest requires GAP_VLM_BASE_URL",
+        )
+    if not api_key:
+        raise ToolError(
+            "vlm",
+            "gemini_rest requires GAP_VLM_API_KEY",
+        )
+
+    generate_url = (
+        f"{base_url.rstrip('/')}/v1beta/models/{model}:generateContent"
+    )
+    parts: list[dict] = [{"text": prompt}]
+    for arr in images:
+        parts.append({
+            "inline_data": {
+                "mime_type": "image/png",
+                "data": _png_b64(arr),
+            }
+        })
+    payload = {
+        "contents": [{"parts": parts}],
+        "generationConfig": {
+            "temperature": _TEMPERATURE,
+            "maxOutputTokens": _MAX_TOKENS,
+        },
+    }
+    headers = {
+        "Content-Type": "application/json",
+        "x-goog-api-key": api_key,
+    }
+
+    last_exc: Exception | None = None
+    with _http_client() as client:
+        for attempt in range(_MAX_RETRIES):
+            try:
+                response = client.post(generate_url, json=payload, headers=headers)
+                response.raise_for_status()
+                body = response.json()
+                response_parts = body["candidates"][0]["content"]["parts"]
+                text = "".join(
+                    part["text"] for part in response_parts
+                    if isinstance(part, dict) and isinstance(part.get("text"), str)
+                )
+                if not text:
+                    raise ValueError("Gemini response contained no candidate text")
+                return text
+            except Exception as exc:  # noqa: BLE001 — transient API/schema errors
+                last_exc = exc
+                logger.warning(
+                    "VLM gemini_rest request failed "
+                    "(attempt %d/%d, generate_url=%s): %s",
+                    attempt + 1, _MAX_RETRIES, generate_url, exc,
+                )
+                if attempt < _MAX_RETRIES - 1:
+                    time.sleep(_BACKOFF_S * (2 ** attempt))
+
+    raise ToolError(
+        "vlm",
+        f"gemini_rest backend unavailable after {_MAX_RETRIES} attempts: "
+        f"generate_url={generate_url}, error={last_exc}",
+    )
+
+
+# ---------------------------------------------------------------------------
 # Provider: vertex (google-genai; Gemini models only)
 # ---------------------------------------------------------------------------
 
@@ -300,6 +382,7 @@ def _query_vertex(prompt: str, images: list[np.ndarray], model: str | None) -> s
 
 
 _PROVIDERS = {
+    "gemini_rest": _query_gemini_rest,
     "openrouter": _query_openrouter,
     "vertex": _query_vertex,
 }
@@ -347,7 +430,8 @@ def query(
         prompt: Free-form question.
         image: Optional uint8 [H, W, 3] RGB context image.
         images: Optional additional context images (same dtype/shape).
-        provider: Per-call provider override (``openrouter``/``vertex``).
+        provider: Per-call provider override
+            (``openrouter``/``gemini_rest``/``vertex``).
         model: Per-call model override.
 
     Returns:
