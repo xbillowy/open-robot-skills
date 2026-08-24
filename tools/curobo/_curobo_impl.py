@@ -350,6 +350,26 @@ class _IKSolverCache:
 _ik_solver_cache = _IKSolverCache()
 
 
+def _default_validation_tensor_args():
+    """Construct tensor args for the installed cuRobo API, or fail closed."""
+    if _V1_AVAILABLE:
+        factory = globals().get("TensorDeviceType")
+        api = "v0.7 TensorDeviceType"
+    elif _V2_AVAILABLE:
+        factory = globals().get("DeviceCfg")
+        api = "v0.8 DeviceCfg"
+    else:
+        raise RuntimeError(
+            "trajectory validation requires curobo v0.7 or v0.8 tensor device support"
+        )
+    if factory is None:
+        raise RuntimeError(f"trajectory validation {api} support is unavailable")
+    try:
+        return factory()
+    except Exception as exc:
+        raise RuntimeError(f"trajectory validation could not construct {api}") from exc
+
+
 def _robot_joint_names(robot_cfg: RobotConfig) -> list[str]:
     """Resolve actuated joint names for :class:`JointState` construction."""
     joint_names = None
@@ -394,7 +414,7 @@ def validate_joint_trajectory_robot_world(
     :return: ``(success, failure_reason, first_collision_index, debug_dict)``.
     """
     if tensor_args is None:
-        tensor_args = TensorDeviceType()
+        tensor_args = _default_validation_tensor_args()
     q = np.atleast_2d(np.asarray(joint_waypoints, dtype=np.float64))
     if q.shape[1] < 7:
         return False, "need_at_least_7_joint_values", None, {"shape": list(q.shape)}
