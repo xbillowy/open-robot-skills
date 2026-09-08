@@ -152,6 +152,106 @@ def test_openrouter_text_only_query(vlm, monkeypatch):
     assert content == [{"type": "text", "text": "hello"}]
 
 
+def test_http_client_is_shared_without_closing_between_queries(vlm):
+    with vlm._http_client() as first:
+        with vlm._http_client() as second:
+            assert first is second
+        assert not first.is_closed
+    assert not first.is_closed
+    vlm._close_http_client()
+    assert first.is_closed
+
+
+def test_parallel_queries_share_client_without_serializing(vlm, image, monkeypatch):
+    barrier = threading.Barrier(4)
+    created = []
+
+    def handler(request):
+        barrier.wait(timeout=2)
+        prompt = json.loads(request.content)["messages"][0]["content"][0]["text"]
+        return httpx.Response(200, json={"choices": [{"message": {"content": prompt}}]})
+
+    def factory():
+        client = httpx.Client(transport=httpx.MockTransport(handler))
+        created.append(client)
+        return client
+
+    monkeypatch.setattr(vlm, "_new_http_client", factory)
+    prompts = [f"question-{i}" for i in range(8)]
+    try:
+        result = vlm.query_batch(prompts=prompts, images=[image] * 8)
+        assert result == {"results": [{"text": prompt} for prompt in prompts]}
+        assert len(created) == 1
+        assert not created[0].is_closed
+    finally:
+        vlm._close_http_client()
+    assert created[0].is_closed
+
+
+def test_fork_reset_does_not_reuse_parent_pool_or_lock(vlm):
+    with vlm._http_client() as parent:
+        parent_lock = vlm._http_client_lock
+        with parent_lock:
+            vlm._reset_http_client_after_fork()
+            assert vlm._http_client_lock is not parent_lock
+            with vlm._http_client() as child:
+                assert child is not parent
+        assert not parent.is_closed
+    parent.close()
+    vlm._close_http_client()
+
+
+@pytest.mark.parametrize("provider", ["openrouter", "gemini_rest"])
+def test_sequential_queries_reuse_tcp_connection(vlm, monkeypatch, provider):
+    from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+    class Handler(BaseHTTPRequestHandler):
+        protocol_version = "HTTP/1.1"
+
+        def do_POST(self):
+            self.rfile.read(int(self.headers["Content-Length"]))
+            body = json.dumps({
+                "choices": [{"message": {"content": "yes"}}],
+                "candidates": [{"content": {"parts": [{"text": "yes"}]}}],
+            }).encode()
+            self.send_response(200)
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+        def log_message(self, *_):
+            pass
+
+    class Server(ThreadingHTTPServer):
+        connections = 0
+
+        def get_request(self):
+            request = super().get_request()
+            self.connections += 1
+            return request
+
+    server = Server(("127.0.0.1", 0), Handler)
+    worker = threading.Thread(target=server.serve_forever, daemon=True)
+    monkeypatch.setenv("NO_PROXY", "127.0.0.1")
+    monkeypatch.setenv("no_proxy", "127.0.0.1")
+    monkeypatch.setenv("GAP_VLM_BASE_URL", f"http://127.0.0.1:{server.server_port}")
+    monkeypatch.setenv("GAP_VLM_API_KEY", "test-key")
+    worker.start()
+    try:
+        for _ in range(8):
+            out = vlm.query(prompt="hello", provider=provider)
+            assert out["text"] == "yes"
+            assert set(out) == ({"text", "route"} if provider == "gemini_rest" else {"text"})
+        assert server.connections == 1
+    finally:
+        close = getattr(vlm, "_close_http_client", None)
+        if close:
+            close()
+        server.shutdown()
+        server.server_close()
+        worker.join(timeout=2)
+
+
 def test_query_batch_is_bounded_concurrent_and_ordered(vlm, image, monkeypatch):
     lock = threading.Lock()
     four_started = threading.Event()
