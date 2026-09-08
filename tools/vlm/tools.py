@@ -45,12 +45,15 @@ All functions are synchronous — the gap runtime is threaded, not async.
 
 from __future__ import annotations
 
+import atexit
 import base64
 import concurrent.futures
+from contextlib import nullcontext
 import io
 import logging
 import os
 import re
+import threading
 import time
 from typing import TypedDict
 
@@ -186,9 +189,46 @@ def _gather_images(
 # ---------------------------------------------------------------------------
 
 
-def _http_client() -> httpx.Client:
-    """Build the HTTP client for the OpenAI-compatible path (test seam)."""
+_shared_http_client: httpx.Client | None = None
+_http_client_lock = threading.Lock()
+
+
+def _new_http_client() -> httpx.Client:
     return httpx.Client(timeout=httpx.Timeout(120.0, connect=10.0))
+
+
+def _http_client() -> nullcontext[httpx.Client]:
+    """Borrow the thread-safe process pool; request contexts never close it.
+
+    Proxy settings are fixed at process startup. Credentials stay on each
+    request, not on the shared client. HTTPX replaces expired/broken sockets.
+    """
+    global _shared_http_client
+    with _http_client_lock:
+        if _shared_http_client is None:
+            _shared_http_client = _new_http_client()
+        return nullcontext(_shared_http_client)
+
+
+def _close_http_client() -> None:
+    """Close at process shutdown, after query workers have settled."""
+    global _shared_http_client
+    with _http_client_lock:
+        if _shared_http_client is not None:
+            _shared_http_client.close()
+            _shared_http_client = None
+
+
+def _reset_http_client_after_fork() -> None:
+    # Never reuse a parent's sockets or possibly held thread lock in a child.
+    global _shared_http_client, _http_client_lock
+    _shared_http_client = None
+    _http_client_lock = threading.Lock()
+
+
+atexit.register(_close_http_client)
+if hasattr(os, "register_at_fork"):
+    os.register_at_fork(after_in_child=_reset_http_client_after_fork)
 
 
 def _query_openrouter(prompt: str, images: list[np.ndarray], model: str | None) -> str:
