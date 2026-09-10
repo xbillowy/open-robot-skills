@@ -343,10 +343,28 @@ def plan_directed_linear(
     orientation_target: Quaternion | None = None,
     robot_file: str = "franka.yml",
 ) -> PlanLinearResult:
-    """FK(start_joint_position) is computed internally; ``start_pose`` is a
-    hint only. ``allowed_axes`` ⊆ ["X","Y","Z"] are free to move (others held
-    at FK values). ``endpoint_mode``: PROJECT_TO_TARGET | DISTANCE |
-    ORIENT_IN_PLACE; ``orientation_mode``: LOCK | TARGET_AT_END | SLERP."""
+    """Plan joint motion, without executing it or verifying physical arrival.
+
+    start_joint_position is in the configured robot model's active joint order
+    (radians for revolute joints). FK of these joints is the authoritative start;
+    start_pose is only a compatibility hint, not a way to override that FK.
+    Positions/directions use the configured model's planning frame and tool link,
+    metres and scalar-first quaternions. This tool does NOT apply the connector's
+    world-to-base or TCP-to-link conversion: do not assume a public world/TCP
+    pose is already in this frame/reference.
+
+    DISTANCE: goal = FK(start) + normalized explicit_direction * distance;
+    target_pose.position does not determine the goal. PROJECT_TO_TARGET: only
+    allowed_axes (X/Y/Z) take target_pose coordinates; others retain FK values.
+    ORIENT_IN_PLACE: position stays at FK(start), ignoring allowed_axes.
+    LOCK keeps the FK start orientation, ignoring orientation_target and the
+    target_pose rotation. TARGET_AT_END and SLERP use orientation_target, or
+    target_pose.rotation when absent; SLERP also constrains path orientation.
+
+    success describes planning only. Compare actual post-execution joint/pose
+    feedback with the planned endpoint in compatible joint order and references;
+    do not equate a valid trajectory with arrival, contact or grasp.
+    """
     impl = _impl()
     try:
         with _LOCK:
