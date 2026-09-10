@@ -374,6 +374,65 @@ def _robot_joint_names(robot_cfg: RobotConfig) -> list[str]:
     return list(joint_names)
 
 
+def _validate_joint_trajectory_v2(
+    world_config, joint_waypoints, *, robot_file, tensor_args, use_cuda_graph,
+    robot_collision_sphere_buffer, collision_activation_distance,
+    ignore_obstacle_names,
+):
+    """Use the v0.8 native joint-bound, self- and scene-collision validator.
+
+    Build a call-local checker so ignored obstacles and sphere buffers cannot
+    leak into other planning calls. Each waypoint is a batch of horizon one,
+    matching the native [batch, horizon, dof] APIs. The installed v0.8
+    validate wrapper passes a tensor to SceneCollisionCost, which now needs
+    KinematicsState; call the same native constraints with their proper input.
+    """
+    from curobo.collision_checking import RobotCollisionChecker, RobotCollisionCheckerCfg
+    from curobo._src.types.robot import RobotCfg
+    from curobo._src.util_file import get_robot_configs_path, join_path, load_yaml
+
+    if use_cuda_graph:
+        raise ValueError('trajectory validation requires use_cuda_graph=False')
+    q = np.atleast_2d(np.asarray(joint_waypoints, dtype=np.float64))
+    if q.ndim != 2 or q.shape[0] == 0 or q.shape[1] < 7 or not np.isfinite(q).all():
+        return False, 'invalid_joint_waypoints', None, {'shape': list(q.shape)}
+    q = q[:, :7]
+    device = tensor_args if tensor_args is not None else DeviceCfg()
+    raw = load_yaml(join_path(get_robot_configs_path(), robot_file))['robot_cfg']
+    if robot_collision_sphere_buffer is not None:
+        raw['kinematics']['collision_sphere_buffer'] = float(robot_collision_sphere_buffer)
+    robot = RobotCfg.create(raw, device)
+    scene = _v2_scene_cfg_excluding(world_config, device, ignore_obstacle_names)
+    cfg = RobotCollisionCheckerCfg.load_from_config(
+        robot_config=robot, scene_model=scene, device_cfg=device,
+        n_meshes=max(50, len(getattr(scene, 'mesh', None) or [])),
+        collision_activation_distance=(0.01 if collision_activation_distance is None
+                                       else float(collision_activation_distance)),
+    )
+    checker = RobotCollisionChecker(cfg)
+    with torch.no_grad():
+        joints = device.to_device(q).reshape(len(q), 1, 7)
+        state = checker.get_kinematics(joints)
+        if checker.collision_constraint is not None:
+            checker.collision_constraint.update_num_spheres(
+                state.robot_spheres.shape[-2], batch_size=len(q), horizon=1,
+            )
+        checker.setup_batch_tensors(len(q), 1)
+        valid = checker.get_bound(joints).reshape(len(q), -1).eq(0).all(dim=-1)
+        if checker.self_collision_cost is not None:
+            valid &= checker.get_self_collision(state.robot_spheres).reshape(len(q), -1).eq(0).all(dim=-1)
+        if checker.collision_constraint is not None:
+            valid &= checker.collision_constraint.forward(state).reshape(len(q), -1).eq(0).all(dim=-1)
+    mask = valid.detach().cpu().numpy().reshape(-1)
+    if mask.dtype != np.bool_ or len(mask) != len(q):
+        raise ValueError('collision checker returned an invalid waypoint mask')
+    failures = np.flatnonzero(~mask)
+    index = int(failures[0]) if len(failures) else None
+    return index is None, '' if index is None else 'collision_or_joint_limit', index, {
+        'num_waypoints': len(q), 'motion_gen_status': 'v0.8_native_collision_validation',
+    }
+
+
 def validate_joint_trajectory_robot_world(
     world_config: Any,
     joint_waypoints: np.ndarray,
@@ -387,12 +446,20 @@ def validate_joint_trajectory_robot_world(
 ) -> tuple[bool, str, int | None, dict[str, Any]]:
     """CuRobo collision check for each joint waypoint (robot vs world + self-collision).
 
-    Uses :meth:`MotionGen.check_start_state` per configuration. Intended for validating
+    Uses the native version's collision validator per configuration. Intended for validating
     PyRoKI ``PlanLinear`` (or similar) joint trajectories against the same ``WorldConfig``
     used for perception-built meshes.
 
     :return: ``(success, failure_reason, first_collision_index, debug_dict)``.
     """
+    if _V2_AVAILABLE:
+        return _validate_joint_trajectory_v2(
+            world_config, joint_waypoints, robot_file=robot_file,
+            tensor_args=tensor_args, use_cuda_graph=use_cuda_graph,
+            robot_collision_sphere_buffer=robot_collision_sphere_buffer,
+            collision_activation_distance=collision_activation_distance,
+            ignore_obstacle_names=ignore_obstacle_names,
+        )
     if tensor_args is None:
         tensor_args = TensorDeviceType()
     q = np.atleast_2d(np.asarray(joint_waypoints, dtype=np.float64))
