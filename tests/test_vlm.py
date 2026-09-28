@@ -245,7 +245,7 @@ def test_gemini_rest_shapes_native_multimodal_request(vlm, image, monkeypatch):
     payload = captured["payload"]
     assert payload["generationConfig"] == {
         "temperature": 0.0,
-        "maxOutputTokens": 32768,
+        "maxOutputTokens": 8192,
     }
     parts = payload["contents"][0]["parts"]
     assert parts[0]["text"].startswith("Is the target inside?")

@@ -143,10 +143,13 @@ def _resolve_vertex_region() -> str:
     )
 
 _MAX_TOKENS = 1024  # ported from the source servicer
-#: Output limit for ``gemini_rest``. It includes thinking tokens; real
-#: gemini-3.8-flash / gemini-robotics-er-2-preview perception replays used up
-#: to ~8k thought tokens on hard pairs once uncapped.
-_GEMINI_REST_MAX_OUTPUT_TOKENS = 32768
+#: Output limit for ``gemini_rest``; it includes thinking tokens. Measured on
+#: real perception pairs: gemini-3.8-flash thinks at most ~5k tokens even when
+#: uncapped (1024 truncated 7.5% of its answers), while
+#: gemini-robotics-er-2-preview ignores ``thinkingBudget`` and on degenerate
+#: pairs thinks up to ~96% of this limit before answering (~31k tokens and
+#: ~105 s per call at 32768). 8192 leaves flash headroom and bounds ER at ~30 s.
+_GEMINI_REST_MAX_OUTPUT_TOKENS = 8192
 #: Tool name -> per-call-kind model selector (see module docstring).
 _CALL_KIND_MODEL_ENV = {
     "query": "GAP_VLM_MODEL_QUERY",
