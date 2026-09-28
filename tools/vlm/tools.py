@@ -26,7 +26,15 @@ a different provider/model than the agent.
   a compatible relay. ``GAP_VLM_BASE_URL`` is required and is extended with
   ``/v1beta/models/<model>:generateContent``. The API key comes from
   ``GAP_VLM_API_KEY`` and is sent only as ``x-goog-api-key``. Images use
-  native inline PNG parts rather than OpenAI data-URL blocks.
+  native inline PNG parts rather than OpenAI data-URL blocks. An optional
+  backup route (``GAP_VLM_BACKUP_BASE_URL`` + ``GAP_VLM_BACKUP_API_KEY``,
+  model ``GAP_VLM_BACKUP_MODEL`` else the primary model) serves a call only
+  after the primary exhausted its retries on a provider outage (transport
+  fault, HTTP 5xx, HTTP 429); content/schema failures never fail over. A
+  route that fails ``GAP_VLM_FAILOVER_CONSECUTIVE`` calls in a row is
+  parked for ``GAP_VLM_FAILOVER_COOLDOWN_S`` seconds. Each gemini_rest
+  result carries a key-free ``route`` record (name, endpoint, model, usage
+  incl. thought tokens) so the trace shows which route answered.
 - ``vertex`` — Vertex AI via ``google-genai`` (Gemini models). Lazy
   import; install the vertex extra
   (``pip install "graph-as-policy[vertex]"``). Config:
@@ -63,6 +71,7 @@ import io
 import logging
 import os
 import re
+import threading
 import time
 from typing import TypedDict
 
@@ -306,11 +315,40 @@ def _log_gemini_usage(model: str, body: dict, latency_s: float) -> None:
     )
 
 
-def _query_gemini_rest(
-    prompt: str, images: list[np.ndarray], model: str | None
-) -> str:
+class _ProviderOutage(Exception):
+    """A route exhausted its retries on a provider (not content) failure."""
+
+
+#: Per-thread record of the route that served the latest gemini_rest call.
+_route_state = threading.local()
+#: Process-local route health: consecutive outage calls and parked-until time.
+_route_health: dict[str, dict[str, float]] = {}
+_route_health_lock = threading.Lock()
+
+
+def _is_provider_outage(exc: Exception) -> bool:
+    if isinstance(exc, httpx.TransportError):
+        return True
+    if isinstance(exc, httpx.HTTPStatusError):
+        status = exc.response.status_code
+        return status == 429 or status >= 500
+    return False
+
+
+def _failover_policy() -> tuple[int, float]:
+    try:
+        consecutive = int(_envstr("GAP_VLM_FAILOVER_CONSECUTIVE") or 1)
+        cooldown = float(_envstr("GAP_VLM_FAILOVER_COOLDOWN_S") or 60.0)
+    except ValueError as exc:
+        raise ToolError("vlm", "invalid gemini_rest failover policy") from exc
+    if consecutive < 1 or not cooldown > 0:
+        raise ToolError("vlm", "invalid gemini_rest failover policy")
+    return consecutive, cooldown
+
+
+def _gemini_rest_routes(model: str | None) -> list[tuple[str, str, str, str]]:
+    """``(name, base_url, api_key, model)`` in preference order."""
     base_url = _envstr("GAP_VLM_BASE_URL")
-    model = _resolve_model(model)
     api_key = _envstr("GAP_VLM_API_KEY")
     if not base_url:
         raise ToolError(
@@ -322,7 +360,96 @@ def _query_gemini_rest(
             "vlm",
             "gemini_rest requires GAP_VLM_API_KEY",
         )
+    resolved = _resolve_model(model)
+    routes = [("primary", base_url, api_key, resolved)]
+    backup_url = _envstr("GAP_VLM_BACKUP_BASE_URL")
+    backup_key = _envstr("GAP_VLM_BACKUP_API_KEY")
+    if backup_url and backup_key:
+        # A per-call model override applies to every route.
+        backup_model = (model or "").strip() or _envstr("GAP_VLM_BACKUP_MODEL") or resolved
+        routes.append(("backup", backup_url, backup_key, backup_model))
+    return routes
 
+
+def _ordered_routes(routes, now: float):
+    with _route_health_lock:
+        ready = [r for r in routes if _route_health.get(r[0], {}).get("parked_until", 0.0) <= now]
+    # All parked: still attempt every route rather than failing without a call.
+    return ready or list(routes)
+
+
+def _record_route_result(name: str, *, outage: bool, now: float) -> None:
+    consecutive, cooldown = _failover_policy() if outage else (1, 0.0)
+    with _route_health_lock:
+        health = _route_health.setdefault(name, {"failures": 0.0, "parked_until": 0.0})
+        if not outage:
+            health["failures"] = 0.0
+            health["parked_until"] = 0.0
+            return
+        health["failures"] += 1
+        if health["failures"] >= consecutive:
+            health["parked_until"] = now + cooldown
+            logger.warning("VLM gemini_rest route %s parked for %.0fs", name, cooldown)
+
+
+def _gemini_usage(body: dict) -> dict[str, int]:
+    usage = body.get("usageMetadata") if isinstance(body, dict) else None
+    usage = usage if isinstance(usage, dict) else {}
+
+    def count(key: str) -> int:
+        value = usage.get(key)
+        return value if isinstance(value, int) and value >= 0 else 0
+
+    thoughts = count("thoughtsTokenCount")
+    return {
+        "input_tokens": count("promptTokenCount"),
+        # Thinking tokens are billed output even though no text part carries them.
+        "output_tokens": count("candidatesTokenCount") + thoughts,
+        "thoughts_tokens": thoughts,
+    }
+
+
+def _take_route() -> dict | None:
+    route = getattr(_route_state, "route", None)
+    _route_state.route = None
+    return route
+
+
+def _with_route(result: dict) -> dict:
+    route = _take_route()
+    if route is not None:
+        result["route"] = route
+    return result
+
+
+def _query_gemini_rest(
+    prompt: str, images: list[np.ndarray], model: str | None
+) -> str:
+    routes = _gemini_rest_routes(model)
+    _route_state.route = None
+    last: _ProviderOutage | None = None
+    for name, base_url, api_key, route_model in _ordered_routes(routes, time.monotonic()):
+        try:
+            text, usage = _query_gemini_rest_route(
+                prompt, images, base_url=base_url, api_key=api_key, model=route_model,
+            )
+        except _ProviderOutage as outage:
+            _record_route_result(name, outage=True, now=time.monotonic())
+            last = outage
+            continue
+        _record_route_result(name, outage=False, now=time.monotonic())
+        _route_state.route = {
+            "name": name, "endpoint": base_url, "model": route_model, "usage": usage,
+        }
+        return text
+    assert last is not None
+    # Same public wrapper as before the backup route existed.
+    raise ToolError("vlm", str(last))
+
+
+def _query_gemini_rest_route(
+    prompt: str, images: list[np.ndarray], *, base_url: str, api_key: str, model: str
+) -> tuple[str, dict[str, int]]:
     generate_url = (
         f"{base_url.rstrip('/')}/v1beta/models/{model}:generateContent"
     )
@@ -358,7 +485,7 @@ def _query_gemini_rest(
                 _log_gemini_usage(model, body, time.monotonic() - started)
                 if not text:
                     raise ValueError("Gemini response contained no candidate answer text")
-                return text
+                return text, _gemini_usage(body)
             except Exception as exc:  # noqa: BLE001 — transient API/schema errors
                 last_exc = exc
                 logger.warning(
@@ -369,11 +496,13 @@ def _query_gemini_rest(
                 if attempt < _MAX_RETRIES - 1:
                     time.sleep(_BACKOFF_S * (2 ** attempt))
 
-    raise ToolError(
-        "vlm",
+    message = (
         f"gemini_rest backend unavailable after {_MAX_RETRIES} attempts: "
-        f"generate_url={generate_url}, error={last_exc}",
+        f"generate_url={generate_url}, error={last_exc}"
     )
+    if last_exc is not None and _is_provider_outage(last_exc):
+        raise _ProviderOutage(message)
+    raise ToolError("vlm", message)
 
 
 # ---------------------------------------------------------------------------
@@ -502,9 +631,9 @@ def query(
     Returns:
         ``{"text": <model response>}``.
     """
-    return {"text": _query(
+    return _with_route({"text": _query(
         prompt, image, images, provider, _call_kind_model(model, "query"),
-    )}
+    )})
 
 
 @tool(
@@ -535,7 +664,7 @@ def query_batch(
 
     def _one(item: tuple[str, np.ndarray]) -> QueryResult:
         prompt, image = item
-        return {"text": _query(prompt, image, None, provider, model)}
+        return _with_route({"text": _query(prompt, image, None, provider, model)})
 
     with concurrent.futures.ThreadPoolExecutor(
         max_workers=min(4, len(prompts))
@@ -595,4 +724,4 @@ def query_yes_no(
         prompt + _YES_NO_INSTRUCTION, image, images, provider,
         _call_kind_model(model, "query_yes_no"),
     )
-    return {"answer": _coerce_yes_no(text), "text": text}
+    return _with_route({"answer": _coerce_yes_no(text), "text": text})
