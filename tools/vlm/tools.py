@@ -61,6 +61,15 @@ and ``GAP_VLM_MODEL_QUERY_YES_NO`` select the model for ``vlm.query``,
 ``model=`` > per-kind env > ``GAP_VLM_MODEL`` > ``GAP_LLM_MODEL`` >
 :data:`DEFAULT_MODEL`. Unset per-kind variables leave behavior unchanged.
 
+Yes/no majority vote: ``GAP_VLM_YES_NO_VOTES`` (an odd integer, default 1)
+makes ``vlm.query_yes_no`` ask the identical question that many times as
+independent concurrent requests (at most :data:`_YES_NO_MAX_IN_FLIGHT` in
+flight) and return the majority answer. The result then carries every vote
+(``votes``: answer, text and, on ``gemini_rest``, its route record) and no
+top-level ``route``. Unset or ``1`` keeps the single-request behavior and
+result bytes unchanged. A failing vote fails the call; votes are never
+fabricated or dropped.
+
 All functions are synchronous — the gap runtime is threaded, not async.
 """
 
@@ -742,6 +751,27 @@ _YES_NO_INSTRUCTION = (
 
 _YES_NO_WORD = re.compile(r"\b(yes|no)\b")
 
+#: In-flight cap for the concurrent majority votes of one yes/no question.
+_YES_NO_MAX_IN_FLIGHT = 3
+_YES_NO_MAX_VOTES = 9
+
+
+def _yes_no_votes() -> int:
+    """``GAP_VLM_YES_NO_VOTES``: odd vote count, default 1 (single request)."""
+    raw = _envstr("GAP_VLM_YES_NO_VOTES")
+    if not raw:
+        return 1
+    try:
+        votes = int(raw)
+    except ValueError:
+        votes = 0
+    if votes < 1 or votes % 2 == 0 or votes > _YES_NO_MAX_VOTES:
+        raise ToolError(
+            "vlm",
+            f"GAP_VLM_YES_NO_VOTES must be an odd integer in 1..{_YES_NO_MAX_VOTES}",
+        )
+    return votes
+
 
 def _coerce_yes_no(text: str) -> bool:
     """First standalone yes/no word wins; legacy substring check as fallback."""
@@ -772,10 +802,26 @@ def query_yes_no(
     substring check when neither word appears.
 
     Returns:
-        ``{"answer": <bool>, "text": <raw model response>}``.
+        ``{"answer": <bool>, "text": <raw model response>}``; with
+        ``GAP_VLM_YES_NO_VOTES > 1`` also ``votes`` (one result per request),
+        ``answer`` the majority and ``text`` the first majority vote's reply.
     """
-    text = _query(
-        prompt + _YES_NO_INSTRUCTION, image, images, provider,
-        _call_kind_model(model, "query_yes_no"),
-    )
-    return _with_route({"answer": _coerce_yes_no(text), "text": text})
+    votes = _yes_no_votes()
+    model = _call_kind_model(model, "query_yes_no")
+    if votes == 1:
+        text = _query(prompt + _YES_NO_INSTRUCTION, image, images, provider, model)
+        return _with_route({"answer": _coerce_yes_no(text), "text": text})
+
+    def _vote(_: int) -> dict:
+        # Each vote runs in its own worker thread, so its route record is its own.
+        text = _query(prompt + _YES_NO_INSTRUCTION, image, images, provider, model)
+        return _with_route({"answer": _coerce_yes_no(text), "text": text})
+
+    with concurrent.futures.ThreadPoolExecutor(
+        max_workers=min(_YES_NO_MAX_IN_FLIGHT, votes)
+    ) as pool:
+        ballots = list(pool.map(_vote, range(votes)))
+    answer = sum(ballot["answer"] for ballot in ballots) * 2 > votes
+    # The first vote agreeing with the majority supplies the caller-visible text.
+    text = next(ballot["text"] for ballot in ballots if ballot["answer"] is answer)
+    return {"answer": answer, "text": text, "votes": ballots}

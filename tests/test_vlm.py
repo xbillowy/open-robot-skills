@@ -58,7 +58,7 @@ def _clean_env(monkeypatch: pytest.MonkeyPatch):
                 "GAP_VLM_MODEL_QUERY_YES_NO",
                 "GAP_VLM_BACKUP_BASE_URL", "GAP_VLM_BACKUP_API_KEY",
                 "GAP_VLM_BACKUP_MODEL", "GAP_VLM_FAILOVER_CONSECUTIVE",
-                "GAP_VLM_FAILOVER_COOLDOWN_S"):
+                "GAP_VLM_FAILOVER_COOLDOWN_S", "GAP_VLM_YES_NO_VOTES"):
         monkeypatch.delenv(var, raising=False)
 
 
@@ -859,3 +859,98 @@ def test_gemini_rest_usage_omits_absent_prompt_token_details(vlm):
     assert vlm._gemini_usage(body) == {
         "input_tokens": 5, "output_tokens": 2, "thoughts_tokens": 0,
     }
+
+
+# ---------------------------------------------------------------------------
+# query_yes_no majority vote (GAP_VLM_YES_NO_VOTES)
+# ---------------------------------------------------------------------------
+
+
+def _yes_no_body(text):
+    return {**_THINKING_BODY, "candidates": [{
+        "content": {"role": "model", "parts": [{"text": text}]}, "finishReason": "STOP",
+    }]}
+
+
+def test_yes_no_votes_unset_or_one_keeps_single_request_result(vlm, monkeypatch):
+    for votes in (None, "1"):
+        if votes is not None:
+            monkeypatch.setenv("GAP_VLM_YES_NO_VOTES", votes)
+        calls = _two_routes(
+            vlm, monkeypatch,
+            lambda request: httpx.Response(200, json=_yes_no_body("YES. A butter box.")),
+            lambda request: pytest.fail("healthy primary must not fail over"),
+        )
+        out = vlm.query_yes_no(prompt="Is it butter?")
+        assert set(out) == {"answer", "text", "route"}
+        assert out["answer"] is True and out["route"]["name"] == "primary"
+        assert calls == {"primary": 1, "backup": 0}
+
+
+def test_yes_no_majority_of_three_records_every_vote(vlm, monkeypatch):
+    monkeypatch.setenv("GAP_VLM_YES_NO_VOTES", "3")
+    replies = iter(["YES. A butter box.", "NO. A juice carton.", "NO. A tea box."])
+    lock = threading.Lock()
+    in_flight = {"now": 0, "max": 0}
+    barrier = threading.Barrier(3, timeout=5)
+
+    def primary(request):
+        with lock:
+            in_flight["now"] += 1
+            in_flight["max"] = max(in_flight["max"], in_flight["now"])
+            text = next(replies)
+        barrier.wait()  # all three votes are in flight at once
+        with lock:
+            in_flight["now"] -= 1
+        assert "YES or NO first" in json.loads(request.content)["contents"][0]["parts"][0]["text"]
+        return httpx.Response(200, json=_yes_no_body(text))
+
+    calls = _two_routes(vlm, monkeypatch, primary,
+                        lambda request: pytest.fail("healthy primary must not fail over"))
+    out = vlm.query_yes_no(prompt="Is it butter?")
+    assert out["answer"] is False
+    assert out["text"].startswith("NO.")
+    assert "route" not in out
+    assert sorted(v["answer"] for v in out["votes"]) == [False, False, True]
+    assert all(v["route"]["name"] == "primary" for v in out["votes"])
+    assert calls == {"primary": 3, "backup": 0} and in_flight["max"] == 3
+
+
+def test_yes_no_majority_vote_routes_show_backup_service(vlm, monkeypatch):
+    monkeypatch.setenv("GAP_VLM_YES_NO_VOTES", "3")
+    monkeypatch.setenv("GAP_VLM_FAILOVER_CONSECUTIVE", "99")
+    _two_routes(
+        vlm, monkeypatch,
+        lambda request: httpx.Response(503, json={"error": "busy"}),
+        lambda request: httpx.Response(200, json=_yes_no_body("YES. Butter.")),
+    )
+    out = vlm.query_yes_no(prompt="Is it butter?")
+    assert out["answer"] is True
+    assert [v["route"]["name"] for v in out["votes"]] == ["backup"] * 3
+    assert "secret" not in json.dumps(out)
+
+
+def test_yes_no_majority_vote_fails_when_a_vote_fails(vlm, monkeypatch):
+    monkeypatch.setenv("GAP_VLM_YES_NO_VOTES", "3")
+    monkeypatch.setattr(vlm, "_BACKOFF_S", 0.0)
+    replies = iter([200, 400, 200] + [400] * 10)
+
+    def primary(request):
+        status = next(replies)
+        return httpx.Response(status, json=_yes_no_body("YES.") if status == 200 else {"e": 1})
+
+    monkeypatch.setenv("GAP_VLM_PROVIDER", "gemini_rest")
+    monkeypatch.setenv("GAP_VLM_BASE_URL", "https://primary.example")
+    monkeypatch.setenv("GAP_VLM_API_KEY", "primary-secret")
+    transport = httpx.MockTransport(primary)
+    monkeypatch.setattr(vlm, "_http_client", lambda: httpx.Client(transport=transport))
+    with pytest.raises(ToolError):
+        vlm.query_yes_no(prompt="Is it butter?")
+
+
+@pytest.mark.parametrize("raw", ["2", "0", "-1", "11", "three"])
+def test_yes_no_votes_rejects_invalid_count(vlm, monkeypatch, raw):
+    monkeypatch.setenv("GAP_VLM_YES_NO_VOTES", raw)
+    _mock_openrouter(vlm, monkeypatch, reply="YES")
+    with pytest.raises(ToolError, match="GAP_VLM_YES_NO_VOTES"):
+        vlm.query_yes_no(prompt="Is it butter?")

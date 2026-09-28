@@ -81,6 +81,11 @@ def _make_cache_key(cameras: list[CameraFrame], args: dict) -> str:
     h.update(os.environ.get("GAP_VLM_PROVIDER", "").encode("utf-8"))
     h.update(b"/")
     h.update(os.environ.get("GAP_VLM_MODEL", "").encode("utf-8"))
+    # A yes/no majority vote changes the verify decision; keys without it
+    # (unset or 1) stay byte-identical to the single-request cache.
+    votes = os.environ.get("GAP_VLM_YES_NO_VOTES", "").strip()
+    if votes and votes != "1":
+        h.update(b"|yes_no_votes|" + votes.encode("utf-8"))
     for cam in cameras:
         h.update(b"|cam|")
         h.update(_hash_camera(cam))
