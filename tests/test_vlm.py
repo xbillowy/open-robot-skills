@@ -53,8 +53,19 @@ def image() -> np.ndarray:
 def _clean_env(monkeypatch: pytest.MonkeyPatch):
     for var in ("GAP_VLM_PROVIDER", "GAP_VLM_MODEL", "GAP_VLM_BASE_URL",
                 "GAP_VLM_API_KEY", "GAP_VLM_PROJECT_ID", "GAP_VLM_REGION",
-                "GAP_LLM_PROVIDER", "GAP_LLM_MODEL", "OPENROUTER_API_KEY"):
+                "GAP_LLM_PROVIDER", "GAP_LLM_MODEL", "OPENROUTER_API_KEY",
+                "GAP_VLM_BACKUP_BASE_URL", "GAP_VLM_BACKUP_API_KEY",
+                "GAP_VLM_BACKUP_MODEL", "GAP_VLM_FAILOVER_CONSECUTIVE",
+                "GAP_VLM_FAILOVER_COOLDOWN_S"):
         monkeypatch.delenv(var, raising=False)
+
+
+
+@pytest.fixture(autouse=True)
+def _fresh_route_health(vlm):
+    vlm._route_health.clear()
+    yield
+    vlm._route_health.clear()
 
 
 def _mock_openrouter(vlm, monkeypatch, reply: str):
@@ -226,7 +237,9 @@ def test_sequential_queries_reuse_tcp_connection(vlm, monkeypatch, provider):
     worker.start()
     try:
         for _ in range(8):
-            assert vlm.query(prompt="hello", provider=provider) == {"text": "yes"}
+            out = vlm.query(prompt="hello", provider=provider)
+            assert out["text"] == "yes"
+            assert set(out) == ({"text", "route"} if provider == "gemini_rest" else {"text"})
         assert server.connections == 1
     finally:
         close = getattr(vlm, "_close_http_client", None)
@@ -331,7 +344,11 @@ def test_gemini_rest_shapes_native_multimodal_request(vlm, image, monkeypatch):
 
     out = vlm.query_yes_no(prompt="Is the target inside?", image=image)
 
+    route = out.pop("route")
     assert out == {"answer": True, "text": "YES\nInside the basket."}
+    assert route["name"] == "primary"
+    assert route["endpoint"] == "https://relay.example/ai/genai"
+    assert "relay-secret" not in json.dumps(route)
     assert captured["url"] == (
         "https://relay.example/ai/genai/v1beta/models/"
         "gemini-3.6-flash:generateContent"
@@ -371,6 +388,162 @@ def test_gemini_rest_fails_closed_on_missing_candidate_text(vlm, monkeypatch):
     with pytest.raises(ToolError, match="unavailable after 3 attempts"):
         vlm.query(prompt="q")
     assert len(attempts) == 3
+
+
+# Real response shape from the backup relay (2026-09-28): the answer part also
+# carries a thoughtSignature and usage reports thinking tokens.
+_THINKING_BODY = {
+    "candidates": [{
+        "content": {"role": "model", "parts": [
+            {"text": "NO\nThe mug is outside the basket.", "thoughtSignature": "c2lnbmF0dXJl"},
+        ]},
+        "finishReason": "STOP",
+    }],
+    "usageMetadata": {
+        "promptTokenCount": 1290, "candidatesTokenCount": 11,
+        "thoughtsTokenCount": 187, "totalTokenCount": 1488,
+    },
+}
+
+
+def _two_routes(vlm, monkeypatch, primary_handler, backup_handler):
+    calls = {"primary": 0, "backup": 0}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.host == "primary.example":
+            calls["primary"] += 1
+            assert request.headers["x-goog-api-key"] == "primary-secret"
+            return primary_handler(request)
+        calls["backup"] += 1
+        assert request.headers["x-goog-api-key"] == "backup-secret"
+        return backup_handler(request)
+
+    transport = httpx.MockTransport(handler)
+    monkeypatch.setattr(vlm, "_http_client", lambda: httpx.Client(transport=transport))
+    monkeypatch.setattr(vlm, "_BACKOFF_S", 0.0)
+    monkeypatch.setenv("GAP_VLM_PROVIDER", "gemini_rest")
+    monkeypatch.setenv("GAP_VLM_BASE_URL", "https://primary.example")
+    monkeypatch.setenv("GAP_VLM_API_KEY", "primary-secret")
+    monkeypatch.setenv("GAP_VLM_MODEL", "gemini-3.8-flash")
+    monkeypatch.setenv("GAP_VLM_BACKUP_BASE_URL", "https://backup.example/ai/genai")
+    monkeypatch.setenv("GAP_VLM_BACKUP_API_KEY", "backup-secret")
+    return calls
+
+
+def test_gemini_rest_thought_signature_text_and_thinking_usage(vlm, monkeypatch):
+    calls = _two_routes(
+        vlm, monkeypatch,
+        lambda request: httpx.Response(200, json=_THINKING_BODY),
+        lambda request: pytest.fail("healthy primary must not fail over"),
+    )
+    out = vlm.query(prompt="q")
+    assert out["text"] == "NO\nThe mug is outside the basket."
+    assert out["route"] == {
+        "name": "primary", "endpoint": "https://primary.example",
+        "model": "gemini-3.8-flash",
+        "usage": {"input_tokens": 1290, "output_tokens": 198, "thoughts_tokens": 187},
+    }
+    assert calls == {"primary": 1, "backup": 0}
+
+
+@pytest.mark.parametrize("status", [429, 503])
+def test_gemini_rest_provider_outage_fails_over_to_backup(vlm, monkeypatch, status):
+    calls = _two_routes(
+        vlm, monkeypatch,
+        lambda request: httpx.Response(status, json={"error": "busy"}),
+        lambda request: httpx.Response(200, json=_THINKING_BODY),
+    )
+    out = vlm.query_batch(prompts=["a"], images=[np.zeros((2, 2, 3), np.uint8)])
+    (result,) = out["results"]
+    assert result["route"]["name"] == "backup"
+    assert result["route"]["endpoint"] == "https://backup.example/ai/genai"
+    assert result["route"]["model"] == "gemini-3.8-flash"
+    assert "secret" not in json.dumps(out)
+    assert calls == {"primary": 3, "backup": 1}
+
+
+def test_gemini_rest_transport_fault_fails_over(vlm, monkeypatch):
+    def refuse(request):
+        raise httpx.ConnectTimeout("handshake timed out", request=request)
+
+    calls = _two_routes(
+        vlm, monkeypatch, refuse, lambda request: httpx.Response(200, json=_THINKING_BODY)
+    )
+    assert vlm.query_yes_no(prompt="q")["route"]["name"] == "backup"
+    assert calls == {"primary": 3, "backup": 1}
+
+
+@pytest.mark.parametrize(
+    "response",
+    [
+        httpx.Response(400, json={"error": "bad request"}),
+        httpx.Response(200, json={"candidates": []}),
+    ],
+)
+def test_gemini_rest_content_failure_never_fails_over(vlm, monkeypatch, response):
+    calls = _two_routes(
+        vlm, monkeypatch,
+        lambda request: response,
+        lambda request: pytest.fail("content failures must not fail over"),
+    )
+    with pytest.raises(ToolError, match="gemini_rest backend unavailable after 3 attempts"):
+        vlm.query(prompt="q")
+    assert calls == {"primary": 3, "backup": 0}
+
+
+def test_gemini_rest_parks_failed_primary_then_recovers(vlm, monkeypatch):
+    monkeypatch.setenv("GAP_VLM_FAILOVER_CONSECUTIVE", "1")
+    monkeypatch.setenv("GAP_VLM_FAILOVER_COOLDOWN_S", "30")
+    state = {"primary_down": True}
+    clock = {"now": 1000.0}
+    monkeypatch.setattr(vlm.time, "monotonic", lambda: clock["now"])
+    calls = _two_routes(
+        vlm, monkeypatch,
+        lambda request: (httpx.Response(503) if state["primary_down"]
+                         else httpx.Response(200, json=_THINKING_BODY)),
+        lambda request: httpx.Response(200, json=_THINKING_BODY),
+    )
+    assert vlm.query(prompt="q")["route"]["name"] == "backup"
+    state["primary_down"] = False
+    # Parked primary is skipped during its cooldown.
+    assert vlm.query(prompt="q")["route"]["name"] == "backup"
+    assert calls == {"primary": 3, "backup": 2}
+    clock["now"] += 31
+    assert vlm.query(prompt="q")["route"]["name"] == "primary"
+    assert calls == {"primary": 4, "backup": 2}
+
+
+def test_gemini_rest_both_routes_down_keeps_the_outage_wrapper(vlm, monkeypatch):
+    _two_routes(
+        vlm, monkeypatch,
+        lambda request: httpx.Response(503),
+        lambda request: httpx.Response(503),
+    )
+    with pytest.raises(ToolError) as caught:
+        vlm.query(prompt="q")
+    message = str(caught.value)
+    assert "gemini_rest backend unavailable after 3 attempts: generate_url=" in message
+    assert "503" in message
+    assert "secret" not in message
+
+
+def test_gemini_rest_without_backup_is_unchanged(vlm, monkeypatch):
+    monkeypatch.setattr(vlm, "_BACKOFF_S", 0.0)
+    monkeypatch.setenv("GAP_VLM_PROVIDER", "gemini_rest")
+    monkeypatch.setenv("GAP_VLM_BASE_URL", "https://primary.example")
+    monkeypatch.setenv("GAP_VLM_API_KEY", "primary-secret")
+    monkeypatch.setenv("GAP_VLM_BACKUP_BASE_URL", "https://backup.example")  # no key
+    attempts = []
+
+    def handler(request):
+        attempts.append(request.url.host)
+        return httpx.Response(503)
+
+    transport = httpx.MockTransport(handler)
+    monkeypatch.setattr(vlm, "_http_client", lambda: httpx.Client(transport=transport))
+    with pytest.raises(ToolError, match="unavailable after 3 attempts"):
+        vlm.query(prompt="q")
+    assert attempts == ["primary.example"] * 3
 
 
 # ---------------------------------------------------------------------------
