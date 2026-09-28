@@ -427,6 +427,9 @@ _THINKING_BODY = {
     "usageMetadata": {
         "promptTokenCount": 1290, "candidatesTokenCount": 11,
         "thoughtsTokenCount": 187, "totalTokenCount": 1488,
+        "promptTokensDetails": [
+            {"modality": "TEXT", "tokenCount": 32}, {"modality": "IMAGE", "tokenCount": 1258},
+        ],
     },
 }
 
@@ -466,7 +469,10 @@ def test_gemini_rest_thought_signature_text_and_thinking_usage(vlm, monkeypatch)
     assert out["route"] == {
         "name": "primary", "endpoint": "https://primary.example",
         "model": "gemini-3.8-flash",
-        "usage": {"input_tokens": 1290, "output_tokens": 198, "thoughts_tokens": 187},
+        "usage": {
+            "input_tokens": 1290, "output_tokens": 198, "thoughts_tokens": 187,
+            "prompt_tokens_details": {"IMAGE": 1258, "TEXT": 32},
+        },
     }
     assert calls == {"primary": 1, "backup": 0}
 
@@ -743,3 +749,13 @@ def test_query_yes_no_appends_explicit_instruction(vlm, monkeypatch):
     assert text_block["type"] == "text"
     assert text_block["text"].startswith("Is this a cream cheese box?")
     assert "YES or NO first" in text_block["text"]
+
+
+def test_gemini_rest_usage_omits_absent_prompt_token_details(vlm):
+    body = {"usageMetadata": {
+        "promptTokenCount": 5, "candidatesTokenCount": 2,
+        "promptTokensDetails": [{"modality": "TEXT"}, "bad", {"tokenCount": 3}],
+    }}
+    assert vlm._gemini_usage(body) == {
+        "input_tokens": 5, "output_tokens": 2, "thoughts_tokens": 0,
+    }

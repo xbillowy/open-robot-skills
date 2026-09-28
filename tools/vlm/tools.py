@@ -34,7 +34,8 @@ a different provider/model than the agent.
   route that fails ``GAP_VLM_FAILOVER_CONSECUTIVE`` calls in a row is
   parked for ``GAP_VLM_FAILOVER_COOLDOWN_S`` seconds. Each gemini_rest
   result carries a key-free ``route`` record (name, endpoint, model, usage
-  incl. thought tokens) so the trace shows which route answered.
+  incl. thought tokens and per-modality prompt tokens) so the trace shows
+  which route answered.
 - ``vertex`` — Vertex AI via ``google-genai`` (Gemini models). Lazy
   import; install the vertex extra
   (``pip install "graph-as-policy[vertex]"``). Config:
@@ -392,7 +393,7 @@ def _record_route_result(name: str, *, outage: bool, now: float) -> None:
             logger.warning("VLM gemini_rest route %s parked for %.0fs", name, cooldown)
 
 
-def _gemini_usage(body: dict) -> dict[str, int]:
+def _gemini_usage(body: dict) -> dict:
     usage = body.get("usageMetadata") if isinstance(body, dict) else None
     usage = usage if isinstance(usage, dict) else {}
 
@@ -401,12 +402,26 @@ def _gemini_usage(body: dict) -> dict[str, int]:
         return value if isinstance(value, int) and value >= 0 else 0
 
     thoughts = count("thoughtsTokenCount")
-    return {
+    result: dict = {
         "input_tokens": count("promptTokenCount"),
         # Thinking tokens are billed output even though no text part carries them.
         "output_tokens": count("candidatesTokenCount") + thoughts,
         "thoughts_tokens": thoughts,
     }
+    # Upstream prompt tokens per modality: relays differ in hidden prompt text
+    # (e.g. an injected preamble), which only this breakdown makes visible.
+    details = usage.get("promptTokensDetails")
+    by_modality = {
+        str(item["modality"]): item["tokenCount"]
+        for item in (details if isinstance(details, list) else ())
+        if isinstance(item, dict)
+        and isinstance(item.get("modality"), str)
+        and isinstance(item.get("tokenCount"), int)
+        and item["tokenCount"] >= 0
+    }
+    if by_modality:
+        result["prompt_tokens_details"] = dict(sorted(by_modality.items()))
+    return result
 
 
 def _take_route() -> dict | None:
@@ -449,7 +464,7 @@ def _query_gemini_rest(
 
 def _query_gemini_rest_route(
     prompt: str, images: list[np.ndarray], *, base_url: str, api_key: str, model: str
-) -> tuple[str, dict[str, int]]:
+) -> tuple[str, dict]:
     generate_url = (
         f"{base_url.rstrip('/')}/v1beta/models/{model}:generateContent"
     )
