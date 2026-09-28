@@ -37,8 +37,20 @@ a different provider/model than the agent.
 
 Generation config: perception callers (the pairwise tournament, the
 yes/no verify gate) are binary judgments that depend on deterministic
-decoding, so all providers pin ``temperature: 0.0`` + ``max_tokens:
-1024`` with 3 retries + exponential backoff.
+decoding, so all providers pin ``temperature: 0.0`` with 3 retries +
+exponential backoff. ``openrouter`` and ``vertex`` keep ``max_tokens:
+1024``. ``gemini_rest`` sends ``maxOutputTokens``
+:data:`_GEMINI_REST_MAX_OUTPUT_TOKENS`: Gemini thinking models count
+thought tokens against that limit, and the former 1024 cap let thinking
+exhaust it and truncate the final answer. The answer is assembled only
+from response parts that are not marked ``"thought": true``.
+
+Per-call-kind model: ``GAP_VLM_MODEL_QUERY``, ``GAP_VLM_MODEL_QUERY_BATCH``
+and ``GAP_VLM_MODEL_QUERY_YES_NO`` select the model for ``vlm.query``,
+``vlm.query_batch`` (the perceiving-objects pairwise tournament) and
+``vlm.query_yes_no`` (its verify_pick gate). Resolution order: per-call
+``model=`` > per-kind env > ``GAP_VLM_MODEL`` > ``GAP_LLM_MODEL`` >
+:data:`DEFAULT_MODEL`. Unset per-kind variables leave behavior unchanged.
 
 All functions are synchronous — the gap runtime is threaded, not async.
 """
@@ -104,6 +116,12 @@ def _resolve_model(model: str | None) -> str:
     )
 
 
+def _call_kind_model(model: str | None, kind: str) -> str | None:
+    """Per-call ``model=`` > the call kind's ``GAP_VLM_MODEL_<KIND>``; ``None``
+    defers to :func:`_resolve_model`'s global chain."""
+    return (model or "").strip() or _envstr(_CALL_KIND_MODEL_ENV[kind]) or None
+
+
 def _resolve_vertex_project() -> str:
     """``GAP_VLM_PROJECT_ID`` > ``GOOGLE_CLOUD_PROJECT`` (the documented
     google-genai knob). Empty string when unset — the caller raises with
@@ -125,6 +143,16 @@ def _resolve_vertex_region() -> str:
     )
 
 _MAX_TOKENS = 1024  # ported from the source servicer
+#: Output limit for ``gemini_rest``. It includes thinking tokens; real
+#: gemini-3.8-flash / gemini-robotics-er-2-preview perception replays used up
+#: to ~8k thought tokens on hard pairs once uncapped.
+_GEMINI_REST_MAX_OUTPUT_TOKENS = 32768
+#: Tool name -> per-call-kind model selector (see module docstring).
+_CALL_KIND_MODEL_ENV = {
+    "query": "GAP_VLM_MODEL_QUERY",
+    "query_batch": "GAP_VLM_MODEL_QUERY_BATCH",
+    "query_yes_no": "GAP_VLM_MODEL_QUERY_YES_NO",
+}
 _MAX_RETRIES = 3
 _BACKOFF_S = 1.0
 #: Deterministic decoding for the binary perception judgments (tournament
@@ -239,6 +267,42 @@ def _query_openrouter(prompt: str, images: list[np.ndarray], model: str | None) 
 # ---------------------------------------------------------------------------
 
 
+def _gemini_answer_text(body: dict) -> str:
+    """Join the first candidate's answer text parts, excluding thought parts.
+
+    Thinking models may return their reasoning summary as parts marked
+    ``"thought": true``; those are not the answer and must not reach the
+    caller's A/B or yes/no parser.
+    """
+    candidate = body["candidates"][0]
+    response_parts = (candidate.get("content") or {}).get("parts") or []
+    return "".join(
+        part["text"] for part in response_parts
+        if isinstance(part, dict)
+        and isinstance(part.get("text"), str)
+        and part.get("thought") is not True
+    )
+
+
+def _log_gemini_usage(model: str, body: dict, latency_s: float) -> None:
+    """Log non-secret per-request usage, including thought tokens."""
+    candidate = (body.get("candidates") or [{}])[0]
+    usage = body.get("usageMetadata") or {}
+    finish = candidate.get("finishReason")
+    parts = (candidate.get("content") or {}).get("parts") or []
+    thought_parts = sum(
+        1 for part in parts if isinstance(part, dict) and part.get("thought") is True
+    )
+    logger.log(
+        logging.WARNING if finish == "MAX_TOKENS" else logging.INFO,
+        "VLM gemini_rest usage model=%s finish=%s prompt_tokens=%s "
+        "candidates_tokens=%s thoughts_tokens=%s thought_parts=%d latency_s=%.3f",
+        model, finish, usage.get("promptTokenCount"),
+        usage.get("candidatesTokenCount"), usage.get("thoughtsTokenCount"),
+        thought_parts, latency_s,
+    )
+
+
 def _query_gemini_rest(
     prompt: str, images: list[np.ndarray], model: str | None
 ) -> str:
@@ -271,7 +335,7 @@ def _query_gemini_rest(
         "contents": [{"parts": parts}],
         "generationConfig": {
             "temperature": _TEMPERATURE,
-            "maxOutputTokens": _MAX_TOKENS,
+            "maxOutputTokens": _GEMINI_REST_MAX_OUTPUT_TOKENS,
         },
     }
     headers = {
@@ -283,16 +347,14 @@ def _query_gemini_rest(
     with _http_client() as client:
         for attempt in range(_MAX_RETRIES):
             try:
+                started = time.monotonic()
                 response = client.post(generate_url, json=payload, headers=headers)
                 response.raise_for_status()
                 body = response.json()
-                response_parts = body["candidates"][0]["content"]["parts"]
-                text = "".join(
-                    part["text"] for part in response_parts
-                    if isinstance(part, dict) and isinstance(part.get("text"), str)
-                )
+                text = _gemini_answer_text(body)
+                _log_gemini_usage(model, body, time.monotonic() - started)
                 if not text:
-                    raise ValueError("Gemini response contained no candidate text")
+                    raise ValueError("Gemini response contained no candidate answer text")
                 return text
             except Exception as exc:  # noqa: BLE001 — transient API/schema errors
                 last_exc = exc
@@ -437,7 +499,9 @@ def query(
     Returns:
         ``{"text": <model response>}``.
     """
-    return {"text": _query(prompt, image, images, provider, model)}
+    return {"text": _query(
+        prompt, image, images, provider, _call_kind_model(model, "query"),
+    )}
 
 
 @tool(
@@ -464,6 +528,7 @@ def query_batch(
         )
     if not prompts:
         return {"results": []}
+    model = _call_kind_model(model, "query_batch")
 
     def _one(item: tuple[str, np.ndarray]) -> QueryResult:
         prompt, image = item
@@ -523,5 +588,8 @@ def query_yes_no(
     Returns:
         ``{"answer": <bool>, "text": <raw model response>}``.
     """
-    text = _query(prompt + _YES_NO_INSTRUCTION, image, images, provider, model)
+    text = _query(
+        prompt + _YES_NO_INSTRUCTION, image, images, provider,
+        _call_kind_model(model, "query_yes_no"),
+    )
     return {"answer": _coerce_yes_no(text), "text": text}

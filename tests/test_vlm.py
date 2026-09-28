@@ -53,7 +53,9 @@ def image() -> np.ndarray:
 def _clean_env(monkeypatch: pytest.MonkeyPatch):
     for var in ("GAP_VLM_PROVIDER", "GAP_VLM_MODEL", "GAP_VLM_BASE_URL",
                 "GAP_VLM_API_KEY", "GAP_VLM_PROJECT_ID", "GAP_VLM_REGION",
-                "GAP_LLM_PROVIDER", "GAP_LLM_MODEL", "OPENROUTER_API_KEY"):
+                "GAP_LLM_PROVIDER", "GAP_LLM_MODEL", "OPENROUTER_API_KEY",
+                "GAP_VLM_MODEL_QUERY", "GAP_VLM_MODEL_QUERY_BATCH",
+                "GAP_VLM_MODEL_QUERY_YES_NO"):
         monkeypatch.delenv(var, raising=False)
 
 
@@ -243,7 +245,7 @@ def test_gemini_rest_shapes_native_multimodal_request(vlm, image, monkeypatch):
     payload = captured["payload"]
     assert payload["generationConfig"] == {
         "temperature": 0.0,
-        "maxOutputTokens": 1024,
+        "maxOutputTokens": 32768,
     }
     parts = payload["contents"][0]["parts"]
     assert parts[0]["text"].startswith("Is the target inside?")
@@ -273,6 +275,125 @@ def test_gemini_rest_fails_closed_on_missing_candidate_text(vlm, monkeypatch):
     with pytest.raises(ToolError, match="unavailable after 3 attempts"):
         vlm.query(prompt="q")
     assert len(attempts) == 3
+
+
+_THOUGHT_FIXTURES = json.loads(
+    (ROOT / "tests" / "fixtures" / "vlm_gemini_rest_thought_responses.json").read_text()
+)["responses"]
+
+
+def _mock_gemini_rest(vlm, monkeypatch, bodies):
+    """Serve ``bodies`` in order (last one repeats); capture every request."""
+    captured: list[dict] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        captured.append({
+            "url": str(request.url),
+            "payload": json.loads(request.content),
+        })
+        return httpx.Response(200, json=bodies[min(len(captured), len(bodies)) - 1])
+
+    transport = httpx.MockTransport(handler)
+    monkeypatch.setattr(vlm, "_http_client", lambda: httpx.Client(transport=transport))
+    monkeypatch.setenv("GAP_VLM_PROVIDER", "gemini_rest")
+    monkeypatch.setenv("GAP_VLM_BASE_URL", "https://relay.example/ai/genai")
+    monkeypatch.setenv("GAP_VLM_API_KEY", "relay-secret")
+    monkeypatch.setenv("GAP_VLM_MODEL", "gemini-3.8-flash")
+    return captured
+
+
+@pytest.mark.parametrize(
+    "fixture", _THOUGHT_FIXTURES,
+    ids=[f"{f['source']['model']}-{f['source']['pid']}" for f in _THOUGHT_FIXTURES],
+)
+def test_gemini_rest_answer_excludes_real_thought_parts(vlm, image, monkeypatch, fixture):
+    _mock_gemini_rest(vlm, monkeypatch, [fixture["response"]])
+    expected = fixture["expected_answer_text"]
+
+    if fixture["source"]["kind"] == "yes_no":
+        out = vlm.query_yes_no(prompt="Is it?", image=image)
+        assert out == {"answer": vlm._coerce_yes_no(expected), "text": expected}
+    else:
+        assert vlm.query(prompt="A or B?", image=image) == {"text": expected}
+    has_thought = any(
+        part.get("thought") for part in fixture["response"]["candidates"][0]["content"]["parts"]
+    )
+    assert (fixture["legacy_joined_text"] != expected) == has_thought
+
+
+def test_gemini_rest_thought_leak_no_longer_flips_real_yes_no(vlm, image, monkeypatch):
+    """Real 3.8-flash reply: its thought summary mentions "yes" before the NO answer."""
+    fixture = next(f for f in _THOUGHT_FIXTURES if f["source"]["pid"] == "d4ea468e318e78d1")
+    assert vlm._coerce_yes_no(fixture["legacy_joined_text"]) is True
+    _mock_gemini_rest(vlm, monkeypatch, [fixture["response"]])
+
+    out = vlm.query_yes_no(prompt="Is it?", image=image)
+
+    assert out["answer"] is False
+    assert out["text"].startswith("NO")
+
+
+def test_gemini_rest_thought_only_response_fails_closed(vlm, monkeypatch):
+    monkeypatch.setattr(vlm, "_BACKOFF_S", 0.0)
+    body = {"candidates": [{"content": {"parts": [
+        {"text": "**Thinking**\n\nStill deciding", "thought": True},
+    ]}, "finishReason": "MAX_TOKENS"}]}
+    captured = _mock_gemini_rest(vlm, monkeypatch, [body])
+
+    with pytest.raises(ToolError, match="no candidate answer text"):
+        vlm.query(prompt="q")
+    assert len(captured) == 3
+
+
+def test_gemini_rest_logs_thought_usage_without_secret(vlm, image, monkeypatch, caplog):
+    fixture = next(f for f in _THOUGHT_FIXTURES if f["source"]["pid"] == "b33da5db74eff02f")
+    _mock_gemini_rest(vlm, monkeypatch, [fixture["response"]])
+
+    with caplog.at_level("INFO"):
+        vlm.query(prompt="A or B?", image=image)
+
+    usage = fixture["response"]["usageMetadata"]
+    [record] = [r for r in caplog.records if "usage" in r.getMessage()]
+    assert record.levelname == "WARNING"  # finish=MAX_TOKENS
+    message = record.getMessage()
+    assert f"thoughts_tokens={usage['thoughtsTokenCount']}" in message
+    assert "thought_parts=1" in message
+    assert "model=gemini-3.8-flash" in message
+    assert "relay-secret" not in caplog.text
+
+
+def test_call_kind_models_route_tournament_and_verify(vlm, image, monkeypatch):
+    body = {"candidates": [{"content": {"parts": [{"text": "YES"}]}}]}
+    captured = _mock_gemini_rest(vlm, monkeypatch, [body])
+    monkeypatch.setenv("GAP_VLM_MODEL_QUERY_BATCH", "gemini-robotics-er-2-preview")
+    monkeypatch.setenv("GAP_VLM_MODEL_QUERY_YES_NO", "gemini-robotics-er-2-preview")
+
+    vlm.query(prompt="free", image=image)
+    vlm.query_batch(prompts=["A or B?"], images=[image])
+    vlm.query_yes_no(prompt="Is it?", image=image)
+    vlm.query_yes_no(prompt="Is it?", image=image, model="explicit-model")
+
+    models = [c["url"].rsplit("/", 1)[1].split(":")[0] for c in captured]
+    assert models == [
+        "gemini-3.8-flash",
+        "gemini-robotics-er-2-preview",
+        "gemini-robotics-er-2-preview",
+        "explicit-model",
+    ]
+
+
+def test_call_kind_models_default_to_global_model(vlm, image, monkeypatch):
+    body = {"candidates": [{"content": {"parts": [{"text": "A"}]}}]}
+    captured = _mock_gemini_rest(vlm, monkeypatch, [body])
+    monkeypatch.setenv("GAP_VLM_MODEL_QUERY", "")
+
+    vlm.query(prompt="q", image=image)
+    vlm.query_batch(prompts=["q"], images=[image])
+    vlm.query_yes_no(prompt="q", image=image)
+
+    assert {c["url"] for c in captured} == {
+        "https://relay.example/ai/genai/v1beta/models/gemini-3.8-flash:generateContent"
+    }
 
 
 # ---------------------------------------------------------------------------
