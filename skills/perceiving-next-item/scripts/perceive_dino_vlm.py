@@ -43,6 +43,12 @@ from gap_core.types import BoundingBox2D, CameraFrame, Mask, PointCloud
 logger = logging.getLogger(__name__)
 
 _LABELS = ["A", "B", "C", "D", "E", "F", "G", "H"]
+
+#: vlm.query_yes_no failures under GAP_VLM_YES_NO_PARSER=2 (still ambiguous
+#: after its re-ask, or an invalid selector) are decisions the tool refused
+#: to guess, not an unavailable bundle: never answer them from the weaker
+#: vlm.query first-letter fallback. The legacy parser never raises these.
+_YES_NO_REFUSALS = ("no unambiguous YES/NO verdict", "GAP_VLM_YES_NO_PARSER")
 _INTERSECTION_DIST = 0.01
 _MIN_INTERSECTION = 1
 
@@ -81,6 +87,11 @@ def _make_cache_key(cameras: list[CameraFrame], args: dict) -> str:
     h.update(os.environ.get("GAP_VLM_PROVIDER", "").encode("utf-8"))
     h.update(b"/")
     h.update(os.environ.get("GAP_VLM_MODEL", "").encode("utf-8"))
+    # The v2 yes/no verdict parser can change the verify decision; keys
+    # without it (unset or 1) stay byte-identical to the legacy cache.
+    parser = os.environ.get("GAP_VLM_YES_NO_PARSER", "").strip()
+    if parser and parser != "1":
+        h.update(b"|yes_no_parser|" + parser.encode("utf-8"))
     for cam in cameras:
         h.update(b"|cam|")
         h.update(_hash_camera(cam))
@@ -369,7 +380,9 @@ def _verify_pick(
     try:
         resp = ctx.tool("vlm.query_yes_no", prompt=q, image=img)
         return bool(resp["answer"])
-    except Exception:
+    except Exception as first_exc:
+        if any(marker in str(first_exc) for marker in _YES_NO_REFUSALS):
+            raise
         try:
             resp = ctx.tool("vlm.query",
                             prompt=q + " Answer YES or NO.", image=img)

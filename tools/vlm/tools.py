@@ -61,6 +61,14 @@ and ``GAP_VLM_MODEL_QUERY_YES_NO`` select the model for ``vlm.query``,
 ``model=`` > per-kind env > ``GAP_VLM_MODEL`` > ``GAP_LLM_MODEL`` >
 :data:`DEFAULT_MODEL`. Unset per-kind variables leave behavior unchanged.
 
+Yes/no parser version: ``GAP_VLM_YES_NO_PARSER`` selects how
+``vlm.query_yes_no`` reads the reply. Unset or ``1`` keeps the legacy first
+standalone yes/no word (byte-identical behavior). ``2`` accepts only an
+explicit verdict — a line that starts with YES/NO or a marked
+``answer/verdict/decision/conclusion: yes|no`` — and requires every such
+verdict in the reply to agree; an ambiguous reply is re-asked once with the
+same prompt and, if still ambiguous, the call fails with ``ToolError``.
+
 All functions are synchronous — the gap runtime is threaded, not async.
 """
 
@@ -751,6 +759,56 @@ def _coerce_yes_no(text: str) -> bool:
     return "yes" in text.lower()
 
 
+#: ``GAP_VLM_YES_NO_PARSER`` versions: 1 = legacy first word, 2 = explicit verdict.
+_YES_NO_PARSERS = {"": 1, "1": 1, "2": 2}
+
+_VERDICT_MARKUP = re.compile(r"[*_`#>]+")
+#: A verdict token: a bare/punctuated yes|no in any case ("No, ...", "yes."),
+#: or an upper-case YES/NO followed by text ("NO The object is ..."); never
+#: "No doubt ...", "No-brainer" or the option list "YES or NO" / "yes/no".
+_VERDICT_TOKEN = (
+    r"(?:(yes|no)(?=\s*$|\s*[.,!:;)\]\"'\u2013\u2014]|\s+-)|(YES|NO)(?=\s))"
+    r"(?!\W{0,3}\s*(?:or|and|/)\s*\W{0,3}(?:yes|no)\b)"
+)
+#: A line that starts with the verdict.
+_LINE_VERDICT = re.compile(r"^[\s\-\u2022\"'(\[]*" + _VERDICT_TOKEN, re.IGNORECASE)
+#: An explicitly marked verdict anywhere in a line ("Final answer: NO").
+_MARKED_VERDICT = re.compile(
+    r"\b(?:answer|verdict|decision|conclusion)\b(?:\s*(?:is|:|=|-))+\s*"
+    r"(?:a\s+|an\s+)?(?:definitive|clear|firm|simple|resounding)?\s*[\"']?"
+    + _VERDICT_TOKEN,
+    re.IGNORECASE,
+)
+
+
+def _yes_no_parser() -> int:
+    """``GAP_VLM_YES_NO_PARSER``: unset/``1`` legacy, ``2`` explicit verdict."""
+    raw = _envstr("GAP_VLM_YES_NO_PARSER")
+    version = _YES_NO_PARSERS.get(raw)
+    if version is None:
+        raise ToolError("vlm", "GAP_VLM_YES_NO_PARSER must be 1 or 2")
+    return version
+
+
+def _yes_no_verdict(text: str) -> bool | None:
+    """Explicit verdict of a yes/no reply, or ``None`` when there is none.
+
+    Collects every line-leading YES/NO and every marked verdict (markdown
+    emphasis ignored). Returns the verdict only when at least one exists and
+    all agree; prose mentions ("no doubt"), option echoes ("YES or NO") and
+    contradictory replies return ``None`` rather than a guess.
+    """
+    found: set[bool] = set()
+    for line in _VERDICT_MARKUP.sub("", text).splitlines():
+        matches = [_LINE_VERDICT.match(line), *_MARKED_VERDICT.finditer(line)]
+        for m in matches:
+            # Group 2 matched case-insensitively; only a real upper-case
+            # YES/NO may be followed directly by prose.
+            if m and (m.group(1) or m.group(2).isupper()):
+                found.add((m.group(1) or m.group(2)).lower() == "yes")
+    return found.pop() if len(found) == 1 else None
+
+
 @tool(
     name="vlm.query_yes_no",
     summary="Yes/no visual question answering; coerces the model reply to a bool.",
@@ -771,11 +829,36 @@ def query_yes_no(
     back to the source servicer's verbatim ``"yes" in text.lower()``
     substring check when neither word appears.
 
+    With ``GAP_VLM_YES_NO_PARSER=2`` the answer is the reply's explicit
+    verdict (:func:`_yes_no_verdict`). An ambiguous reply is re-asked once
+    with the identical request; if that reply is also ambiguous the call
+    raises :class:`ToolError` instead of guessing. ``text`` (and ``route``)
+    are those of the reply that supplied the answer.
+
     Returns:
         ``{"answer": <bool>, "text": <raw model response>}``.
     """
-    text = _query(
-        prompt + _YES_NO_INSTRUCTION, image, images, provider,
-        _call_kind_model(model, "query_yes_no"),
+    parser = _yes_no_parser()
+    if parser == 1:
+        text = _query(
+            prompt + _YES_NO_INSTRUCTION, image, images, provider,
+            _call_kind_model(model, "query_yes_no"),
+        )
+        return _with_route({"answer": _coerce_yes_no(text), "text": text})
+
+    model = _call_kind_model(model, "query_yes_no")
+    for attempt in (1, 2):
+        text = _query(prompt + _YES_NO_INSTRUCTION, image, images, provider, model)
+        answer = _yes_no_verdict(text)
+        if answer is not None:
+            return _with_route({"answer": answer, "text": text})
+        # The ambiguous reply did not decide anything; drop its route record.
+        _take_route()
+        logger.warning(
+            "vlm.query_yes_no: no unambiguous YES/NO verdict (reply %d/2): %r",
+            attempt, text[:200])
+    raise ToolError(
+        "vlm",
+        "query_yes_no: no unambiguous YES/NO verdict after 2 replies; "
+        f"last reply starts {text[:120]!r}",
     )
-    return _with_route({"answer": _coerce_yes_no(text), "text": text})

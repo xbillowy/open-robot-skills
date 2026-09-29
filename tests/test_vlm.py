@@ -58,7 +58,7 @@ def _clean_env(monkeypatch: pytest.MonkeyPatch):
                 "GAP_VLM_MODEL_QUERY_YES_NO",
                 "GAP_VLM_BACKUP_BASE_URL", "GAP_VLM_BACKUP_API_KEY",
                 "GAP_VLM_BACKUP_MODEL", "GAP_VLM_FAILOVER_CONSECUTIVE",
-                "GAP_VLM_FAILOVER_COOLDOWN_S"):
+                "GAP_VLM_FAILOVER_COOLDOWN_S", "GAP_VLM_YES_NO_PARSER"):
         monkeypatch.delenv(var, raising=False)
 
 
@@ -851,6 +851,146 @@ def test_query_yes_no_appends_explicit_instruction(vlm, monkeypatch):
     assert "YES or NO first" in text_block["text"]
 
 
+# ---------------------------------------------------------------------------
+# Yes/no verdict parser v2 (GAP_VLM_YES_NO_PARSER=2)
+# ---------------------------------------------------------------------------
+
+_VERDICT_FIXTURE = json.loads(
+    (ROOT / "tests" / "fixtures" / "vlm_yes_no_verdict_replies.json").read_text()
+)["cases"]
+
+
+def _mock_openrouter_replies(vlm, monkeypatch, replies: list[str]):
+    """Serve ``replies`` in order; record every request payload."""
+    payloads: list[dict] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        payloads.append(json.loads(request.content))
+        reply = replies[len(payloads) - 1]
+        return httpx.Response(200, json={"choices": [{"message": {"content": reply}}]})
+
+    transport = httpx.MockTransport(handler)
+    monkeypatch.setattr(vlm, "_http_client", lambda: httpx.Client(transport=transport))
+    return payloads
+
+
+@pytest.mark.parametrize(
+    "case", _VERDICT_FIXTURE, ids=[f"{i}" for i in range(len(_VERDICT_FIXTURE))])
+def test_recorded_replies_legacy_coercion_is_unchanged(vlm, case):
+    """The recorded answers were produced by the legacy first-word rule."""
+    assert vlm._coerce_yes_no(case["text"]) is case["legacy_answer"]
+
+
+@pytest.mark.parametrize(
+    "case", _VERDICT_FIXTURE, ids=[f"{i}" for i in range(len(_VERDICT_FIXTURE))])
+def test_recorded_replies_v2_verdict(vlm, case):
+    assert vlm._yes_no_verdict(case["text"]) is case["expected"]
+
+
+def test_corpus_s19_reply_is_misread_by_legacy_and_read_by_v2(vlm, monkeypatch):
+    """memory-corpus-v1 temp_y0_2/3 seed 19: 'no doubt' precedes the final YES."""
+    (case,) = [c for c in _VERDICT_FIXTURE if "s19 parent" in c["note"]]
+    _mock_openrouter_replies(vlm, monkeypatch, [case["text"], case["text"]])
+    assert vlm.query_yes_no(prompt="q")["answer"] is False  # legacy default
+    monkeypatch.setenv("GAP_VLM_YES_NO_PARSER", "2")
+    payloads = _mock_openrouter_replies(vlm, monkeypatch, [case["text"]])
+    assert vlm.query_yes_no(prompt="q") == {"answer": True, "text": case["text"]}
+    assert len(payloads) == 1
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        ("Yes", True),
+        ("no.", False),
+        ("YES — clearly visible.", True),
+        ("NO The main object is a mug.", False),
+        ("**YES**\nIt is a basket.", True),
+        ("The answer is yes", True),
+        ("Final answer: **NO**. It is a book.", False),
+        ("Therefore, the answer is: NO. It is a book.", False),
+        ("Reasoning first.\n\nYES\nIt matches.", True),
+        ("No need to overthink it.\n\nYES. It matches.", True),
+        # Not a verdict: prose, echoes, alternatives and contradictions.
+        ("No doubt it is a basket.", None),
+        ("No-brainer, it is a basket.", None),
+        ("The answer is no doubt YES.", None),
+        ("The answer is no longer in doubt: YES", None),
+        ("The answer is YES The label says so.", True),
+        ("Yes - it is a basket.", True),
+        ("Yes the object matches.", None),
+        ("Eyes on the table", None),
+        ("Absolutely not", None),
+        ("", None),
+        ("It appears to be a match.", None),
+        ('Answer with the single word YES or NO first.', None),
+        ('"YES" or "NO" first, then a sentence.', None),
+        ("YES. It is pudding.\n\nNO\nIt is a gripper.", None),
+        ("UNRESOLVED. The base is out of frame.", None),
+    ],
+)
+def test_yes_no_verdict_rules(vlm, text, expected):
+    assert vlm._yes_no_verdict(text) is expected
+
+
+def test_v2_ambiguous_reply_is_reasked_once_with_the_same_prompt(vlm, monkeypatch):
+    monkeypatch.setenv("GAP_VLM_YES_NO_PARSER", "2")
+    payloads = _mock_openrouter_replies(
+        vlm, monkeypatch, ["It appears to be a match.", "YES. It matches."])
+    assert vlm.query_yes_no(prompt="Is it a basket?") == {
+        "answer": True, "text": "YES. It matches."}
+    assert len(payloads) == 2
+    assert payloads[0] == payloads[1]
+    assert "YES or NO first" in payloads[1]["messages"][0]["content"][0]["text"]
+
+
+def test_v2_still_ambiguous_after_retry_fails_the_call(vlm, monkeypatch):
+    monkeypatch.setenv("GAP_VLM_YES_NO_PARSER", "2")
+    payloads = _mock_openrouter_replies(
+        vlm, monkeypatch, ["UNRESOLVED. Out of frame.", "YES. Pudding.\n\nNO\nGripper."])
+    with pytest.raises(ToolError, match="no unambiguous YES/NO verdict"):
+        vlm.query_yes_no(prompt="Is it lifted?")
+    assert len(payloads) == 2
+
+
+def test_v2_retry_failure_does_not_leak_a_route_record(vlm, monkeypatch):
+    monkeypatch.setenv("GAP_VLM_YES_NO_PARSER", "2")
+    monkeypatch.setenv("GAP_VLM_PROVIDER", "gemini_rest")
+    monkeypatch.setenv("GAP_VLM_BASE_URL", "https://relay.invalid")
+    monkeypatch.setenv("GAP_VLM_API_KEY", "fixture-key")
+    replies = iter(["maybe", "unclear", "YES."])
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, json={
+            "candidates": [{"content": {"parts": [{"text": next(replies)}]},
+                            "finishReason": "STOP"}]})
+
+    transport = httpx.MockTransport(handler)
+    monkeypatch.setattr(vlm, "_http_client", lambda: httpx.Client(transport=transport))
+    with pytest.raises(ToolError):
+        vlm.query_yes_no(prompt="q")
+    assert vlm._take_route() is None
+    out = vlm.query_yes_no(prompt="q")
+    assert out["answer"] is True and out["route"]["name"] == "primary"
+
+
+@pytest.mark.parametrize("value", ["", "1"])
+def test_parser_selector_unset_or_1_is_legacy(vlm, monkeypatch, value):
+    monkeypatch.setenv("GAP_VLM_YES_NO_PARSER", value)
+    payloads = _mock_openrouter_replies(vlm, monkeypatch, ["maybe"])
+    assert vlm.query_yes_no(prompt="q") == {"answer": False, "text": "maybe"}
+    assert len(payloads) == 1
+
+
+@pytest.mark.parametrize("value", ["3", "v2", "0", "2.0"])
+def test_parser_selector_rejects_unknown_versions(vlm, monkeypatch, value):
+    monkeypatch.setenv("GAP_VLM_YES_NO_PARSER", value)
+    payloads = _mock_openrouter_replies(vlm, monkeypatch, ["YES"])
+    with pytest.raises(ToolError, match="GAP_VLM_YES_NO_PARSER"):
+        vlm.query_yes_no(prompt="q")
+    assert payloads == []
+
+
 def test_gemini_rest_usage_omits_absent_prompt_token_details(vlm):
     body = {"usageMetadata": {
         "promptTokenCount": 5, "candidatesTokenCount": 2,
@@ -859,3 +999,72 @@ def test_gemini_rest_usage_omits_absent_prompt_token_details(vlm):
     assert vlm._gemini_usage(body) == {
         "input_tokens": 5, "output_tokens": 2, "thoughts_tokens": 0,
     }
+
+
+def _perceive_script(skill, monkeypatch):
+    import importlib.util
+    import sys
+
+    name = f"perceive_dino_vlm_under_test_{skill.replace('-', '_')}"
+    spec = importlib.util.spec_from_file_location(
+        name, ROOT / "skills" / skill / "scripts" / "perceive_dino_vlm.py")
+    module = importlib.util.module_from_spec(spec)
+    monkeypatch.setitem(sys.modules, name, module)
+    spec.loader.exec_module(module)
+    return module
+
+
+@pytest.mark.parametrize("skill", ["perceiving-objects", "perceiving-next-item"])
+def test_perception_cache_key_binds_only_a_non_legacy_parser(skill, monkeypatch):
+    """A v2 verify decision must not be served from a legacy-parser cache entry."""
+    module = _perceive_script(skill, monkeypatch)
+    legacy = module._make_cache_key([], {})
+    monkeypatch.setenv("GAP_VLM_YES_NO_PARSER", "1")
+    assert module._make_cache_key([], {}) == legacy
+    monkeypatch.setenv("GAP_VLM_YES_NO_PARSER", "2")
+    assert module._make_cache_key([], {}) != legacy
+
+
+class _VerifyCtx:
+    """Minimal ctx: query_yes_no raises ``error``; vlm.query answers YES."""
+
+    def __init__(self, error: Exception):
+        self.error = error
+        self.calls: list[str] = []
+
+    def tool(self, name, **kwargs):
+        self.calls.append(name)
+        if name == "vlm.query_yes_no":
+            raise self.error
+        return {"text": "YES"}
+
+
+_V2_REFUSALS = [
+    ToolError("vlm", "query_yes_no: no unambiguous YES/NO verdict after 2 replies; x"),
+    # The out-of-process bundle surfaces remote errors by message.
+    RuntimeError("vlm.query_yes_no: ToolError: GAP_VLM_YES_NO_PARSER must be 1 or 2"),
+]
+
+
+@pytest.mark.parametrize("skill", ["perceiving-objects", "perceiving-next-item"])
+@pytest.mark.parametrize("error", _V2_REFUSALS, ids=["ambiguous", "selector"])
+def test_verify_pick_never_answers_a_v2_refusal_from_the_query_fallback(
+    skill, error, monkeypatch,
+):
+    module = _perceive_script(skill, monkeypatch)
+    rgb = np.zeros((64, 64, 3), dtype=np.uint8)
+    box = {"x1": 10, "y1": 10, "x2": 40, "y2": 40}
+    ctx = _VerifyCtx(error)
+    with pytest.raises(type(error), match="YES/NO verdict|GAP_VLM_YES_NO_PARSER"):
+        module._verify_pick(ctx, rgb, box, "basket", "", True)
+    assert ctx.calls == ["vlm.query_yes_no"]
+
+
+@pytest.mark.parametrize("skill", ["perceiving-objects", "perceiving-next-item"])
+def test_verify_pick_keeps_the_query_fallback_for_other_failures(skill, monkeypatch):
+    module = _perceive_script(skill, monkeypatch)
+    rgb = np.zeros((64, 64, 3), dtype=np.uint8)
+    box = {"x1": 10, "y1": 10, "x2": 40, "y2": 40}
+    ctx = _VerifyCtx(ToolError("vlm", "relay unavailable"))
+    assert module._verify_pick(ctx, rgb, box, "basket", "", False) is True
+    assert ctx.calls == ["vlm.query_yes_no", "vlm.query"]

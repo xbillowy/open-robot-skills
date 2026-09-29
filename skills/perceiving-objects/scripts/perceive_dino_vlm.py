@@ -86,6 +86,12 @@ def _maybe_warn_auth_once(exc: BaseException) -> None:
     logger.warning("VLM call failed (auth): %s\nhint: %s", exc, _AUTH_HINT)
 
 _LABELS = ["A", "B", "C", "D", "E", "F", "G", "H"]
+
+#: vlm.query_yes_no failures under GAP_VLM_YES_NO_PARSER=2 (still ambiguous
+#: after its re-ask, or an invalid selector) are decisions the tool refused
+#: to guess, not an unavailable bundle: never answer them from the weaker
+#: vlm.query first-letter fallback. The legacy parser never raises these.
+_YES_NO_REFUSALS = ("no unambiguous YES/NO verdict", "GAP_VLM_YES_NO_PARSER")
 _INTERSECTION_DIST = 0.01
 _MIN_INTERSECTION = 1
 
@@ -164,6 +170,11 @@ def _make_cache_key(cameras: list[CameraFrame], args: dict) -> str:
     h.update(_resolved_vlm_provider().encode("utf-8"))
     h.update(b"/")
     h.update(_resolved_vlm_model().encode("utf-8"))
+    # The v2 yes/no verdict parser can change the verify decision; keys
+    # without it (unset or 1) stay byte-identical to the legacy cache.
+    parser = os.environ.get("GAP_VLM_YES_NO_PARSER", "").strip()
+    if parser and parser != "1":
+        h.update(b"|yes_no_parser|" + parser.encode("utf-8"))
     for cam in cameras:
         h.update(b"|cam|")
         h.update(_hash_camera(cam))
@@ -481,6 +492,8 @@ def _verify_pick(
             object_name, resp["answer"], str(resp["text"])[:200])
         return bool(resp["answer"])
     except Exception as first_exc:
+        if any(marker in str(first_exc) for marker in _YES_NO_REFUSALS):
+            raise
         # query_yes_no may be unavailable in a non-canonical vlm bundle;
         # fall back to the lower-level vlm.query in that case. But if
         # query ALSO fails — auth, network, retries exhausted — let it
