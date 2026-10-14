@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import re
 from dataclasses import dataclass
 from typing import Any, TypedDict
@@ -223,6 +224,100 @@ def _parse_letter(text: str, n: int) -> int | None:
     return None
 # -- END strict letter parser
 
+# -- Opt-in VLM choice-prompt version (GAP_VLM_CHOICE_PROMPT). Unset or "1"
+# keeps the legacy prompts byte-identical; "2" asks the parent-box question
+# with "contains" semantics, an explicit NONE answer and a one-line JSON reply.
+_CHOICE_PROMPT_ENV = "GAP_VLM_CHOICE_PROMPT"
+_CHOICE_JSON_TAIL = (
+    'Reply with one line of JSON only: {"box": "<letter>"} or {"box": "NONE"}.'
+)
+
+
+def _choice_prompt_version() -> int:
+    raw = os.environ.get(_CHOICE_PROMPT_ENV, "").strip()
+    if raw in ("", "1"):
+        return 1
+    if raw == "2":
+        return 2
+    raise ValueError(f"{_CHOICE_PROMPT_ENV} must be 1 or 2, got {raw!r}")
+
+
+def _choice_declined(text: str) -> bool:
+    """True when the reply's final answer is an explicit NONE / neither."""
+    s = (text or "").strip()
+    for blob in reversed(_SLP_JSON.findall(s)):
+        try:
+            obj = json.loads(blob)
+        except ValueError:
+            continue
+        if isinstance(obj, dict):
+            for key, value in obj.items():
+                if str(key).lower() in _SLP_JSON_KEYS:
+                    return isinstance(value, str) and (
+                        value.strip().upper() in ("NONE", "NEITHER"))
+    return bool(_SLP_DECLINE_ONLY.fullmatch(s))
+
+
+def _panel_head(n: int) -> str:
+    return (
+        'The image has two panels: the left panel ("Original") is the '
+        "unmodified scene; the right panel shows the same scene with "
+        f"{n} candidate bounding boxes labeled {', '.join(_VLM_LABELS[:n])}."
+    )
+
+
+def _parent_contain_prompt(parent_prompt: str, n: int) -> str:
+    p = parent_prompt
+    return (
+        f"{_panel_head(n)}\n\nWhich box best CONTAINS the {p}? The box must "
+        f"enclose the entire {p}. It may be larger than the {p} (for "
+        f"example a box around the whole object that the {p} is a part of), "
+        f"but among boxes that enclose it prefer the tightest one, and do not "
+        f"pick a box around a different object of the same kind. If no box "
+        f"encloses the {p}, answer NONE.\n\n{_CHOICE_JSON_TAIL}"
+    )
+
+
+def _pick_parent_box_contain(
+    ctx: Any, annotated: np.ndarray, detections: list, n: int,
+    parent_prompt: str,
+) -> BoundingBox2D | None:
+    """Choice-prompt v2 parent pick: "which box CONTAINS" + NONE + JSON.
+
+    A letter selects that box. An explicit NONE means no candidate frames
+    the parent in this camera, so the camera yields no parent (None) rather
+    than a box around something else. A reply with neither a letter nor
+    NONE is re-asked once; a second such reply, or a VLM error, keeps the
+    legacy top-confidence fallback.
+    """
+    prompt = _parent_contain_prompt(parent_prompt, n)
+    try:
+        for attempt in range(2):
+            text = ctx.tool("vlm.query", prompt=prompt, image=annotated)["text"]
+            idx = _parse_letter(text, n)
+            if idx is not None:
+                logger.info(
+                    "perceive_subpart: VLM (contain v2) picked box %d/%d for "
+                    "parent %r (text=%r)", idx, n, parent_prompt, text[:80])
+                return detections[idx]["box"]
+            if _choice_declined(text):
+                logger.warning(
+                    "perceive_subpart: VLM (contain v2) answered NONE for "
+                    "parent %r among %d boxes; no parent in this camera",
+                    parent_prompt, n)
+                return None
+            logger.warning(
+                "perceive_subpart: VLM (contain v2) reply has no letter or "
+                "NONE for parent %r (attempt %d, text=%r)",
+                parent_prompt, attempt + 1, text[:120])
+    except Exception as exc:
+        logger.warning(
+            "perceive_subpart: VLM disambiguation failed (%s); "
+            "falling back to top-confidence box", exc,
+        )
+    return detections[0]["box"]
+
+
 def _render_boxes_on_image(
     rgb: np.ndarray, detections: list,
 ) -> np.ndarray:
@@ -290,6 +385,9 @@ def _pick_parent_box(
     # under "frying pan." because the prompts are loose).
     n = min(len(detections), len(_VLM_LABELS))
     annotated = _render_boxes_on_image(rgb, detections[:n])
+    if _choice_prompt_version() == 2:
+        return _pick_parent_box_contain(
+            ctx, annotated, detections, n, parent_prompt)
     vlm_prompt = (
         f"The image on the right shows {n} candidate bounding boxes "
         f"labeled {', '.join(_VLM_LABELS[:n])}. Which box is the actual "

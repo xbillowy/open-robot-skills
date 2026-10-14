@@ -176,6 +176,10 @@ def _make_cache_key(cameras: list[CameraFrame], args: dict) -> str:
     parser = os.environ.get("GAP_VLM_YES_NO_PARSER", "").strip()
     if parser and parser != "1":
         h.update(b"|yes_no_parser|" + parser.encode("utf-8"))
+    # Choice-prompt v2 can change the selected box; unset/1 keeps legacy keys.
+    choice = os.environ.get("GAP_VLM_CHOICE_PROMPT", "").strip()
+    if choice and choice != "1":
+        h.update(b"|choice_prompt|" + choice.encode("utf-8"))
     for cam in cameras:
         h.update(b"|cam|")
         h.update(_hash_camera(cam))
@@ -446,6 +450,93 @@ def _tournament(
     return keep[bracket[0]]
 
 
+# -- Opt-in VLM choice-prompt version (GAP_VLM_CHOICE_PROMPT). Unset or "1"
+# keeps the legacy pairwise tournament for every name. "2" asks a name that
+# is defined by a left/right image position on the full scene with all
+# candidate boxes labeled (set-of-marks), because isolated crops cannot
+# answer "left bowl" vs "right bowl". NONE or an unparseable reply (after one
+# re-ask) falls back to the legacy tournament.
+_CHOICE_PROMPT_ENV = "GAP_VLM_CHOICE_PROMPT"
+_CHOICE_JSON_TAIL = (
+    'Reply with one line of JSON only: {"box": "<letter>"} or {"box": "NONE"}.'
+)
+_SPATIAL_NAME = re.compile(r"\b(?:left|right|leftmost|rightmost)\b", re.IGNORECASE)
+
+
+def _choice_prompt_version() -> int:
+    raw = os.environ.get(_CHOICE_PROMPT_ENV, "").strip()
+    if raw in ("", "1"):
+        return 1
+    if raw == "2":
+        return 2
+    raise ValueError(f"{_CHOICE_PROMPT_ENV} must be 1 or 2, got {raw!r}")
+
+
+def _render_scene_marks(rgb: np.ndarray, detections: list) -> np.ndarray:
+    """Original scene (left) beside the same scene with labeled boxes."""
+    import cv2
+
+    original = rgb.copy()
+    for color, width in (((255, 255, 255), 4), ((0, 0, 0), 2)):
+        cv2.putText(original, "Original", (10, 40), cv2.FONT_HERSHEY_SIMPLEX,
+                    1.2, color, width, cv2.LINE_AA)
+    annotated = rgb.copy()
+    for i, det in enumerate(detections[:len(_LABELS)]):
+        color = _COLORS[i % len(_COLORS)]
+        x1, y1, x2, y2 = _box_xyxy(det["box"])
+        cv2.rectangle(annotated, (x1, y1), (x2, y2), color, 3)
+        tx, ty = x1, max(y1 - 8, 20)
+        cv2.putText(annotated, _LABELS[i], (tx, ty), cv2.FONT_HERSHEY_SIMPLEX,
+                    1.0, (255, 255, 255), 4, cv2.LINE_AA)
+        cv2.putText(annotated, _LABELS[i], (tx, ty), cv2.FONT_HERSHEY_SIMPLEX,
+                    1.0, color, 2, cv2.LINE_AA)
+    return np.concatenate([original, annotated], axis=1)
+
+
+def _scene_marks_prompt(object_name: str, n: int) -> str:
+    return (
+        'The image has two panels: the left panel ("Original") is the '
+        "unmodified scene; the right panel shows the same scene with "
+        f"{n} candidate bounding boxes labeled {', '.join(_LABELS[:n])}."
+        f"\n\nWhich box is the {object_name}? If no box shows it, answer "
+        f"NONE.\n\n{_CHOICE_JSON_TAIL}"
+    )
+
+
+def _scene_marks_pick(
+    ctx: Any, rgb_np: np.ndarray, detections: list, object_name: str,
+) -> int | None:
+    """Full-scene set-of-marks choice for a left/right name (v2).
+
+    Returns the selected index, or None (NONE, or no letter after one
+    re-ask) so the caller keeps the legacy tournament. VLM errors
+    propagate exactly like the tournament's.
+    """
+    n = min(len(detections), len(_LABELS))
+    if n < 2:
+        return None
+    sheet = _render_scene_marks(rgb_np, detections[:n])
+    prompt = _scene_marks_prompt(object_name, n)
+    for attempt in range(2):
+        text = ctx.tool("vlm.query", prompt=prompt, image=sheet)["text"]
+        idx = _parse_letter(text, n)
+        if idx is not None:
+            logger.info(
+                "VLM scene-marks (v2) selected box %d for '%s' from %d "
+                "detections (text=%r)", idx, object_name, n, text[:80])
+            return idx
+        if _SLP_DECLINE_ONLY.fullmatch(text.strip()) or re.search(
+                r'"(?:box|answer)"\s*:\s*"(?:NONE|NEITHER)"', text, re.I):
+            logger.warning(
+                "VLM scene-marks (v2) answered NONE for '%s'; falling back "
+                "to the pairwise tournament", object_name)
+            return None
+        logger.warning(
+            "VLM scene-marks (v2) reply has no letter or NONE for '%s' "
+            "(attempt %d, text=%r)", object_name, attempt + 1, text[:120])
+    return None
+
+
 @dataclass
 class _CamResult:
     cloud: Any
@@ -659,10 +750,16 @@ def _perceive_single_camera(
             # for the WRONG object and the run reported success. Only
             # catch sam3.segment_box errors (they have a legitimate
             # fallback to segment_text below).
-            selected_idx = _tournament(
-                ctx, rgb_np, gdino_detections,
-                object_name, object_description,
-            )
+            selected_idx = None
+            if (_choice_prompt_version() == 2
+                    and _SPATIAL_NAME.search(object_name or "")):
+                selected_idx = _scene_marks_pick(
+                    ctx, rgb_np, gdino_detections, object_name)
+            if selected_idx is None:
+                selected_idx = _tournament(
+                    ctx, rgb_np, gdino_detections,
+                    object_name, object_description,
+                )
             logger.info(
                 "VLM tournament selected box %d for '%s' from %d detections",
                 selected_idx, object_name,
