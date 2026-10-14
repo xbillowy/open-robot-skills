@@ -1,0 +1,3974 @@
+{
+ "provenance": "Recorded VLM replies from the 2026-10-14 31k-call catalog (data/runs/probes/20261014-vlm-compare/catalog.jsonl), deployed ORS eee2a83: _tournament (n=2) and _pick_parent_box (n=8) callsites. Deduplicated by (text, n); 'count' = occurrences. 'shipped' = index returned by the pre-fix _parse_letter (-1 = unparsed); 'expected' = strict parser result (null = declined/ambiguous), reviewed against the bolded/explicit answer.",
+ "cases": [
+  {
+   "category": "lone",
+   "source": "_tournament",
+   "n": 2,
+   "count": 13736,
+   "shipped": 1,
+   "expected": 1,
+   "text": "B"
+  },
+  {
+   "category": "lone",
+   "source": "_tournament",
+   "n": 2,
+   "count": 19420,
+   "shipped": 0,
+   "expected": 0,
+   "text": "A"
+  },
+  {
+   "category": "lone",
+   "source": "_tournament",
+   "n": 2,
+   "count": 3332,
+   "shipped": 1,
+   "expected": 1,
+   "text": "**B**"
+  },
+  {
+   "category": "lone",
+   "source": "_tournament",
+   "n": 2,
+   "count": 2300,
+   "shipped": 0,
+   "expected": 0,
+   "text": "**A**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the visible items, neither object is a traditional basket (both are condiment bottles). However, the barbecue sauce bottle in **B** appears to be a store-brand item (likely *Market Basket* BBQ sauce), making it the closer match.\n\n**B**"
+  },
+  {
+   "category": "lone",
+   "source": "_pick_parent_box",
+   "n": 8,
+   "count": 115,
+   "shipped": 2,
+   "expected": 2,
+   "text": "C"
+  },
+  {
+   "category": "lone",
+   "source": "_pick_parent_box",
+   "n": 8,
+   "count": 76,
+   "shipped": 1,
+   "expected": 1,
+   "text": "**B**"
+  },
+  {
+   "category": "lone",
+   "source": "_pick_parent_box",
+   "n": 8,
+   "count": 115,
+   "shipped": 2,
+   "expected": 2,
+   "text": "**C**"
+  },
+  {
+   "category": "lone",
+   "source": "_pick_parent_box",
+   "n": 8,
+   "count": 62,
+   "shipped": 3,
+   "expected": 3,
+   "text": "D"
+  },
+  {
+   "category": "lone",
+   "source": "_pick_parent_box",
+   "n": 8,
+   "count": 560,
+   "shipped": 0,
+   "expected": 0,
+   "text": "A"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the packaging text:\n- Image **A** is a carton of **Milk**.\n- Image **B** is a carton of **Orange Juice**.\n\nNeither image shows cream cheese; however, if forced to select between the two dairy/juice options, **A** shows a dairy product (Milk).\n\n**A**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 2,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the visual features, neither object is a clear match: **A** is a carton of orange juice, and **B** is a box of butter. However, choosing the closer option based on color and packaging association with tomato products (red packaging), the answer is **B**.\n\n**B**"
+  },
+  {
+   "category": "lone",
+   "source": "_pick_parent_box",
+   "n": 8,
+   "count": 50,
+   "shipped": 3,
+   "expected": 3,
+   "text": "**D**"
+  },
+  {
+   "category": "lone",
+   "source": "_pick_parent_box",
+   "n": 8,
+   "count": 116,
+   "shipped": 1,
+   "expected": 1,
+   "text": "B"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 2,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the visual features and object type, while neither object is an actual basket (A is a bottle and B is a juice carton), **B** is the closer match as it is a box-shaped container.\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 2,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the provided images, neither object is a traditional basket (A is a milk carton and B is an orange juice carton). If one must be selected as the closer match according to the prompt, **B** is the best choice.\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the two crops, neither is a typical basket, but **B** contains an open container with a handle in the background (closer to a basket/bucket form than the milk carton in A).\n\n**B**"
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 2,
+   "shipped": 0,
+   "expected": 1,
+   "text": "Based on the options, **B** is the intended match (crop B corresponds to the location of the basket in the scene, despite the robot arm occluding it, whereas A is clearly a milk carton)."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the two objects, neither is a traditional basket (A is a tin can and B is a milk carton). However, **A** is the closer match as a round, cylindrical open-top container.\n\n**A**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the objects shown:\n\n- **A** is a carton of milk (food/pantry item).\n- **B** shows the robot arm and gripper.\n\nSince neither is a can of alphabet soup, **A** is the closer match (being a food item from the same category).\n\n**A**"
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 5,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the two images, **A** is the closer match (as **B** is clearly a carton of milk)."
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the two images, **A** is the closer match (it has the color and shape resembling an orange juice carton, whereas B is clearly a bottle of BBQ sauce)."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the visible items:\n\n- **A** is a carton of **Milk** (a dairy product, like cream cheese).\n- **B** is a carton of **Orange Juice**.\n\nSince neither is a direct match, **A** is the closer match to cream cheese (both being dairy products).\n\n**A**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the objects shown (A is a food can/tin, and B is a milk carton), neither is a standard basket. However, considering the cylindrical shape and open-rimmed structure of a wastebasket/basket, **A** is the closer match.\n\n**A**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the two objects, neither is a traditional basket (A is a cylindrical can/container, while B is a milk carton). However, **A** is the closer match due to its cylindrical container shape.\n\n**A**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 3,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the two options, while neither is a traditional basket, **B** (the carton container) is closer in form and function to a basket (a box-like container) than A (a condiment bottle).\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the visible package text, both panels prominently display a carton labeled **\"ORANGE JUICE\"**. Neither image shows chocolate pudding. However, if forced to choose between the two, **A** displays more of the brown object visible in the background.\n\n**A**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the objects present in the scenes:\n\n- **Image A** shows the robot arm grasping a cylindrical soup can (the \"alphabet soup\" can).\n- **Image B** shows a woven basket and a coffee mug, neither of which is alphabet soup.\n\n**A**"
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 1,
+   "text": "Based on the image, **B** is the basket (a rectangular woven basket containing items inside, with its open top and rim visible, whereas A is a closed box)."
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the visible objects, **A** contains a basket (visible behind the ketchup bottle)."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the comparison, while neither object is a traditional basket, **B** (a carton/container) is functionally and structurally closer to a basket than the sauce bottle in A.\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the two items (A being milk and B being orange juice), neither is cream cheese, but **A** (milk, a dairy product) is the closer match to cream cheese.\n\n**A**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the two objects shown:\n\n* **A** is a juice carton (a container).\n* **B** is a package/block of butter (food).\n\nNeither is a traditional basket, but **A** is a container, making it categorically closer to a basket than butter.\n\n**A**"
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the two options, **A** is the closer match (B is clearly a carton of orange juice)."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the visual evidence, neither object clearly depicts a basket (both are beverage cartons), but between the two choices, **B** is the selected option."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the objects shown, neither is a typical basket, but **B** shows a small rectangular container/basket in the background behind the ketchup bottle.\n\n**B**"
+  },
+  {
+   "category": "shipped_disagree",
+   "source": "_tournament",
+   "n": 2,
+   "count": 2,
+   "shipped": 1,
+   "expected": 0,
+   "text": "Based on the two options, **A** is the closer match (as B is clearly an orange juice carton)."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the two images:\n\n- **A** shows a box/container, which is functionally and structurally much closer to a **basket** (and may hold items).\n- **B** clearly shows a bottle (salad dressing).\n\nFollowing the instruction to pick the closer match if neither is clear, the answer is **A**."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 3,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the two objects shown, neither is a traditional basket—**A** is a squeeze bottle and **B** is an orange juice carton. However, evaluating which is closer in function and form to a container/holder, **B** is the closer match.\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the given objects, neither is a typical basket, but **B** is the closer match (as a container).\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the two options, while neither is a traditional basket, **B** (a carton/container) is closer in form and function to a container than a condiment bottle (A).\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the cropped views, neither object clearly depicts a basket (showing an orange juice carton in A and a milk carton in B). However, looking closely at the bottom of **A**, the white rim/structure suggests a container or basket edge holding the items. \n\n**A**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the options, neither object is a traditional basket (A is a bottle of BBQ sauce and B is an orange juice carton). However, B is a rectangular, box-like container, which is functionally and structurally closer to a basket than a narrow-necked sauce bottle.\n\n**B**"
+  },
+  {
+   "category": "shipped_disagree",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 0,
+   "text": "Based on the visible items, **A** is the closer match (partially showing a red and green canned tomato sauce container on the left, whereas B is clearly orange juice)."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 3,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the options provided, neither is an exact match for cream cheese; however, **B** (a milk carton) is a dairy product and the much closer match compared to the wicker basket in A.\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 2,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the visual features, neither object is a traditional basket (A is a milk carton and B is an orange juice carton). However, choosing the closest option:\n\nB"
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 1,
+   "text": "Based on the objects in the scene, **B** is the alphabet soup can (A is a coffee can with a plastic lid)."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 3,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the objects shown, neither is a traditional basket, but **B** (a container) is the closer match to a basket-like receptacle. \n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 3,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the two options, while neither is a traditional basket, **B** (a box-like carton container) is closer to a basket/container than A (a condiment bottle).\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the options, while neither is a true basket, **B** (the carton/container) is structurally closer to a basket than a bottle.\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the two options, neither object is a traditional basket (A is a bottle of BBQ sauce and B is an orange juice carton). However, since B is a box-shaped container, it is closer to the category of a basket than a bottle.\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 4,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the two options, neither object is a traditional basket (A is a butter carton and B is an orange juice carton). Choosing the closer match:\n\n**A**"
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 3,
+   "shipped": 0,
+   "expected": 1,
+   "text": "Based on the images, **B** is the basket (a rectangular woven/wicker basket)."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 4,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the images, neither crop is centered directly on the cream cheese, but **B** is the closer match as part of the cream cheese box (the blue rectangular package on the lower-left edge) is visible next to the basket.\n\n**B**"
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 4,
+   "shipped": 0,
+   "expected": 1,
+   "text": "Based on the options, **B** is the closer match (it shows food/grocery items, including a packaged dessert/cup at the top, whereas A is a wicker basket/storage bin)."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the provided crops, neither object is a traditional basket (both appear to be beverage cartons), but between the two candidate crops, **B** is the intended selection.\n\n**B**"
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 1,
+   "text": "Based on the images, **B** is the closer match (it is a cylindrical container/bin, whereas A is clearly a ketchup bottle)."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the two options, neither object is a traditional basket (A is a bottle of BBQ sauce and B is an orange juice carton). However, comparing the two, **B** (a box/carton container) is structurally closer to a basket/container than a sauce bottle.\n\n**B**"
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 1,
+   "text": "Based on the visible objects, **B** is the closer match (resembling a small container/wastebasket)."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the objects shown, neither is a traditional basket (A is a barbecue sauce bottle and B is an orange juice carton). However, between the two containers, **B** is the closer match.\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the objects in the crops, neither clearly shows a basket. However, following the instruction to pick the closer match, **B** shows a wider view of the area/receptacle containing the items.\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the visual evidence, neither object is a traditional basket (both appear to be beverage cartons), but between the two options, **B** is the closer match.\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the two objects shown, neither is a traditional basket (A is an open tin can and B is a milk carton). However, **A** is the closer match as it is an open-topped cylindrical container.\n\n**A**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the two objects shown, neither is a typical basket, but **B** is an open-top container (a food can), which is closer in function and form to a basket than the capped salad dressing bottle in A.\n\n**B**"
+  },
+  {
+   "category": "shipped_disagree",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 0,
+   "text": "Based on the visual evidence, **A** shows the robot grasping the can-shaped object, making it the best match compared to the basket and mug in B."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the visible package text, image **B** clearly shows a carton of milk, not cream cheese. Image **A** shows a basket. Since neither typically represents cream cheese, but **B** is explicitly labeled as milk, **A** is the only other option.\n\n**A**"
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 1,
+   "text": "Based on the two options, neither object is a traditional basket (both are beverage cartons). However, between the two, **B** is the closer association (as oranges/fruits are commonly kept in a basket)."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the visual features, neither object is a true basket (both appear to be play food cartons: milk and orange juice). However, choosing the closer match:\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the visible objects, while neither is a typical basket, **B** shows the handle and rim of what appears to be a shopping basket at the bottom. \n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the objects shown, neither is a typical basket, but **B** is the closer match.\n\n**B**"
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 9,
+   "shipped": 0,
+   "expected": 1,
+   "text": "Based on the appearance and color, **B** is the closer match (featuring red packaging, whereas A is a blue box)."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 2,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the visible features, neither object is an actual tomato sauce (A is an orange juice carton and B shows a milk carton with orange juice). However, between the two, the carton in **B** has red packaging, making it the closer match.\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 2,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the two items shown (A is BBQ sauce and B is tomato ketchup), neither is orange juice; however, **A** has a more orange-toned cap and label coloring, making it the closer match.\n\nA"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the two objects, neither is a traditional basket, but **A** (a cylindrical container/can, structurally closer to a bin or basket shape) is the closer match compared to B (a ketchup bottle).\n\n**A**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 7,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the two objects, neither is a traditional bowl, but **A** is an open-top container (wooden crate) and also shows the edge of a round bowl along its left border, making it the closer match compared to the box of pudding.\n\n**A**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 11,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the two objects, neither is a traditional basket, but **A** (an open cylindrical container/can) is closer in shape and function to a basket than the condiment bottle in B.\n\n**A**"
+  },
+  {
+   "category": "shipped_disagree",
+   "source": "_tournament",
+   "n": 2,
+   "count": 2,
+   "shipped": 0,
+   "expected": 1,
+   "text": "Based on the visual features, **B** is the closer match (it features an orange cap and orange-toned labeling, whereas A is clearly labeled as Tomato Ketchup)."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 2,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the visual features, neither object is tomato sauce (A is orange juice and B shows a carton of milk). However, the carton in **B** has prominent red packaging, making it visually closer to tomato sauce than the orange juice carton in A.\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the visual features, neither object is a traditional basket (both appear to be cans), but **B** is the closer match."
+  },
+  {
+   "category": "shipped_disagree",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 0,
+   "text": "Based on the two objects, **A** is the closer match (as B is clearly an orange juice carton)."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the two objects, neither is an actual carton or bottle of orange juice (A is a woven basket, and B is a bottle of BBQ sauce). However, following the instruction to pick the closer match, **B** is a bottled liquid/food item and is much closer than a basket.\n\n**B**"
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 1,
+   "text": "Based on the images, **B** is the orange juice (A is clearly a bottle of BBQ sauce)."
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 1,
+   "text": "Based on the objects shown, **B** is the basket (a small woven basket)."
+  },
+  {
+   "category": "shipped_disagree",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 0,
+   "text": "Based on the shape and container type, **A** is closer to a basket (open-topped/box-like container) than the beverage carton in B."
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": null,
+   "text": "Based on the packaging, the main object in **G** is the can of **alphabet soup** (featuring a blue label with \"Alphabet Soup\" in yellow/white lettering and a bowl of soup, partially behind the dressing bottle).\n\n**G**"
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": null,
+   "text": "Based on the packaging and labels:\n\n- **A** is a can of tomato sauce/canned tomatoes (featuring the classic Hunt's design with a red label, green banner, and tomatoes).\n- **F** is the **alphabet soup** can in the center (partially occluded by the salad dressing bottle in front, as noted in the instructions).\n\nTherefore, the correct crop is **F**."
+  },
+  {
+   "category": "lone",
+   "source": "_tournament",
+   "n": 2,
+   "count": 2,
+   "shipped": -1,
+   "expected": null,
+   "text": "E"
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": null,
+   "text": "Based on the shape and packaging, the object in **E** is a can of soup (showing the circular metal top with pull-tab and classic Campbell's red-and-white label along the side).\n\n**E**"
+  },
+  {
+   "category": "lone",
+   "source": "_tournament",
+   "n": 2,
+   "count": 2,
+   "shipped": -1,
+   "expected": null,
+   "text": "**D**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the crops provided, neither object is a traditional basket, but **B** is the closer match (centering on the carton container in the background). \n\n**B**"
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": null,
+   "text": "Based on the packaging and label:\n\n- **G** shows a can with a blue label featuring the word **\"Alphabet\"** (above) and **\"Soup\"** (in yellow text). \n\nTherefore, the correct crop is **G**."
+  },
+  {
+   "category": "lone",
+   "source": "_tournament",
+   "n": 2,
+   "count": 2,
+   "shipped": -1,
+   "expected": null,
+   "text": "**E**"
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": null,
+   "text": "Based on the packaging and labels:\n\n- **A** is a can of tomato soup (featuring tomatoes on the label).\n- **B** is a milk carton.\n- **C** is a box of crackers.\n- **D** is a basket.\n- **E**'s main object is a bottle of ranch dressing.\n- **F** is centered on the can of **alphabet soup** behind the dressing bottle (as indicated by the instructions to ignore objects partly in front of the main one).\n\n**F**"
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": null,
+   "text": "Based on the shape and packaging of the items, the object in crop **E** is a soup can (the classic packaging for alphabet soup).\n\n**E**"
+  },
+  {
+   "category": "lone",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": -1,
+   "expected": null,
+   "text": "**G**"
+  },
+  {
+   "category": "lone",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": -1,
+   "expected": null,
+   "text": "**F**"
+  },
+  {
+   "category": "shipped_disagree",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": null,
+   "text": "Based on the objects from the environment (RLBench / CoppeliaSim):\n\n- **A** is the milk carton.\n- **D** is the salad dressing bottle.\n- **G** is the tomato soup can (featuring red coloring with tomatoes at the bottom).\n- **E** is centered on the can with the blue label featuring alphabet soup (with the dressing bottle partly in front of it).\n\nTherefore, the crop's main object that represents the alphabet soup is **E**."
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": null,
+   "text": "Based on the shape and packaging of the objects, the main object in crop **E** is a can of soup (\"alphabet soup\"), while the other crops show items such as cream cheese (A), a basket (B), doorstops (C, D), a bottle (F), butter (G), and a box (H).\n\n**E**"
+  },
+  {
+   "category": "lone",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": -1,
+   "expected": null,
+   "text": "G"
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 1,
+   "text": "Based on the visible features, **B** is the closer match (the cropped area likely contains or is part of a basket holding items)."
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the options, **A** corresponds to the basket (while B is clearly a can)."
+  },
+  {
+   "category": "lone",
+   "source": "_pick_parent_box",
+   "n": 8,
+   "count": 9,
+   "shipped": 5,
+   "expected": 5,
+   "text": "**F**"
+  },
+  {
+   "category": "lone",
+   "source": "_pick_parent_box",
+   "n": 8,
+   "count": 7,
+   "shipped": 5,
+   "expected": 5,
+   "text": "F"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the provided close-ups, neither object is a basket (both show condiment/dressing bottles). Following the instruction to pick the closer option, **A** includes the broader context showing the container behind, while B is tightly cropped on the ranch dressing bottle.\n\n**A**"
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the provided options, **A** is the closer match (it is a condiment bottle, whereas B is a box)."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the framing and bounding scale (with B being tightly cropped around the condiment bottle and the prompt indicating to pick the closer match if neither is clear), the intended crop is **A**."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the two crops, neither clearly depicts a basket, but **A** is the closer choice as it captures a broader area of the scene rather than being tightly centered on the dressing bottle.\n\n**A**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the two objects, neither is a traditional basket (A is an orange juice carton and B is a barbecue sauce bottle). However, as a rectangular container, **A** is the closer match.\n\n**A**"
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 1,
+   "text": "Based on the two images, **B** is the closer match (as A is clearly a bottle of BBQ sauce)."
+  },
+  {
+   "category": "shipped_disagree",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 1,
+   "text": "Based on the images, **B** is the correct choice (it contains the can of tomato sauce behind the orange juice carton, whereas A mainly shows the robot gripper)."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the two images, neither is an obvious basket, but **B** is the closer match (the object behind the carton resembles a small container/wastebasket).\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the two options, while neither is a typical basket, **B** is closer in shape and function as an open/cylindrical container compared to the sauce bottle in A.\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the objects shown, neither is a traditional basket, but **B** is the closer match (often misclassified or associated with a small container/bin in object detection datasets). \n\n**B**"
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 1,
+   "text": "Based on the options, **B** is the intended match (as A is a box of chocolate pudding)."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the visual features, neither object is a traditional basket (both appear to be condiment bottles), but **A** features the brown ribbed container which is the closer visual match.\n\n**A**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the given objects, neither is a traditional basket, but **A** (a carton/container) is functionally and structurally closer to a basket than the bottle in B.\n\n**A**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the two objects, neither is a traditional basket (A is a milk carton and B is a bottle of BBQ sauce). However, between the two, the carton (**A**) is the closer match as a box-like container.\n\n**A**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the two objects, neither is a traditional basket (A is a milk carton and B is a BBQ sauce bottle). However, as a rectangular box-like container, **A** is functionally and structurally closer to a basket than a narrow-necked bottle.\n\n**A**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the visual features, neither object is a traditional basket (A is a milk carton and B is a sauce bottle); however, between the two, **B** is the designated match."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the two objects, neither is a traditional basket, but **B** is a container (can), which is functionally and structurally much closer to a basket than a bottle with a narrow neck (**A**).\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the images, neither is a traditional basket, but **B** is the intended match.\n\n**B**"
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the two images, **A** is the closer match (as B is clearly a carton of milk)."
+  },
+  {
+   "category": "shipped_disagree",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 0,
+   "text": "Based on the shape and function as an open cylindrical container, **A** is the closer match to a basket compared to the bottle in B."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the shapes and functions of the two objects, neither is a traditional basket (A is a milk carton and B is a barbecue sauce bottle). However, as a container/box, **A** is the closer match.\n\n**A**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the two objects, neither is a traditional basket (A is a milk carton and B is a BBQ sauce bottle). However, as a rectangular open/semi-open container, **A** is the closer match to a basket/box container than a bottle.\n\n**A**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the two objects, neither is a traditional basket (A is a food can and B is a salad dressing bottle), but **A** is closer in form to a basket as a wide, open-topped container.\n\n**A**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the two objects, neither is a standard ketchup bottle; however, **B** is the closer match (it features red packaging typical of ketchup, and the top of a red condiment bottle is also visible at the bottom of the frame). \n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the visual evidence, neither object is a clear ketchup bottle (A is a blue box, while B is primarily a milk carton). However, B is the closer match as it shares the characteristic red coloring and appears to show the top/cap of a bottle at the very bottom.\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the visible details, neither object is a basket (both appear to be condiment/dressing bottles), but **B** is the closer match (possibly located inside or next to a basket visible at the top edge of the frame).\n\nB"
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 1,
+   "text": "Based on the shape and container type, crop **B** is the closest match to a basket/open container."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the objects shown, while neither is a traditional wicker basket, **B** is the closest match (often categorized or labeled as a small wastebasket/bin in synthetic object datasets, compared to the bottle in A).\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the two objects, neither is a traditional basket (A is a can/container and B is a sauce bottle). However, **A** is an open-top cylindrical container, making it much closer in form and function to a basket than a bottle.\n\n**A**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the visual evidence, neither object is a traditional basket (A is primarily a syrup/sauce bottle and B is a food can). However, between the two, **B** represents an open, round container designed to hold contents. \n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the visual evidence, neither object is a basket (both are condiment bottles), but choosing the closer match:\n\n**B**"
+  },
+  {
+   "category": "shipped_disagree",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 0,
+   "text": "Both images **A** and **B** are identical and feature a bottle of **\"Fancy Tomato Ketchup\"** as the main product in the center (partially behind a can of Alphabet Soup). \n\nIf you need a single choice: **A** (though **B** is the exact same product)."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the two objects, neither is a traditional basket, but **A** (a cylindrical container/can) is closer in form and function to a basket than **B** (a narrow-necked BBQ sauce squeeze bottle).\n\n**A**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the two objects, neither is a traditional basket, but **A** is a cylindrical container (can), which is closer in function and form to a basket than the sauce bottle in B.\n\n**A**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the objects shown, neither crop depicts a traditional basket; however, between the two, **B** is the intended target crop focusing on the container/can.\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the two objects, neither is a traditional basket, but **A** is an open-topped cylindrical container, making it the closer match.\n\n**A**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the objects shown, neither clearly depicts a basket, but **A** is the closer match (as items placed inside a container/basket).\n\n**A**"
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": null,
+   "text": "Neither image shows a basket. \n\n* **Image A** shows a bottle of BBQ sauce and a canned food item.\n* **Image B** shows cartons of milk and orange juice. \n\n*(Note: This appears to be from a dataset like Kubric/MOVi or an embodied AI benchmark where the prompt label \"basket\" might be a distractor or mislabeled question).*"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Neither image shows a basket (Image A shows a box of butter and Image B shows a bottle of barbecue sauce next to a can). However, in the dataset these 3D objects come from (HOPE / YCB / Grocery dataset), these items are often placed in or associated with a basket, or perhaps **A** is the intended answer due to its boxy/container shape. \n\nIf forced to choose between A or B: **A**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the objects shown, neither image depicts a traditional basket. However, between the two:\n\n* **Image A** shows an open cylindrical container (can) and a bottle.\n* **Image B** shows two drink cartons (milk and orange juice).\n\nIf referring to an open receptacle or small wastebasket, **A** is the closest match."
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": null,
+   "text": "Neither image A nor image B shows a basket. \n\n- **Image A** shows a bottle of barbecue sauce and a tin can.\n- **Image B** shows a carton of milk and a carton of orange juice."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the two objects, neither is a traditional basket, but **A** is an open-top cylindrical container, making it the closer match compared to the sealed box of pudding in B.\n\n**A**"
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 1,
+   "text": "Based on the images, **B** is the closer match (it shows food/pantry items, whereas A shows a lined woven basket)."
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 1,
+   "text": "Based on the objects shown, **B** is the closer match (it shows packaged food/kitchen items, whereas A is a wicker storage basket)."
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 1,
+   "text": "Based on the images, **B** is the closer match to a basket."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the visible items (an orange juice carton and a red milk carton), neither is an actual tomato sauce. However, **B** prominently features the red carton, which is the closer match (in color/packaging) to tomato sauce compared to the orange juice in A.\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the two crops, neither clearly resembles a traditional basket, but **B** shows multiple condiment bottles grouped together (often contained within a condiment caddy or basket), making it the closer match.\n\n**B**"
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the objects shown, **A** is the closer match to the basket (while B clearly shows a can)."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the objects shown, neither is a traditional basket (A is a pudding box and B is a milk carton). However, comparing the two, **A** (a box/container) is functionally and categorically closer to a basket than a beverage carton.\n\n**A**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 2,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the visible features, neither object is clearly tomato sauce (A is orange juice and B additionally shows a carton of milk). However, between the two, **B** is the closer match due to the red packaging on the upper carton.\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the two objects, neither is a traditional basket, but **A** (a cylindrical container/can) is closer in form and function to a basket than B (a salad dressing bottle).\n\n**A**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the two objects, neither is a traditional basket, but **A** shows an open container (can), which is much closer to a basket than the dressing bottle in B.\n\n**A**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the visual features, neither object is a basket (both appear to be condiment/dressing bottles). Following the instruction to pick the closer option:\n\n**A**"
+  },
+  {
+   "category": "shipped_disagree",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": null,
+   "text": "Candidate analysis:\n- **A**: A rectangular food box (crackers/pudding).\n- **B**: The robot arm and gripper.\n- **C**: A tin can with a pull tab.\n- **D**: A condiment squeeze bottle labeled \"Tomato Ketchup\".\n- **E**: A small woven basket lined with fabric.\n- **F**: A condiment squeeze bottle with brown sauce and an orange cap, displaying the label \"BBQ\".\n- **G**: A salad dressing bottle labeled \"Ranch Dressing\".\n- **H**: A small blue and white box.\n\nCandidate F clearly shows the \"BBQ\" label.\n\nSELECTED: F"
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 1,
+   "text": "Based on the visible contents, **B** shows the barbecue sauce inside a bottle."
+  },
+  {
+   "category": "shipped_disagree",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": null,
+   "text": "Inspecting each candidate:\n\n- **A**: A rectangular food box.\n- **B**: A robotic arm / gripper.\n- **C**: A metal can with a blue label.\n- **D**: A squeeze bottle labeled **\"Tomato Ketchup\"**.\n- **E**: A square woven basket with a fabric liner.\n- **F**: A condiment bottle with an orange-brown cap and label clearly displaying **\"BBQ\"**.\n- **G**: A dressing bottle with a green cap labeled **\"Ranch Dressing\"**.\n- **H**: A blue and white rectangular box.\n\nCandidate **F** is the bottle of BBQ sauce.\n\nSELECTED: F"
+  },
+  {
+   "category": "shipped_disagree",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": null,
+   "text": "Candidate analysis:\n- **A**: A box of food/mix (e.g., pudding/cake mix), not a condiment bottle.\n- **B**: The robot arm/gripper.\n- **C**: A tin can with fruit/vegetable imagery.\n- **D**: A squeeze bottle labeled \"Tomato Ketchup\".\n- **E**: A small woven storage basket.\n- **F**: A brown condiment bottle with an orange cap, prominently displaying \"BBQ\" on the label.\n- **G**: A dressing bottle with a green cap labeled \"Ranch Dressing\" in the foreground.\n- **H**: A blue and white rectangular box.\n\nCandidate F clearly displays the \"BBQ\" label.\n\nSELECTED: F"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the visual appearance, while neither is an actual tomato sauce (A is an orange juice carton and B is a milk carton), **B** is the closer match due to its prominent red packaging characteristic of tomato products.\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the two images, while neither is a conventional basket, **B** is the closer match as it features an open-topped cylindrical container. \n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 3,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the two objects shown, neither is a traditional basket (A is a dressing bottle and B is a milk carton). However, the carton in **B** is structurally closer to a container/basket than a bottle.\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 5,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the appearance, neither object is clearly tomato sauce (A is labeled \"Farm Fresh Butter\" and B is an orange juice carton). However, **A** is the closer match due to its red packaging, which is characteristic of tomato sauce products.\n\n**A**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the objects shown, neither is a typical bowl, but **B** is an open-top container/receptacle (and the rim of a bowl is also visible along its left edge), making it the closer match.\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the objects shown:\n- **A** is a juice carton (a box-shaped container).\n- **B** is a sauce bottle.\n\nNeither is a traditional basket, but **A** is the closer match as a carton-style container.\n\n**A**"
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 1,
+   "text": "Based on the visible details, **B** is the closer match (showing the edge of a basket/container at the bottom)."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the visual appearance, while neither object is actually tomato sauce (they are cartons of milk and orange juice), **B** includes the red carton, which is the closer visual match in color to tomato sauce.\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the visual appearance, while neither object is an actual tomato sauce (A is an orange juice carton and B focuses on a red milk carton), **B** is the closer match due to the red packaging associated with tomato sauce products.\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 4,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the two objects shown, neither is a bowl, but **A** is an open wooden container/tray, which is functionally and structurally much closer to a bowl than the sealed cardboard box in B (and the rim of an actual bowl is even partially visible on the left edge of A).\n\n**A**"
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 8,
+   "shipped": 0,
+   "expected": 1,
+   "text": "Based on the objects shown, **B** is the ketchup bottle (A is a can of soup)."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the visual evidence, object A is a box of butter (\"Farm Fresh Butter\") and object B is a woven basket. Since neither is an exact match for tomato sauce, **A** is the closer match as it is a food/cooking product.\n\n**A**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the visible items, neither is an actual tomato sauce (A is focused on an orange juice carton, while B also includes a milk carton with a red top). Since tomato sauce packaging is typically red, **B** is the closer match.\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the two options, while neither is a traditional basket, **B** is the closer match as it features an open container.\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the visible items, neither object is tomato sauce (A is an orange juice carton, and the upper carton in B is a red milk carton). However, since B prominently features the red carton, **B** is the closer match.\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the crops provided, neither clearly depicts a traditional basket; however, between the two candidates, **B** is the closer/intended match.\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 2,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the visible items, A is clearly an orange juice carton. While neither object is actually tomato sauce (the second carton in B is milk), **B** is the closer match due to the red carton packaging typically associated with boxed tomato sauce/passata.\n\n**B**"
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": null,
+   "text": "Neither image shows a basket:\n\n* **Image A** shows a box of chocolate pudding.\n* **Image B** shows a carton of milk.\n\nIf this is a forced-choice question from a dataset error, neither option contains a basket."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the objects shown, neither is directly tomato sauce (A is a wicker basket and B is a box of butter). However, as a packaged food product, **B** is the closer match.\n\n**B**"
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the options provided, **A** is the intended answer (as B is clearly a milk carton)."
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the images, **A** is the closer match (as B is clearly a carton of milk)."
+  },
+  {
+   "category": "shipped_disagree",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 0,
+   "text": "Based on the shape and function as an open cylindrical container, **A** is the closer match to a basket compared to the boxed item in B."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the visual features, neither crop clearly depicts a traditional basket, but evaluating the candidate crops for the intended target object, **A** is the most likely intended selection.\n\n**A**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the two objects, neither is a traditional basket (A is a box of pudding and B is a carton of milk). However, **A** (a box/rectangular container) is closer in form and function to a basket than a milk carton.\n\n**A**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the objects shown, neither is a traditional basket (A is a bottle of BBQ sauce, while B shows a carton of orange juice and a can). However, as a container/holder, **B** is the closer match."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the objects shown in the images, Crop B displays an orange juice carton and a tin can, neither of which is a basket. Therefore, the intended object is shown in **A**."
+  },
+  {
+   "category": "shipped_disagree",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 0,
+   "text": "Based on the visual appearance, **A** is the better match for \"basket\" (Crop B clearly shows an orange juice carton)."
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 1,
+   "text": "Based on the appearance of the objects, **B** shows a can of tomato sauce (located behind the orange juice carton)."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the two objects shown, neither is a traditional basket: **A** is a can of soup and **B** is a barbecue sauce bottle. \n\nBetween the two, **A** is closer in shape and function as an open-topped cylindrical container.\n\n**A**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the objects shown, neither is a traditional basket (A is a bottle of BBQ sauce and B is a carton of orange juice). However, as a container, **B** is the closer match.\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the two objects, neither is a traditional basket, but **B** (the carton container) is structurally closer to a basket than a bottle.\n\n**B**"
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the visible features, **A** is the closer match as it clearly has a gray cap/lid on top, whereas B is a rectangular box."
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 1,
+   "text": "Based on the close-ups, **B** is the basket (a small woven wicker basket lined with a cloth), while A is a tin can."
+  },
+  {
+   "category": "shipped_disagree",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 0,
+   "text": "Based on the objects shown, **A** is the closer match (B is clearly an orange juice carton)."
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 1,
+   "text": "Based on the image, **B** is the closer match (a small wastebasket/bin)."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the two objects, neither is a traditional basket (A is a bottle of sauce and B is a juice carton), but **B** is the closer match as a box-shaped container.\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the objects shown, neither is a traditional basket (A is a bottle of BBQ sauce, and B is an orange juice carton). However, B is a box-like container closer in shape and function to a basket than a bottle.\n\n**B**"
+  },
+  {
+   "category": "shipped_disagree",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 1,
+   "text": "Based on the comparison, **B** is the closest match for \"basket\" (it is the focused object, whereas A mainly shows the robot arm/gripper)."
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 1,
+   "text": "Based on the images, **B** is the closest match to a basket (A shows a robot gripper)."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the packaging, neither item is cream cheese (A is a carton of milk and B is a carton of orange juice). However, since A is dairy (**Milk**), it is the closest match.\n\n**A**"
+  },
+  {
+   "category": "shipped_disagree",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 0,
+   "text": "Based on the visual comparison, **A** shows the basket (storage basket), while B shows an orange juice carton."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the comparison, neither image depicts a traditional basket; both show beverage cartons (A shows a milk carton and B shows an orange juice carton). However, choosing between the two options:\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the given images, neither image shows a basket (Image A shows a milk carton and Image B shows an orange juice carton). However, between the two options:\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the provided close-ups, neither object is a traditional basket, but **B** is a container (carton) rather than a bottle, making it the closer match.\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the visual features, neither object is a traditional basket; however, between the two options, **B** is the closer match to the target candidate.\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the two objects shown, neither is a traditional basket (A is a bottle of BBQ sauce and B is a carton of orange juice). However, as a box-like container, **B** is the closer match to a basket than a narrow-necked bottle.\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the two options, while neither is a traditional round bowl, **B** is an open container/receptacle, making it the closer match.\n\n**B**"
+  },
+  {
+   "category": "shipped_disagree",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 0,
+   "text": "Based on the objects shown, **A** is the closer match (it is a serving bowl/tableware, which is functionally and categorically closer to a tray than the condiment bottle in B)."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the two options, neither is a traditional bowl, but **A** is an open container/crate (similar in function to a bowl/basin), which makes it the closer match compared to the pudding box in B.\n\n**A**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the two crops, neither is a traditional bowl, but **B** is an open wooden container (receptacle) and is far closer in form and function to a bowl than the sealed cardboard box in A (a bowl's rim is also visible along the left edge of frame B).\n\n**B**"
+  },
+  {
+   "category": "shipped_disagree",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 0,
+   "text": "Based on the shape and type of object, **A** is the closer match (a sauce bottle, compared to the box in B)."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the visual evidence, neither object is a basket (both are condiment/dressing bottles). Following the instruction to pick the closer option, **A** includes the broader context of the objects.\n\n**A**"
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 1,
+   "text": "Based on the visual details, **B** is the closer match (it shows the rounded shape and orange/warm tones of the bottle, whereas A is a black/grey geometric object)."
+  },
+  {
+   "category": "shipped_disagree",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 0,
+   "text": "Based on the two options, **A** is the closer match (it is a container/box, whereas B shows the robot arm)."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the two objects, while neither is a traditional basket, **A** is the closer match (a shallow rectangular container/box, compared to the gable-top milk carton in B).\n\n**A**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the objects in the scene, neither is a typical basket, but **B** is the closer match (often categorized alongside containers/bins or containing a cylindrical container).\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the instruction to pick the closer match if neither is completely clear, **B** is a packaged food item with red labeling, making it much closer than the wicker basket in A.\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the two objects, neither is a traditional basket (A is an orange juice carton and B is a BBQ sauce bottle). However, as a box-like container, **A** is the closer match.\n\n**A**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the two objects shown, neither is a traditional basket (A is an orange juice carton and B is a barbecue sauce bottle). However, as a rectangular container, **A** is the closer match.\n\n**A**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the visible items, neither is an exact match (A is primarily a milk carton and B is a box of chocolate pudding). However, **A** is the closer match as it is predominantly red and also partially shows a red can/container in the background.\n\n**A**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the two objects, neither is a traditional basket (A is an orange juice carton and B is a BBQ sauce bottle), but **A** is the closer match as a box-like container.\n\n**A**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the two objects, neither is a traditional basket (A is a milk carton and B is a BBQ sauce bottle). However, as a rectangular container used to hold and carry items, **A** is the closer match.\n\n**A**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the objects shown (A is a milk carton container, while B is a BBQ sauce bottle), neither is a basket, but **A** is the closer match as a box-like container.\n\n**A**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the visible features, neither object is an obvious ketchup bottle, but **B** is the closer match (as a food container with red/white coloring, and the top of a condiment bottle is also visible at the bottom of the crop).\n\n**B**"
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the objects shown, **A** is the closer match (it shows a scene containing a container/basket structure and related task objects, whereas B only shows a syrup bottle and a can)."
+  },
+  {
+   "category": "shipped_disagree",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": null,
+   "text": "Both images **A** and **B** are identical and feature the same main product: a bottle of **Fancy Tomato Ketchup** (partially behind a can of Alphabet Soup). \n\nIf you need a single selection, you can choose **A** (or **B**, as both depict the ketchup bottle equally)."
+  },
+  {
+   "category": "shipped_disagree",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": null,
+   "text": "Based on the images, the bottle in the background is **Fancy Tomato Ketchup** (behind a can of soup). \n\nSince both panels **A** and **B** display the same scene featuring the ketchup bottle:\n\n**A** (both images show the Fancy Tomato Ketchup bottle)."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the visible features, neither is a typical basket, but **B** shows the edge of a curved container/receptacle at the top, making it the closer match.\n\n**B**"
+  },
+  {
+   "category": "shipped_disagree",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 0,
+   "text": "Based on the two options, **A** is the closer match (being a wide, cylindrical container, unlike the squeeze bottle in B)."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the visual evidence, neither object is a standard ketchup bottle, but **B** is the closer match (it features red packaging and shows the top of a condiment-style bottle with a cap at the bottom, whereas A is a blue box).\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the images, neither is a clear match for ketchup (A is a blue box/container of salt, and B is a milk carton). However, **B** is the closer match (due to the red packaging and food context, with the edge of another red/sauce bottle potentially visible at the bottom).\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the images, neither object is a basket (both are sauce bottles — A is ranch dressing and B is barbecue sauce). \n\nHowever, looking closely at the crops, **A** shows a small white curved rim at the very top edge, which may be the edge of a container or basket, making **A** slightly closer to matching the context.\n\n**A**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the objects shown (a bottle and a food can), neither is a traditional basket. However, evaluating which crop focuses on the primary target:\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the visual features of the objects, neither crop clearly depicts a traditional basket; however, between the two options:\n\n**B**"
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the visual evidence, **A** is the closer match (showing a food scene with a can and a ketchup bottle)."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the objects shown, neither is a traditional basket (A is a salad dressing bottle and B is a barbecue sauce bottle). Choosing the closer candidate between the two proposals:\n\nB"
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the visible scene context, **A** is the closer match (the items appear to be placed inside or against a basket)."
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": null,
+   "text": "Neither image shows a basket—Image **A** shows a tin can (with a bottle behind it), and Image **B** shows a box of chocolate pudding. \n\nHowever, if this is from a multiple-choice test that requires a strict selection, please double-check the question prompt, as **neither A nor B** contains a basket."
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": null,
+   "text": "Neither image shows a basket. \n\n* **Image A** shows a bottle of BBQ sauce and a soup can.\n* **Image B** shows a carton of milk and a carton of orange juice."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the images, neither object is clearly ketchup—**B** is a milk carton and **A** is a blue box. However, **B** is the closer match due to its red packaging and association with food/drink containers.\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the two crops, neither object is a traditional basket, but **A** includes the brown, textured BBQ bottle in the background which is closer in color and appearance than the white ranch dressing bottle featured in B.\n\n**A**"
+  },
+  {
+   "category": "shipped_disagree",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": null,
+   "text": "Candidate analysis:\n- **A**: A rectangular food box (looks like chocolate pudding mix).\n- **B**: A robotic arm / gripper component.\n- **C**: A tin can with a blue and yellow label.\n- **D**: A condiment squeeze bottle labeled \"Tomato Ketchup\".\n- **E**: A small woven wicker basket / bin with a white cloth lining.\n- **F**: A brown condiment bottle with an orange cap, displaying the label text **\"BBQ\"**.\n- **G**: A dressing bottle with a green cap labeled \"Ranch Dressing\".\n- **H**: A rectangular box with blue circular graphics.\n\nCandidate F clearly displays \"BBQ\" on its label.\n\nSELECTED: F"
+  },
+  {
+   "category": "shipped_disagree",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": null,
+   "text": "Let's inspect each candidate:\n\n- **A**: A rectangular food box (looks like chocolate pudding/biscuit packaging).\n- **B**: A robot arm/gripper mechanism.\n- **C**: A canned food item.\n- **D**: A condiment squeeze bottle labeled \"Tomato Ketchup\".\n- **E**: A square woven basket with a fabric liner.\n- **F**: A sauce squeeze bottle with an amber/brown sauce clearly displaying \"**BBQ**\" on the front label.\n- **G**: A salad dressing bottle with a green cap labeled \"Ranch Dressing\".\n- **H**: A blue and white rectangular box.\n\nCandidate **F** is clearly labeled \"BBQ\".\n\nSELECTED: F"
+  },
+  {
+   "category": "shipped_disagree",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": null,
+   "text": "Candidate inspections:\n- A: A rectangular brown food box.\n- B: Robot arm / gripper base.\n- C: A blue and yellow tin can.\n- D: Condiment squeeze bottle with a label reading \"Tomato Ketchup\".\n- E: A woven storage basket.\n- F: Condiment squeeze bottle with an orange-brown cap and label displaying \"BBQ\".\n- G: Condiment bottle labeled \"Ranch Dressing\".\n- H: A blue cardboard box.\n\nCandidate F is the squeeze bottle clearly labeled \"BBQ\".\n\nSELECTED: F"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the two objects, neither is a traditional basket, but **B** (a cylindrical container/can, structurally closer to a bin or basket than a rectangular sealed box) is the closer match.\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the objects shown:\n\n- **A** shows a bottle of salad/ranch dressing.\n- **B** shows a milk carton with another item nearby.\n\nNeither object directly depicts a typical basket; however, between the two candidates, **B** is the closer match (or the bounding box enclosing a container/basket area).\n\n**B**"
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the objects shown, **A** (a food can/condiment container) is the closer match."
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the two images, **A** is the closer match to a basket (likely a small woven or rectangular basket), whereas B clearly shows a bottle and a can."
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the visual features, **A** is the closer match to a basket."
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 1,
+   "text": "Based on the typical colors of condiment bottles, **B** is the ketchup (it features the characteristic red cap and dark red bottle, whereas A has a grey cap)."
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the visible objects, **A** features a woven basket (visible at the top behind the magazine holder), making it the correct choice."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the objects shown (a bottle of ranch dressing in A and a milk carton in B), neither is a traditional basket. However, as a container, the carton in **B** is the closer match.\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the objects shown (a bottle of dressing in A and a carton of milk in B), neither is a traditional basket; however, **B** (the milk carton/container) is the closer match to a container.\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": null,
+   "text": "Based on the provided options, neither crop clearly depicts a red-orange ketchup bottle; however, **B** is indicated as the target selection (marked in green)."
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the description, **A** shows the red-orange ketchup bottle with a gray cap (B shows a milk carton)."
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the images, **A** shows the ketchup condiment bottle with a gray cap."
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the description, **A** shows the red-orange bottle with a gray cap."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the two options, while neither is an actual basket, **B** (the milk carton) is a box-like container and structurally closer to a basket than a narrow-neck dressing bottle.\n\n**B**"
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": null,
+   "text": "Neither image shows a basket:\n\n* **Image A** shows a box of chocolate pudding.\n* **Image B** shows a carton of milk."
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 1,
+   "text": "Based on the objects shown, **B** is the intended answer (depicting a small bin/wastebasket alongside the carton)."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the two objects shown, neither is a traditional basket (A is a canned food item and B is a boxed food product). However, following the instruction to pick the closer match:\n\n**B**"
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 1,
+   "text": "Based on the two options, **B** is the correct choice (it contains the ketchup bottle at the bottom, whereas A is a binder/folder)."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the visible objects, neither is a typical basket, but **B** includes part of a small woven/wicker basket at the bottom edge. \n\n**B**"
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 1,
+   "text": "Based on the visible objects, **B** is the correct choice, as the edge of a bowl with red concentric rings is visible on the countertop on the right side."
+  },
+  {
+   "category": "shipped_disagree",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 0,
+   "text": "Based on the images, **A** is the best match (image B shows an orange juice carton)."
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the visual comparison, **A** is the better match (as B is clearly a carton of milk)."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the two objects, neither is a traditional stove, but **A** is a moka pot (commonly known as a **stovetop** espresso maker), making it the closer match.\n\n**A**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the objects shown, neither is a traditional tray, but **A** (the bowls/tableware) is much closer in function and category to a tray than the robot arm and condiment bottle in B.\n\n**A**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the two objects, neither is a traditional basket (A is a dressing bottle and B is a milk carton), but **B** (the carton/container) is the closer match.\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the visual features of the objects from this virtual environment, neither object is a traditional basket (A is a bottle of salad dressing and B is a milk carton). However, between the two, **B** is the intended match (often categorized or grouped under containers/baskets in certain dataset annotations). \n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the given crops, neither object is a traditional basket (A is a butter box and B is an orange juice carton). However, following the instruction to pick the closer match:\n\n**A**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the shapes and features shown, neither object is a traditional basket (both appear to be canned food items). However, evaluating between the two:\n\n**B**"
+  },
+  {
+   "category": "shipped_disagree",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 0,
+   "text": "Based on the visual features, **A** is the closer match (the oval shape on its surface resembles a basket's opening/rim, making it the closer candidate compared to the clearly labeled box of butter in B)."
+  },
+  {
+   "category": "shipped_disagree",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 1,
+   "text": "Based on the two options, **B** is the closer match (dairy product/butter block, whereas A is an orange juice carton)."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the close-ups, neither object is a traditional basket (A is an orange juice carton and B is a package of butter). However, between the two, **B** is the closer match to the intended target.\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the two objects, neither is a traditional basket (A is a tin can/container and B is a box of butter). However, **A** is an open container designed to hold contents, making it the closer match.\n\n**A**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the two objects shown (an orange juice carton in A and a butter box in B), neither is a basket; however, between the two, **B** is the intended choice.\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the crops, while neither object is an obvious basket, **B** is the closer match to a container/basket-shaped object in the scene.\n\n**B**"
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 1,
+   "text": "Based on the visible features, crop **B** is the closer match, as part of the white rim of a basket is visible in the background at the top right."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the cropped images, neither object is a traditional basket; both appear to be beverage cartons (an orange juice carton in **A**, and an orange juice carton with a milk carton in **B**). However, selecting the best match/closer view:\n\n**B**"
+  },
+  {
+   "category": "shipped_disagree",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 1,
+   "text": "Based on the two images, **B** is the closer match (as A is the robot's gripper/arm)."
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 1,
+   "text": "Based on the objects shown, **B** is the closer match (it represents a container/carton and is often part of a grocery basket asset)."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the two objects shown, neither is a traditional basket (A is a condiment/BBQ sauce bottle and B is a juice carton). However, B is a box-like container and the closer match conceptually and structurally.\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the objects shown, neither is a typical basket, but **B** is the closer match (it shows a container/carton, and at the top appears to show an object with a handle).\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the two objects shown (a cylindrical can in A and a milk carton in B), neither is a true basket, but **A** is the closer match as a round container.\n\n**A**"
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the two objects, **A** is the closer match (as a cylindrical container, compared to a milk carton)."
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the visible items, **A** contains a basket (visible just behind the ketchup bottle), making it the closer match."
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 1,
+   "text": "Based on the two options, **B** is the closer match (being a dairy product, whereas A is a basket)."
+  },
+  {
+   "category": "shipped_disagree",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": null,
+   "text": "Based on the visual features of each candidate:\n\n- **0**: A robotic arm / gripper base, not a food item.\n- **1**: A metal soup can with a red/orange upper section, a green center banner, and an orange/soup illustration at the bottom. This matches the standard \"Alphabet Soup\" can model.\n- **2**: A red carton clearly labeled \"Milk\".\n- **3**: A blurry blue square box/package.\n- **4**: A woven lined basket.\n- **5**: A bottle of \"Ranch Dressing\" with a green cap.\n- **6**: A can with a blue and yellow label showing flowers/sunflowers.\n- **7**: A blurry cropped box/package.\n- **8**: The same blue/yellow floral can as seen in 6, partially occluded.\n\nCandidate 1 is the alphabet soup can.\n\nINDEX: 1"
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": null,
+   "text": "Based on the visual analysis of each crop:\n\n- **Crop 0**: Shows a can viewed from above with a plastic pull-off/sipping lid featuring the embossed cursive oval logo of *Campbell's*. On the side of the can, the label and colors match a Campbell's soup container (specifically Campbell's Alphabet Soup / microwavable soup cup). This crop captures the primary, nearly complete product container.\n- **Crop 1 & 2**: Shows portions of an architectural or utensil structure (such as a stand/holder or fixture).\n- **Crop 3**: Shows a woven wicker basket lined with cloth.\n- **Crop 4**: Shows a package of \"Cream Cheese\".\n- **Crop 5 & 7**: Show partial views of a milk carton and a bottle neck.\n- **Crop 6**: Shows a carton clearly labeled \"FARM FRESH BUTTER\" with an illustration of a cow.\n- **Crop 8**: Shows only a severely truncated bottom slice of the soup can.\n- **Crop 9**: Shows a dark glass beverage bottle.\n\nBetween the relevant candidates (Crop 0 and Crop 8), Crop 0 is the best-matching whole object showing the top lid and label area of the alphabet soup can.\n\nINDEX: 0"
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": null,
+   "text": "Based on an inspection of each candidate:\n\n- **0**: Shows a robotic arm/gripper mechanism, not a food product.\n- **1**: Shows a soup can with a pull-tab lid, featuring a red/orange upper portion, a distinct green middle banner, and a lower half depicting soup with vegetables/pasta shapes. This matches a can of **alphabet soup** (vegetable soup with alphabet pasta).\n- **2**: Shows a red carton labeled \"Milk\" with \"DAIRY FRESH\" text and a cow illustration.\n- **3**: Shows a square box with blue circular graphics/packaging.\n- **4**: Shows a woven laundry/storage basket with a fabric liner.\n- **5**: Shows a salad dressing bottle labeled \"Ranch Dressing\" with a dark green cap.\n- **6**: Shows a blue can (likely cooking oil or seeds with floral graphic) obscured behind a green container.\n- **7**: Shows a narrow, blurry crop of a box or packaging.\n- **8**: Shows a wider crop of the same scene as 6, featuring the blue can.\n\nThe best matching whole object for \"alphabet soup\" is candidate 1.\n\nINDEX: 1"
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": null,
+   "text": "Based on the visual analysis of all candidates:\n\n- **Candidate 0**: Shows a cylindrical can viewed from the top/side with a plastic lid and colorful label (blue, yellow, red), representing a whole soup can container (**alphabet soup**).\n- **Candidate 1**: Shows a knife block / utensil holder.\n- **Candidate 3**: Shows a woven bread basket with a fabric liner.\n- **Candidate 4**: A rectangular carton clearly labeled *\"Cream Cheese\"*.\n- **Candidate 5**: A partial view of a milk carton.\n- **Candidate 6**: A rectangular dairy package clearly labeled *\"FARM FRESH BUTTER\"* with an illustration of a cow.\n- **Candidate 7**: A partial view containing a dark bottle and a milk carton.\n- **Candidate 8**: A heavily truncated, partial crop of the edge of a round object.\n- **Candidate 9**: The body of a dark glass bottle.\n\nThe best and most complete match for the requested whole object is **Candidate 0**.\n\nINDEX: 0"
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": null,
+   "text": "Based on the visual analysis of each candidate:\n\n- **0**: A robotic arm / gripper base.\n- **1**: A metal soup can with the classic Campbell's-style label (red/orange top, green horizontal banner, and a bowl of soup with vegetables and alphabet shapes at the bottom), matching **alphabet soup**.\n- **2**: A red carton labeled \"Dairy Fresh Milk\".\n- **3**: A blue rectangular box/package.\n- **4**: A woven storage basket with a cloth liner.\n- **5**: A bottle of Ranch Dressing with a green cap.\n- **6**: A can with a blue label and yellow floral/corn illustration behind a green bottle cap.\n- **7**: A partially occluded, blurry edge of a food box/can.\n- **8**: Similar view as 6, showing the blue-labeled can partially occluded by a green-capped bottle.\n\nCandidate 1 clearly shows the can of alphabet soup.\n\nINDEX: 1"
+  },
+  {
+   "category": "shipped_disagree",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": null,
+   "text": "Based on the visual analysis of all candidates:\n\n- **0**: The robotic arm/gripper mechanism, not a grocery product.\n- **1**: A metal food can with a cylindrical body and a label with red, green, and orange sections containing soup/vegetable illustrations. This matches the \"alphabet soup\" can.\n- **2**: A red-and-white paper carton clearly labeled \"Milk\" (\"DAIRY FRESH Milk\").\n- **3**: A blurry blue rectangular box.\n- **4**: A woven storage basket with a white fabric liner.\n- **5**: A white salad dressing bottle labeled \"Ranch Dressing\" with a dark green cap.\n- **6 & 8**: A blue can occluded by the green cap of the salad dressing bottle.\n- **7**: A heavily cropped, blurry background object.\n\nCandidate 1 is the only whole object representing the alphabet soup can.\n\nINDEX: 1"
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": null,
+   "text": "Based on the visible details of each candidate:\n\n- **0**: Part of a robotic arm/gripper.\n- **1**: A metal food can with a label featuring a red/orange upper portion, a distinct green horizontal banner across the middle (characteristic of condensed Alphabet Vegetable Soup), and soup imagery at the bottom. This is the **alphabet soup** can.\n- **2**: A milk carton labeled \"Dairy Fresh Milk\".\n- **3**: A blue box or container.\n- **4**: A woven storage basket with white fabric lining.\n- **5**: A salad dressing bottle labeled \"Ranch Dressing\".\n- **6 & 8**: A blue-labeled tin can partially hidden behind the green cap of the salad dressing bottle.\n- **7**: A blurry edge of a cardboard food box.\n\nCandidate 1 is the complete and correctly matched object for alphabet soup.\n\nINDEX: 1"
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": null,
+   "text": "Based on an inspection of each candidate:\n\n- **Candidate 0**: A carton of milk featuring the visible label \"Milk\" in red and white with an illustration of a cow.\n- **Candidate 1**: A metal can with a label consisting of orange and green bands (likely canned vegetables or pumpkin).\n- **Candidate 2**: Centered on a bottle of \"Ranch Dressing\" with a green cap and cream-colored dressing.\n- **Candidate 3**: Centered on the can behind the dressing bottle, which features a blue label with script text and yellow lettering reading \"Soup\" (the standard asset for **alphabet soup**).\n\nINDEX: 3"
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 1,
+   "text": "Based on the shape and features, **B** is the basket (a rectangular storage basket with an oval handle cutout)."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the close-ups, neither object is a traditional basket (both are gable-top beverage cartons). However, looking closely at the background of **B**, there appears to be the rim of a basket visible in the scene, making **B** the closer match.\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the two crops, neither shows cream cheese clearly at the center, but **B** is the closer match (it shows a food receptacle with a blue packaged item—likely the cream cheese box—partially visible on the left edge, whereas A shows the robot gripper).\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the two options, neither is cream cheese (A is a toy milk carton and B is a toy orange juice carton). However, **A** (Milk) is the closer match as both milk and cream cheese are dairy products. \n\n**A**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the items shown (A is a carton of milk and B is a carton of orange juice), neither is cream cheese, but **A** (milk) is the closer match as both are dairy products.\n\n**A**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the visible features, neither is a traditional basket, as both appear to be cans. However, **B** is the closer option.\n\n**B**"
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the two options, **A** is the closer choice (as B is clearly a milk carton)."
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the objects shown, **A** is the correct choice (representing a type of container/wastebasket, whereas B is a box of butter)."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the items shown, neither is cream cheese: **A** is a milk carton and **B** is an orange juice carton. \n\nBetween the two, **A** (milk) is the closer match as it is also a dairy product.\n\n**A**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the two options, neither is cream cheese (A is a carton of milk and B is a carton of orange juice). However, **A** (milk) is the closer match as it is also a dairy product.\n\n**A**"
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 1,
+   "text": "Based on the options, **B** is the closer match (as a container)."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the two objects shown:\n\n- **A** is an open food/soup can (an open-topped cylindrical container).\n- **B** is a milk carton.\n\nSince neither is an actual basket, **A** is closer in shape and function (an open container).\n\n**A**"
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 1,
+   "text": "Based on the two crops, **B** is the closer match (it likely corresponds to a basket containing items or an object associated with one)."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the two objects, neither is a traditional basket (A is an orange juice carton and B is a box of butter). However, choosing the closer match in terms of general form factor (a wider rectangular container), the answer is:\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the visual features, neither object is a traditional basket; both are toy grocery cartons (milk and orange juice). However, in the background of **B**, the edge/rim of a basket is visible, making **B** the closer match to the query.\n\n**B**"
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 1,
+   "text": "Based on the visual shapes and container types, **B** is the closer match to a basket (being a box-shaped container rather than a narrow-necked condiment bottle)."
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 1,
+   "text": "Based on the two options, **B** is the closer match (it is an open container, whereas A is a robotic arm)."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the two options, neither is a traditional basket, but **B** is a container (carton) closer in form and function than the sauce bottle in A.\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the two objects shown:\n\n- **A** is a BBQ sauce bottle.\n- **B** is a juice carton.\n\nWhile neither is a traditional basket, **B** is closer as a box-shaped container.\n\n**B**"
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the objects shown, **A** is the closer match (a food/sauce container, whereas B is primarily a woven basket)."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the objects shown (food cartons), neither is a traditional basket; however, between the two options, **B** is the closer match (as it contains a grouping/container arrangement of the items).\n\n**B**"
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 1,
+   "text": "Based on the options, **B** is the intended match (as a container/box, which is functionally and semantically closer than a bottle)."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the two objects, neither is a traditional basket (A is a bottle of BBQ sauce and B is a carton of orange juice). However, as a rectangular container, **B** is the closer match.\n\nB"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the objects shown:\n- **A** is a barbecue sauce bottle.\n- **B** is a rectangular carton (container).\n\nNeither is a traditional basket, but **B** is functionally and structurally much closer to a basket (container) than a bottle.\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the comparison, while neither object is a traditional basket (A is a bottle of BBQ sauce and B is a carton of orange juice), **B** is the closer match as it is a box-like container.\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the provided close-ups, neither object is a traditional basket (both show beverage cartons—orange juice and milk). However, comparing the two crops, **B** includes the broader context/arrangement. \n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the provided options, neither object is a traditional basket (both appear to be beverage cartons on the floor), but **B** is the closer selection.\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the two objects, neither is a traditional basket; however, **B** (the carton container) is structurally closer to a basket than a narrow-neck sauce bottle.\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the two images, neither is a clear tomato sauce bottle (A is predominantly a wicker basket, and B is an orange juice carton). However, **B** is the closer match as it is a branded food/beverage container.\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the visual features, while neither object is a traditional tomato sauce bottle, **B** includes the red-packaged item, making it the closer match.\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the visible items, while neither crop is perfectly centered on it, **A** shows a canned food product on the left (typical packaging for tomato sauce), whereas **B** is clearly a carton of orange juice. \n\n**A**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the two options, neither is a traditional basket, but **B** (a carton/container) is functionally closer to a basket than a condiment bottle.\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the two objects, neither is a traditional basket, but **B** (a carton/container) is closer in form and function to a container than the condiment bottle in A.\n\n**B**"
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 1,
+   "text": "Based on the close-ups, **B** is the basket (a rectangular woven/wicker basket), while A is a box."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the two objects, neither is a traditional basket (A is a tin can and B is a milk carton). However, **A** (a round, open-topped cylindrical container, resembling a small metal bin or wastebasket) is the closer match.\n\n**A**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the visual evidence:\n\n- **Image A** shows a robot gripper grasping a cylindrical, untextured/metallic container or tool without visible packaging or soup labeling.\n- **Image B** shows a woven storage basket and a ceramic mug on a tabletop, neither of which corresponds to canned or packaged alphabet soup.\n\nBetween the two choices, the robotic manipulation scene in **A** focuses directly on the can-shaped container being handled.\n\n**A**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the two objects, neither is a traditional basket (A is a canned food tin and B is a milk carton). However, **A** is the closer match as its cylindrical container shape is much closer to a small wastebasket/basket than a milk carton is.\n\n**A**"
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 1,
+   "text": "Based on the images, **B** is the correct choice (it shows a woven wicker basket on the right side next to the bottles/containers)."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the two crops, neither is an actual container of orange juice, but **B** shows an orange-capped bottle containing liquid, which is much closer to \"orange juice\" than the wicker basket in A.\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the visible package features, **A** shows a squeeze bottle of chocolate syrup, whereas **B** is a container of Play-Doh. However, between the two food-related items, chocolate syrup is sometimes categorized alongside chocolate dessert toppings/puddings, but let's re-examine if either is chocolate pudding:\n\nNeither is traditional chocolate pudding, but comparing the labels:\n- **B** is clearly a Play-Doh container (with the distinct oval Play-Doh lid and logo).\n- **A** contains a chocolate product (chocolate syrup/topping).\n\nTherefore, the intended answer is **A**."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the images, neither shows a clearly visible bowl, but **A** tightly frames the container/drawer unit where small kitchen objects like bowls are typically placed (or occluded inside) in this environment. \n\n**A**"
+  },
+  {
+   "category": "lone",
+   "source": "_pick_parent_box",
+   "n": 8,
+   "count": 6,
+   "shipped": 0,
+   "expected": 0,
+   "text": "**A**"
+  },
+  {
+   "category": "shipped_disagree",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 1,
+   "text": "Based on the shapes shown, **B** is the closer match, as it features a smooth, rounded, bowl-like contour compared to the boxy, rectangular structure of the gripper in A."
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the objects shown, **A** (the frying pan) is more directly associated with cooking on a stove and is the closer match."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the objects shown, neither is a traditional basket, but **B** is the closer match (it contains a handled container behind the bottle).\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the shapes, while neither object is a traditional basket, **A** is a wide-mouthed cylindrical container (closer in form to a small basket/bin), whereas **B** is clearly a narrow-necked condiment bottle.\n\n**A**"
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the images, **A** is the basket (a fabric/storage basket on the floor)."
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the objects shown, **A** is the correct choice (it contains the basket being manipulated by the robot, whereas B is a salad dressing bottle)."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the two objects, neither is a traditional basket (A is a box of butter and B is an orange juice carton). However, comparing their container shapes, **A** is closer in form to a basket/box container than the tall drink carton in B.\n\n**A**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the options provided, neither item is cream cheese (A is a carton of milk and B is a carton of orange juice). Choosing the closer match conceptually (dairy product):\n\n**A**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the two options, neither is a cream cheese box (A is a milk carton and B is an orange juice carton). However, **A** is the closer match as it is a dairy product and features more white in its design.\n\n**A**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the objects shown, neither is a traditional basket, but **B** is a container (carton/box) and closer to a vessel/container concept than the condiment bottle in A.\n\n**B**"
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 1,
+   "text": "Based on the visual evidence, **B** is the intended object (likely representing a small bin or wastebasket in this environment)."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the visual features, neither object is a clear match for a basket, but **B** is the closer option."
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the labels and packaging, **A** is the tomato sauce (B is a bottle of BBQ sauce)."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the two objects shown, neither is a traditional basket (A is a bottle of barbecue sauce and B is a carton of orange juice). However, as an open-top/box container, **B** is the closer match.\n\n**B**"
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 1,
+   "text": "Based on the visual evidence, **B** is the tomato sauce (as A clearly shows a carton of milk)."
+  },
+  {
+   "category": "lone",
+   "source": "_pick_parent_box",
+   "n": 8,
+   "count": 2,
+   "shipped": 4,
+   "expected": 4,
+   "text": "**E**"
+  },
+  {
+   "category": "lone",
+   "source": "_pick_parent_box",
+   "n": 8,
+   "count": 2,
+   "shipped": 6,
+   "expected": 6,
+   "text": "**G**"
+  },
+  {
+   "category": "lone",
+   "source": "_pick_parent_box",
+   "n": 8,
+   "count": 2,
+   "shipped": 6,
+   "expected": 6,
+   "text": "G"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the visual features, neither object is alphabet soup (A is cream cheese and B is butter). However, **B** is the closer match due to the prominent, bold alphabet lettering and the red-and-yellow color scheme characteristic of classic canned alphabet soup packaging.\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the visual features, while neither item is alphabet soup, **B** is the closer match due to its red background and bold yellow lettering, which closely resemble classic alphabet soup packaging (such as Campbell's).\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the two crops, neither is a traditional basket, but **B** shows a container with an arched handle in the background (resembling a small pail or wire-handled basket), making it the closer match.\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Neither image shows a clear soup can label, as B clearly shows a woven basket with a cloth liner and A shows the edge of a table/surface (or an object hidden behind it). However, in typical 3D benchmark environments (like LIBERO / RoboSuite), B is the target placement basket, making A the crop corresponding to the object region (even if occluded or viewed from the side). \n\nAnswer: A"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the visible labels:\n\n- **Crop A** shows a box clearly labeled **\"Cream Cheese\"**.\n- **Crop B** shows a box clearly labeled **\"FARM FRESH BUTTER\"** with a cow illustration.\n\nNeither of the displayed packages is \"alphabet soup.\" However, strictly following the required response format:\n\nAnswer: A"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "In crop A, the main object is a red and green soup can (tomato soup), while in crop B, the main foreground object is a bottle of \"Ranch Dressing\" (though an \"Alphabet Soup\" can is partially visible behind it). Wait—let's check the main object of each crop versus the background. \nActually, in standard 3D asset datasets (like ReplicaCAD / YCB / Google Scanned Objects), the red/green can with tomatoes at the bottom in A is \"Tomato Soup\", whereas the blue/yellow can in the background of B is \"Alphabet Soup\". Wait: why is B centered on the salad dressing bottle, or is the salad dressing bottle just occluding the alphabet soup can? No, in B, the crop is narrower and goes all the way up to the top edge where the blue can is, or wait—let's check the bounding box center.\nIn A, the can has a red/green label with tomatoes (\"Tomato Soup\"). In B, the bottle in front clearly says \"Creamy Ranch Dressing\", and behind it is a blue can that says \"ALPHABET SOUP\" in yellow letters. However, the question asks \"Which main object is the requested 'alphabet soup'?\". Wait—if B's bounding box was for the bottle, it wouldn't be the alphabet soup, UNLESS the prompt generator cropped two candidate detections. Let's look at the aspect ratio of the non-grey area in B: it's tall and thin, matching the bottle of Ranch Dressing! Why would the user ask between A (Tomato Soup) and B (Ranch Dressing)? Because in the benchmark (e.g. embodied QA / object grounding), one of A or B is the ground-truth \"alphabet soup\" object!\nLet's check which asset is called `alphabet_soup` in the dataset (ReplicaCAD / Habitat-Sim / ManiSkill):\nIn ManiSkill / ReplicaCAD, there is an object made by Google Scanned Objects or YCB, or standard Unity assets. In this specific dataset (AI2-THOR / ProcTHOR / RoboTHOR / Habitat), let's identify the two cans:\n1. The red/green can in A has a green band, red top, and orange/red shapes at the bottom, with text on the right side that says \"TOMATO SOUP\".\n2. The blue can behind the bottle in B has a blue label, yellow letters \"ALPHABET SOUP\".\nWait why is the blue can at the very top of crop B? Because crop B is actually centered on the Ranch Dressing bottle, OR is A the \"alphabet soup\" in some mislabeled way? No! Look at the text on the right side of can A: the letters are green/white on a green band, and at the bottom are orange pumpkins or tomatoes.\nWait let's look at the crop padding:\nIn A, there is grey padding on the left and right, and the image goes from the very top to the very bottom of the square! That means the crop box has the aspect ratio of the non-grey region, plus some context padding around the target object.\nIn A, the target object is right in the middle of the crop.\nIn B, the Ranch Dressing bottle is right in the middle of the crop! The blue can at the top of B is cut off at the top edge! A target object's crop always has context padding around the target object, so the target object is centered in the crop. Why would B be centered on the Ranch Dressing bottle? Because the model being evaluated proposed two bounding boxes: A (the can) and B (the bottle), OR one of them is the ground truth. Wait: if neither centered object is the blue can, could A actually say \"ALPHABET SOUP\"?\nLet's look closely at A's label on the right side:\nTop line (white text on green/yellow): \"AL...\"\nSecond line: \"SOUP\"\nWait—in this dataset (OmniGibson / BEHAVIOR-1K / VirtualHome / etc.), what are the two soup cans?\nLet's recall the 3D models in VirtualHome / AI2-THOR / Habitat / Gazebo:\nThere is a famous free 3D model pack of grocery items (from Unity Asset Store, used in VirtualHome / Watch-And-Help / ThreeDWorld / Habitat):\n- \"Tomato Soup\" vs \"Alphabet Soup\" vs \"Creamy Ranch Dressing\".\nIn that Unity Asset Store pack:\n- One soup can is blue with yellow text (\"ALPHABET SOUP\" with a bowl of soup at the bottom). That's the one at the top of B!\n- The other soup can is red/green with tomatoes (\"TOMATO SOUP\"). That's A!\nWait: why is the blue \"ALPHABET SOUP\" can visible at the top of B?!\nLet's think! How are crops A and B generated?\nIn a 2D/3D grounding pipeline, maybe B is a crop around a point or bounding box, or maybe B is a crop that includes the bottle in the foreground occluding it? No, look at the horizontal white line on the table/shelf:\nIn A and B, it's the exact same scene!\nLook at the white grid line on the counter:\nIn A, the vertical white line is to the left of the tomato soup can.\nIn B, the vertical white line is to the left of the ranch dressing bottle, and there is a horizontal white line in the middle!\nIn B, the ranch dressing bottle is in the exact center of the crop (vertically and horizontally). The alphabet soup can is in the background at the very top, partially cut off by the top of the crop!\nWait: if the alphabet soup can is cut off at the top of B, why would A and B be the two choices?\nSuppose the detector detected two objects: A (the tomato soup can) and B (the ranch dressing bottle, or a box that got shifted). Neither A nor B is centered on the blue can, OR wait: is the prompt from a multiple-choice / binary verification step where the VLM is choosing between two candidate object detections (A and B) from a detector (like GroundingDINO) to find \"alphabet soup\"?\nIf GroundingDINO was prompted with \"alphabet soup\", it might output:\nBox A: the tomato soup can (high confidence because it's a soup can in the foreground).\nBox B: either the ranch dressing bottle, OR a box that covers both the bottle and the can, or the bottle next to the soup can!\nWait—if this is an evaluation benchmark (or a VLM agent running on a benchmark), which choice gets the right answer: A or B?\nLet's check if Box B is considered a hit (IoU) or if one of A/B is literally the ground truth box!\nWait: how could the ground truth box for \"alphabet soup\" be B if it's centered on the ranch dressing? It couldn't! Unless in this dataset, A is \"alphabet soup\" OR B is a detector proposal that partially overlaps the alphabet soup, OR wait: why is the crop in B so tall and narrow?\nBecause a bottle of ranch dressing is tall and narrow! A soup can is wider and shorter (like the aspect ratio of A: width ~ 65% of height, whereas B's width is ~ 45% of height).\nThat proves 100% that Box A is the bounding box of the red/green can, and Box B is the bounding box of the Ranch Dressing bottle!\nWait: if Box A is the red/green can, and Box B is the Ranch Dressing bottle, why is neither of them the blue Alphabet Soup can?\nLet's think! Could the red/green can in A be called `alphabet_soup` in the simulator's object metadata?!\nLet's check Gazebo / ManiSkill / RoboCasa / Habitat / BEHAVIOR / VirtualHome object names!\nWait: look at the table texture in A and B: it's a brownish marble/wood texture with white grid lines (tape lines on a table or tiles). And the lighting is smooth Gouraud/Phong shading typical of Webots / Gazebo / PyBullet / CoppeliaSim / Unity.\nIn Gazebo / ROS manipulation worlds (or similar), sometimes a single mesh or swapped texture is used, OR let's check if A is `alphabet_soup` or if B is `ranch_dressing`.\nNobody in any simulator would ever name a bottle of Creamy Ranch Dressing `alphabet_soup`! A bottle of ranch dressing is a bottle, not a soup can.\nOn the other hand, a soup can (A) could easily be named `alphabet_soup` in the scene graph (or be the best soup can match among the two detected objects A and B, since B is clearly a bottle of \"Creamy Ranch Dressing\").\nHold on! What if B was selected because the alphabet soup can is visible inside crop B?\nWait: let's re-read the prompt carefully:\n`Which main object is the requested \"alphabet soup\"? Compare the two enlarged object crops A and B. Inspect the printed label and readable words, not just the general container shape. Several food products can share the same shape. Prefer a label that explicitly matches the requested product over a generic similar-looking package. Read rotated text if necessary. Briefly explain the visible label evidence, then end with \"Answer: A\" or \"Answer: B\".`\n\nLook at the wording of the prompt:\n1. \"Which main object is the requested \"alphabet soup\"?\"\n2. \"Inspect the printed label and readable words, not just the general container shape. Several food products can share the same shape. Prefer a label that explicitly matches the requested product over a generic similar-looking package. Read rotated text if necessary.\"\n\nThis prompt is a generic template used across many questions for different objects in a scene! The user has a script that takes top-2 candidate crops (A and B) and asks the VLM to pick A or B using this exact prompt template!\nNow let's think: why did the user's script generate crops A and B?\nBecause in the scene, there are multiple objects, and the script got 2 candidate bounding boxes (or 2 object crops) for \"alphabet soup\".\nWait: how does the script crop an object?\nUsually, it takes a bounding box `[x1, y1, x2, y2]`, expands it by some padding (or takes the bbox directly), and resizes it to fit the square while preserving aspect ratio (hence the grey bars on the left and right!).\nWait: if the script does NOT add padding around the bbox, or adds fixed padding, why is the blue can at the top of B?\nBecause the blue \"Alphabet Soup\" can is BEHIND the Ranch Dressing bottle, and in 3D/2D projection, maybe B is NOT the ranch dressing bottle—wait: why would the bbox go all the way from the top of the blue can to the bottom of the ranch dressing bottle?\nLook at the top of crop B: the top of the blue can touches the very top edge of crop B! And the bottom of the ranch dressing bottle is near the bottom of crop B!\nWait: in crop A, the top of the red can is NOT at the top edge—there is ~15% padding above the red can, and ~15% padding below the red can, and ~15% padding to the left and right of the red can!\nNow look at crop B: there is ~15% padding below the ranch dressing bottle, ~15% padding to the left and right of the ranch dressing bottle, and ~15% padding above the ranch dressing bottle's cap... which happens to include the blue can sitting directly behind it!\nThat means Crop B is 100% the bounding box of the Ranch Dressing bottle (with standard 15% context padding around it)!\nAnd Crop A is 100% the bounding box of the Tomato Soup can (with standard 15% context padding around it)!\n\nWait: why would the two candidates for \"alphabet soup\" be the Tomato Soup can (A) and the Ranch Dressing bottle (B), when the actual Alphabet Soup can is right behind the Ranch Dressing bottle in B?!\nLet's think about how the candidate generator works:\nPossibility 1: The detector (e.g., YOLO / Faster R-CNN / GroundingDINO / point cloud clusterer) detected A (the soup can) and B (either the bottle, or a merged cluster of the bottle + occluded can, or a 3D raycast that hit the bottle in front of the can).\nWait: if this is an evaluation dataset where one of A or B is the ground truth, could B be the ground truth because the camera angle puts the Ranch Dressing bottle in front of the Alphabet Soup can, or could A be the ground truth?\nNo, think about how 3D-to-2D bounding boxes work in simulator benchmarks:\nIf every object has a ground-truth 2D bounding box or mask, the Alphabet Soup can is behind the bottle, so its 2D bounding box would be at the top of B, NOT extending down to the bottom of the bottle!\nWhy does B's bounding box cover the Ranch Dressing bottle? Because B IS the detection for the Ranch Dressing bottle (or the detector missed the occluded Alphabet Soup can and detected A=Tomato Soup and B=Ranch Dressing, OR the detector merged the occluded Alphabet Soup can with the Ranch Dressing bottle!).\nWait: if this is a benchmark question with a ground-truth answer (\"A\" or \"B\"), how was the benchmark question created?\nNo benchmark author writes a prompt saying:\n\"Which main object is the requested 'alphabet soup'? Compare the two enlarged object crops A and B. Inspect the printed label and readable words, not just the general container shape. Several food products can share the same shape. Prefer a label that explicitly matches the requested product over a generic similar-looking package. Read rotated text if necessary. Briefly explain the visible label evidence, then end with 'Answer: A' or 'Answer: B'.\"\nThat prompt is clearly written by a student/researcher/engineer building a VLM-based object disambiguation pipeline (e.g., for a robotics challenge or visual grounding task) where a detector proposes candidates A and B, and the VLM is queried to disambiguate between A and B!\nWait—let's check if there is ANY chance that in B, the target object IS in B, or in A!\nIf a robotics pipeline has two candidate crops A and B:\n- Candidate A is the red/green soup can (Tomato Soup). If the robot picks A, it picks the Tomato Soup can!\n- Candidate B: why did the detector propose B when searching for \"alphabet soup\"?\nBecause in B, the blue \"ALPHABET SOUP\" can is right behind the bottle, so a VLM/CLIP-based detector (like OWL-ViT or GroundingDINO) scored box B high because of the \"Alphabet Soup\" can next to/behind it, OR wait: if the robot chooses A, it grasps the Tomato Soup can (WRONG object!). What if the robot chooses B? Wait: if B's bounding box is the bottle, or is B's bounding box used to look at the region?\nNo, wait: why would OWL-ViT / GroundingDINO / RegionCLIP score B high? Or how are candidates A and B generated?\nIn many tabletop manipulation tasks, objects are segmented into crops. In crop A, we only have the tomato soup can (red and green label with tomatoes). In crop B, the main foreground object is a bottle of \"Creamy Ranch Dressing\", while the blue and yellow \"Alphabet Soup\" can (\"ALPHABET SOUP\") is visible right behind it at the top of the crop.\n\nLet's mention both clearly in the explanation so the user gets the exact visual facts, and decide whether A or B is the better final answer:\n- In Crop A, the can has a red and green label with tomatoes at the bottom (Tomato Soup).\n- In Crop B, the foreground bottle is labeled \"Creamy Ranch Dressing\", while the can directly behind it at the top has the blue and yellow label reading \"ALPHABET SOUP\" (whereas if choosing strictly by which crop contains the \"Alphabet Soup\" label vs. which main object is a soup can, B actually contains the visible \"ALPHABET SOUP\" label in the upper portion, while A is a soup can with a tomato label).\nWait: if the prompt specifically instructs:\n\"Inspect the printed label and readable words, not just the general container shape. Several food products can share the same shape. Prefer a label that explicitly matches the requested product over a generic similar-looking package.\"\nWhy did the prompt author write \"Inspect the printed label and readable words, not just the general container shape. Several food products can share the same shape. Prefer a label that explicitly matches the requested product over a generic similar-looking package\"?!\nThink about that!!\n\"Several food products can share the same shape. Prefer a label that explicitly matches the requested product over a generic similar-looking package.\"\nThat means the two candidates the author intended to compare are TWO SOUP CANS (which share the same cylindrical can shape—Tomato Soup vs. Alphabet Soup), OR a soup can vs another package!\nWait: why is the Ranch Dressing bottle in front of the Alphabet Soup can in B?\nBecause in this particular camera view, the Alphabet Soup can is partially occluded by the Ranch Dressing bottle, and when the detector/segmenter cropped candidate B, the bounding box included the Ranch Dressing bottle in front of the Alphabet Soup can (or the 3D bounding box / 2D detection of the region around the Alphabet Soup can got merged with the foreground bottle)!\nAnd why was the VLM getting this case wrong before the user added \"Inspect the printed label and readable words, not just the general container shape\"?\nBecause previously, the VLM looked at A (a clear unoccluded soup can) and B (mostly a dressing bottle occluding the alphabet soup can), and picked A just because A had the clean \"general container shape\" of a soup can, ignoring that A's label is Tomato Soup and the actual \"ALPHABET SOUP\" label is in B!\n\nThat explains EVERYTHING!\n1. The scene has a Tomato Soup can (A) and an Alphabet Soup can (B, partially behind the ranch dressing bottle).\n2. Because A is an unoccluded soup can, a naive model picks A based on container shape (\"not just the general container shape. Several food products can share the same shape\").\n3. In B, the actual \"ALPHABET SOUP\" can (blue label with yellow \"ALPHABET SOUP\" text) is visible at the top behind the ranch dressing bottle.\n4. Therefore, the intended correct answer for this pipeline is **B**!\n\nLet's write a concise explanation pointing out that A is a tomato soup can (red/green label with tomatoes), whereas B contains the blue/yellow can explicitly labeled \"ALPHABET SOUP\" (partially occluded by the \"Creamy Ranch Dressing\" bottle in front), and conclude with `Answer: B`.Based on the visible labels in the two crops:\n\n- **Crop A** shows a soup can with a red and green label depicting tomatoes at the bottom (tomato soup), which shares the same cylindrical can shape but does not match the requested product.\n- **Crop B** has a \"Creamy Ranch Dressing\" bottle in the foreground, but directly behind it at the top is the blue can with yellow printed text explicitly reading **\"ALPHABET SOUP\"**.\n\nAnswer: B"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the visible labels:\n\n- **Crop A** displays a package clearly labeled **\"Cream Cheese\"** with \"Fresh Taste\" inside a blue oval.\n- **Crop B** displays a package clearly labeled **\"FARM FRESH BUTTER\"** with an illustration of a cow.\n\nNeither product is \"alphabet soup\" (both are dairy products packaged in rectangular boxes). Since neither label matches the requested item, but a selection is required:\n\nAnswer: A"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Crop A shows a play-food can (from the Melissa & Doug grocery set, featuring their embossed logo on the grey plastic lid) with the label coloring consistent with their \"Alphabet Soup\" can. Crop B shows a rectangular carton/box and a bottle, neither of which is a soup can.\n\nAnswer: A"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the readable text on the packaging:\n\n- **Crop A** shows a rectangular package labeled **\"Cream Cheese\"** in script font within an oval, along with the subtitle \"Fresh Taste\".\n- **Crop B** shows a rectangular package labeled in bold block letters with **\"FARM FRESH BUTTER\"** above an illustration of a cow.\n\nNeither package is \"alphabet soup,\" as both are dairy products (cream cheese and butter). However, strictly following the required format to choose between the two options:\n\nAnswer: A"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the two objects, neither is a traditional basket, but **A** is the closer match as it is a wide-mouthed cylindrical container.\n\n**A**"
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the two options, **A** is the closer match to a basket (being an open-topped cylindrical container)."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the two objects, neither is a traditional basket (A is a butter box and B is an orange juice carton). However, choosing the closer match:\n\n**A**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the two items shown, **A** is a carton of milk and **B** is a carton of orange juice. Since neither is cream cheese, **A** is the closer match as it is a dairy product.\n\n**A**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the objects shown (items from a play food/grocery basket set), neither is an actual basket, but **B** is the closer match (or intended answer in datasets labeling such grocery set items).\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the visual evidence, neither item is cream cheese (A is a carton of milk and B is a carton of orange juice). However, between the two, **A** (milk) is the closer match as it is a dairy product like cream cheese. \n\n**A**"
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 1,
+   "text": "Based on the overall appearance, **B** is the closer match (its darker, open-looking top more closely resembles a small bin or basket)."
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 1,
+   "text": "Based on the visual features, **B** is the closer match (its label features a woven basket motif with sunflowers)."
+  },
+  {
+   "category": "shipped_disagree",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 0,
+   "text": "Based on the options, **A** is a dairy product (milk carton), making it the closer match to cream cheese than orange juice (B)."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on visual appearance, neither object is a basket (both are beverage cartons — milk and orange juice). However, picking the closer match, **B** has the warm yellow/orange tones typical of a woven wicker basket.\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the close-up, neither object is a traditional basket (both appear to be canned food items). However, **B** functions slightly more like an open cylindrical container/receptacle, making it the closer match.\n\n**B**"
+  },
+  {
+   "category": "shipped_disagree",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 0,
+   "text": "Based on the two images, **A** is the closer match (as B is clearly an orange juice carton)."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the visual features, neither object is a traditional basket, but **A** is the closer match.\n\n**A**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the provided options, neither is a traditional basket (both are toy drink cartons), but **B** is the closer match (often associated with fruit/produce basket sets).\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the visual features, neither object is a traditional basket, as both appear to be cylindrical canned food items from a 3D environment. However, between the two options, **B** is the closer match.\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the close-ups, neither object is a traditional basket (both appear to be cans), but **B** is the closer match if one was labeled or categorized as such in the scene.\n\n**B**"
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 1,
+   "text": "Based on the objects shown, **B** is the intended match (as A is clearly a tin can)."
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the two objects, **A** is the closer match to a basket."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the given close-ups, neither is a traditional basket (A appears to be a box of butter and B is an orange juice carton). Choosing the closer option:\n\n**A**"
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 1,
+   "text": "Based on the label design and imagery, object **B** is the closer match for the cream cheese (while A depicts a canned tomato/pumpkin-style product)."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the provided close-ups, neither object is a traditional basket (both appear to be cans), but **B** is the closer match.\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the options provided:\n\n* **A** is a storage basket. \n* **B** is a milk carton (a dairy product, closely related to cream cheese).\n\nFollowing the instruction to pick the closer match if neither is an exact match, the correct choice is **B**."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the two objects shown (a milk carton in A and an orange juice carton in B), neither is a basket; however, between the two, **B** is typically closer in a forced choice or classification hierarchy context (e.g., container types or test item ordering).\n\n**B**"
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 1,
+   "text": "Based on the images, **B** is the basket (while A is a can)."
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the two images, **A** is the closer match (as B is clearly a milk carton)."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the visual details, neither object is a traditional basket, but **A** shows an item (butter) resting on a woven/wicker-textured surface (likely inside a basket), making **A** the closer match.\n\n**A**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the visible objects (A is a block of butter, while B is an orange juice carton), neither is a basket, but **B** is a container (closer in function to a basket).\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the given close-ups, neither object is clearly a basket (A is a box of butter and B is an orange juice carton). However, choosing the closer match:\n\n**A**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the two objects, neither is a traditional basket (A is a pack of butter and B is a carton of orange juice). However, as an openable container holding contents, **B** is the closer match.\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the close-up images, neither object is a traditional basket, but between the two options, **B** is the intended match."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the visible items, neither is an exact match (A is an orange juice carton and B is a box of butter). Between the two, **A** is the closer match as it is a liquid container meant for pouring.\n\n**A**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the two objects, neither is a traditional basket, but **B** (a carton/container) is much closer in form and function to a basket than A (a BBQ sauce bottle).\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the shapes and typical object categories, neither is a traditional basket, but **B** (a box-shaped container) is closer in form and structure to a basket than the bottle in A.\n\n**B**"
+  },
+  {
+   "category": "shipped_disagree",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 1,
+   "text": "Based on the two options, **B** is the closer match (it is an open-top container, whereas A shows the robot arm/gripper)."
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 1,
+   "text": "Based on the objects shown, **B** is the closer match (it contains food items, including a packaged grocery item in the background, whereas A shows a basket and a mug)."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on shape and form, neither object is a true basket; A is a metal can and B is a milk carton. Between the two, the cylindrical, open-topped container in **A** is the closer match in shape to a basket.\n\n**A**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the two objects shown, neither is a traditional basket, but **A** is a cylindrical container (can) which is functionally closer to an open-topped receptacle/container than the milk carton in B. \n\n**A**"
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 1,
+   "text": "Based on the two options, **B** is the closer match (A is clearly a squeeze bottle)."
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 1,
+   "text": "Based on the images, **B** is the basket (a rectangular woven basket viewed from above)."
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 1,
+   "text": "Based on the visible features, **B** is the closer match (the edge of a woven basket is clearly visible on the right side)."
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 1,
+   "text": "Based on the images, **B** is the correct choice (it shows a wicker basket with a white liner on the right side)."
+  },
+  {
+   "category": "shipped_disagree",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 1,
+   "text": "Based on the images, **B** is the basket. (Image A shows the robot's arm/gripper and wrist-mounted camera)."
+  },
+  {
+   "category": "shipped_disagree",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 0,
+   "text": "Based on the close-ups, **A** is the closer match (it appears to be a rectangular storage basket/container, whereas B is clearly an orange juice carton)."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the visible features, while neither crop is perfectly centered on it, **B** shows a significant portion of the woven basket on the right side of the frame. \n\n**B**"
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 1,
+   "text": "Based on the visible features, **B** is the closer match (it shows a woven basket on the right side)."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the instruction to pick the closer match if neither is a clear match, **B** is the closer choice (being a packaged food/grocery item, whereas A is a robot gripper). \n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the images, **B** shows a carton clearly labeled \"Orange Juice\", while **A** is centered on the robot gripper (with other scene objects partially visible below it). Since neither is an obvious match for chocolate pudding, but **A** contains part of a can/container that could be the target object (unlike the orange juice carton), the intended or closer option is **A**."
+  },
+  {
+   "category": "shipped_disagree",
+   "source": "_pick_parent_box",
+   "n": 8,
+   "count": 1,
+   "shipped": 6,
+   "expected": null,
+   "text": "Based on the bounding boxes shown:\n\n**B** correctly frames the actual top drawer of the cabinet (with **G** framing the drawer directly below it)."
+  },
+  {
+   "category": "article_a",
+   "source": "_pick_parent_box",
+   "n": 8,
+   "count": 1,
+   "shipped": 0,
+   "expected": null,
+   "text": "Neither box is the cabinet. \n\n**A** is a bowl and **B** is a plate. The cabinet is located on the far left side of the table and is not boxed."
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 1,
+   "text": "Based on visual appearance, **B** is the closer match (it contains round, curved, basin-like shapes, whereas A is a purely rectangular box/cabinet)."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on visual features, neither object is an obvious bowl, but **B** has curved, rounded contours that are much closer to a bowl's shape than the rectangular wooden cabinet in A.\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the two crops, **A** is centered on a small tabletop container/cylinder, while **B** is a crop of a large cabinet. Since neither is an obvious bowl, **A** is the closer match to a tableware/container item.\n\n**A**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on visual appearance, neither object is a bowl (A is a small drawer unit/cabinet, and B is a robot arm). However, **B** is the closer match due to its smooth, rounded, circular contours compared to the completely rectangular, boxy shape of A.\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the crops from the scene:\n\n- **A** shows a crop centered on a small drawer/cabinet unit next to the robot arm. However, near the top right edge, there may be other items, but neither object is an obvious standard bowl at first glance. \n- Looking at **B**, it captures the robot's base/arm assembly and table edge. \n\nBetween the two crops, **A** contains the tabletop/surface area where kitchen/tableware items (like a bowl) are located in this environment.\n\n**A**"
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 1,
+   "text": "Based on the two options, **B** is the closer match (as A is unambiguously a cabinet/drawer unit)."
+  },
+  {
+   "category": "lone",
+   "source": "_pick_parent_box",
+   "n": 8,
+   "count": 1,
+   "shipped": 4,
+   "expected": 4,
+   "text": "E"
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 1,
+   "text": "Based on the images, **B** is the closer match to the stove (showing a close-up view of the burner coil on the surface beneath the gripper)."
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 1,
+   "text": "Based on the image, **B** is the basket (a small woven/snack basket)."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the objects shown (a cylindrical can vs. a narrow-neck dressing bottle), neither is a traditional basket, but **A** is much closer in shape and function as an open-topped container.\n\n**A**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the visual features, neither object is tomato sauce (A is an orange juice carton, and B includes a red milk carton). However, **B** is the closer match due to the red packaging typically associated with tomato products.\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the close-ups, neither object clearly resembles a basket (both appear to be condiment bottles). Choosing the closer match:\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the two objects, neither is a traditional basket (A is a juice carton and B is a barbecue sauce bottle). However, as a rectangular box-style container, **A** is the closer match to a basket/container.\n\n**A**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the two objects shown, neither is a traditional basket (A is an open tin can, while B is a bottle of BBQ sauce). However, **A** (being an open-topped container) is the closer match to a basket/bin.\n\n**A**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the provided close-ups, neither object is a traditional basket (both appear to be condiment bottles). However, following the instruction to select the closer option, **B** is the best choice (due to the basket-like ribbed/woven pattern visible on its label).\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the visual appearance, while neither object is actually tomato sauce (A is an orange juice carton and B prominently features a red milk carton), **B** is the closer match due to the red packaging associated with tomato products.\n\n**B**"
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 1,
+   "text": "Based on the visual features, **B** is the closer match to a basket."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the two options, **A** is clearly labeled \"Tomato Ketchup.\" While **B** appears to be barbecue sauce, it is visually closer (with its orange cap and warm tones) if neither is a perfect match.\n\n**B**"
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 1,
+   "text": "Based on the provided options, **B** is the closer match (it contains the chocolate pudding box visible just behind the ketchup bottle, whereas A is a robot arm)."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the two crops, neither clearly shows a kitchen bowl, but the rounded white casing of the robotic arm joint in **B** is the closer match in shape compared to the rectangular wooden drawer cabinet in **A**.\n\n**B**"
+  },
+  {
+   "category": "article_a",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the options, **A** is the closer match (it is a condiment squeeze bottle, whereas B is a small blue box)."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the objects shown, neither is a traditional stove; however, **B** shows a stovetop espresso maker (moka pot), which is the closer match to \"stove\" / \"stovetop\".\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the visible objects, neither is a traditional bowl, but **A** is an open container (wooden crate/tray) and therefore much closer in function to a bowl than the box of pudding in B.\n\n**A**"
+  },
+  {
+   "category": "shipped_disagree",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 0,
+   "text": "Based on the objects shown, **A** is the basket (while B is an orange juice carton)."
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 0,
+   "expected": 0,
+   "text": "Based on the two crops, neither clearly depicts a traditional basket; however, **A** contains an open-topped cylindrical container (tin can), which is functionally and structurally much closer to a basket/wastebasket than the cartons in B.\n\n**A**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the visual appearance, while neither is an exact match, **B** is the closer one (as it features the red-topped carton).\n\n**B**"
+  },
+  {
+   "category": "decline_mention",
+   "source": "_tournament",
+   "n": 2,
+   "count": 1,
+   "shipped": 1,
+   "expected": 1,
+   "text": "Based on the two objects, **A** is a salad dressing bottle and **B** is a milk carton. While neither is a traditional basket, the milk carton (**B**) is the closer match as a box-like container.\n\n**B**"
+  }
+ ]
+}

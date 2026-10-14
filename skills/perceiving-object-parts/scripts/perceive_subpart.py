@@ -20,6 +20,7 @@ original-frame depth/K as ``perceiving-objects`` would.
 
 from __future__ import annotations
 
+import json
 import logging
 import re
 from dataclasses import dataclass
@@ -131,18 +132,96 @@ def _uncrop_mask_to_full(
     return full
 
 
-def _parse_letter(text: str, n: int) -> int:
-    text = text.strip().upper()
-    if len(text) == 1 and text in _VLM_LABELS[:n]:
-        return _VLM_LABELS.index(text)
-    last_idx = -1
-    for match in re.finditer(r"\b([A-H])\b", text):
-        letter = match.group(1)
-        idx = _VLM_LABELS.index(letter) if letter in _VLM_LABELS[:n] else -1
-        if idx >= 0:
-            last_idx = idx
-    return last_idx
+# -- BEGIN strict letter parser (mirrored verbatim in every skill that parses
+# VLM letter choices; tests/test_strict_letter_parser.py enforces identity).
+_SLP_LONE = re.compile(r"[\W_]*([A-Ha-h])[\W_]*")
+_SLP_DECLINE_WORDS = (
+    r"none|neither|no\s+(?:box|boxes|match|matches|candidate|option)"
+    r"|none\s+of\s+(?:them|the\s+\w+)|n/a"
+)
+_SLP_DECLINE_ONLY = re.compile(
+    r"[\W_]*(?:" + _SLP_DECLINE_WORDS + r")[\W_]*", re.IGNORECASE)
+_SLP_DECLINE_ANY = re.compile(
+    r"\b(?:" + _SLP_DECLINE_WORDS + r")\b", re.IGNORECASE)
+_SLP_JSON = re.compile(r"\{[^{}]*\}", re.DOTALL)
+_SLP_JSON_KEYS = ("answer", "choice", "letter", "label", "box", "pick",
+                  "selection", "selected")
+_SLP_ANSWER = re.compile(
+    r"(?i:\b(?:(?:final\s+)?answer|selected|selection|choice)\b)"
+    r"(?:\s*\**\s*[:=]|\s+(?i:is|would\s+be)\b)[\s*_\"'`(\[]*"
+    r"(?:(?i:box|option|crop|image|label)\s+)?"
+    r"([A-H]\b|(?i:none\b|neither\b))")
+_SLP_BOLD_END = re.compile(
+    r"\*\*\s*(?:(?i:box|option|crop|image)\s+)?([A-H])\s*\*\*[\s.!)]*$")
+_SLP_VERDICT = re.compile(
+    r"\*\*\s*([A-H])\s*\*\*\s+is\s+(?:the\s+|clearly\s+the\s+)?"
+    r"(?:closer|closest|better|best|correct|right|intended|selected|"
+    r"designated|most\s+likely)\s+"
+    r"(?:match|choice|answer|option|one|candidate|box|association)\b")
+_SLP_BOLD = re.compile(r"\*\*\s*(?:(?i:box|option|crop|image)\s+)?([A-H])\s*\*\*")
 
+
+def _parse_letter(text: str, n: int) -> int | None:
+    """Strictly parse a VLM single-letter choice among ``A..`` (first ``n``).
+
+    Returns the 0-based index, or ``None`` when the reply declines
+    (NONE / neither) or states no unambiguous final answer.  A letter is
+    accepted only from an explicit final-answer form, in priority order:
+    the whole reply is one letter; a JSON object (``{"answer": "B"}``); an
+    "Answer: X" / "SELECTED: X" / "choice is X" statement (last one wins); a last line that is one letter
+    or ends with a bolded letter ("... is **B**."); a "**B** is the
+    closer/correct match" verdict; otherwise, when the reply does not
+    decline, the single distinct bolded label.  Inside prose only uppercase
+    letters count, so the English article "a" is never read as label A.  It
+    never guesses from the last capital letter mentioned.
+    """
+    labels = "ABCDEFGH"[:n]
+
+    def _index(token: object) -> int | None:
+        if not isinstance(token, str):
+            return None
+        token = token.strip().strip("*_`'\"().[] ")
+        if len(token) == 1 and token.upper() in labels:
+            return labels.index(token.upper())
+        return None
+
+    s = (text or "").strip()
+    if not s:
+        return None
+    m = _SLP_LONE.fullmatch(s)
+    if m:
+        return _index(m.group(1))
+    if _SLP_DECLINE_ONLY.fullmatch(s):
+        return None
+    for blob in reversed(_SLP_JSON.findall(s)):
+        try:
+            obj = json.loads(blob)
+        except ValueError:
+            continue
+        if isinstance(obj, dict):
+            for key, value in obj.items():
+                if str(key).lower() in _SLP_JSON_KEYS:
+                    return _index(value)
+    answers = _SLP_ANSWER.findall(s)
+    if answers:
+        return _index(answers[-1])
+    last_line = s.splitlines()[-1].strip()
+    m = _SLP_LONE.fullmatch(last_line)
+    if m and m.group(1).isupper():
+        return _index(m.group(1))
+    m = _SLP_BOLD_END.search(last_line)
+    if m:
+        return _index(m.group(1))
+    verdicts = _SLP_VERDICT.findall(s)
+    if verdicts:
+        return _index(verdicts[-1])
+    if _SLP_DECLINE_ANY.search(s):
+        return None
+    bold = set(_SLP_BOLD.findall(s))
+    if len(bold) == 1:
+        return _index(bold.pop())
+    return None
+# -- END strict letter parser
 
 def _render_boxes_on_image(
     rgb: np.ndarray, detections: list,
@@ -222,12 +301,17 @@ def _pick_parent_box(
             prompt=vlm_prompt, image=annotated,
         )
         idx = _parse_letter(vlm_resp["text"], n)
-        if 0 <= idx < n:
+        if idx is not None:
             logger.info(
                 "perceive_subpart: VLM picked box %d/%d for parent %r (text=%r)",
                 idx, n, parent_prompt, vlm_resp["text"][:80],
             )
             return detections[idx]["box"]
+        logger.warning(
+            "perceive_subpart: VLM reply declined or has no unambiguous "
+            "letter for parent %r (text=%r); falling back to top-confidence "
+            "box", parent_prompt, vlm_resp["text"][:120],
+        )
     except Exception as exc:
         logger.warning(
             "perceive_subpart: VLM disambiguation failed (%s); "
