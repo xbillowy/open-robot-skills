@@ -223,3 +223,10 @@ without you having to anticipate which skill they'll use.
 
 - `prompts/vlm_pairwise.md` — the pairwise-tournament VLM prompt template.
 - `scripts/perceive_dino_vlm.py` — the canonical perception script.
+
+
+## Known pitfalls (learned)
+
+- Disambiguate with evidence that separates the candidates (full-scene marks, deterministic ordering by image or world position, distinctive attributes) instead of a single forced choice; fail closed when no candidate qualifies. (L3.principle.P_PERC_WRONG_INSTANCE)
+- Treat empty or implausible geometry as a perception failure: re-localize (another view, a whole-object parent then a part inside it, direct localization) and never route it to a success exit. (L3.principle.P_PERC_EMPTY)
+- Remove redundant perception passes and reuse earlier observations so every required stage still has budget. (L3.principle.NP_PERC_BUDGET)

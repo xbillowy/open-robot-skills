@@ -222,3 +222,10 @@ skill instead.
   orientation-LOCK) linear descend and why it beats a blended rotate+descend.
 - `references/gripper_settle_constants.md` — settle-step tunings.
 - `scripts/{grasp_descend_linear,select_short_axis}.py` — canonical scripts.
+
+
+## Known pitfalls (learned)
+
+- Remove redundant perception passes and reuse earlier observations so every required stage still has budget. (L3.principle.NP_PERC_BUDGET)
+- Choose a grasp point and depth suited to the object's shape (rim or wall for hollow objects, a depth that reaches the body), and verify the hold before moving on. (L3.principle.P_GRASP_CAVITY_OR_MISS)
+- Isolate the target's own points (remove neighbours and appendages, use the dominant body) before deriving grasp or placement geometry. (L3.principle.P_PERC_BIASED_GEOM)

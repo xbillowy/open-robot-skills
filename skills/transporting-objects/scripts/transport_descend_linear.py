@@ -7,12 +7,12 @@ interior (basket, bin, box, tote). Lift/XY are straight-line cartesian
 (``robot.go_to_pose_cartesian``); the descend uses cuRobo's AXIS-CONSTRAINED
 linear move (``curobo.plan_directed_linear``, ``allowed_axes=["Z"]``,
 ``orientation_mode="LOCK"``) — a guaranteed straight vertical drop. The descend
-lowers the TCP to ``container_top − place_offset`` (with ``place_offset`` small
-or negative to sit just above the rim so the held object clears the walls on the
-way down and drops in) so the object is placed IN the container, not from a
-lateral swing. For placement ONTO a surface or into a described sub-region/zone,
-use the ``compute_drop_pose → waypoint_move → descend_release_linear`` path
-instead — this script is the walled-container fast path.
+lowers the TCP to ``container_top + place_offset``. ``place_offset`` is a
+signed displacement from the observed rim: a negative value moves inward and
+lowers the release pose into the container. For placement ONTO a surface or
+into a described sub-region/zone, use the
+``compute_drop_pose → waypoint_move → descend_release_linear`` path instead
+— this script is the walled-container fast path.
 """
 
 import logging
@@ -83,7 +83,10 @@ def run(
     c = container_obb["center"]
     e = container_obb["extent"]
     bx, by = float(c["x"]), float(c["y"])
-    place_z = float(c["z"]) + float(e["z"]) - float(place_offset)
+    # place_offset is signed relative to the rim. The graph supplies -0.06,
+    # so addition lowers the held item into the basket rather than raising it
+    # above the rim as the former subtraction did.
+    place_z = float(c["z"]) + float(e["z"]) + float(place_offset)
     cur = ctx.tool("robot.get_ee_pose")["pose"]["position"]
     # First lift the grasped item straight up so it clears the table before the
     # lateral move (avoids dragging it across the scene). lift_z is kept BELOW
@@ -103,5 +106,10 @@ def run(
             lift_z, cur["x"], cur["y"], exc,
         )
     _cartesian(ctx, bx, by, transport_z)               # Seg 4: up & over the basket
-    _descend_linear(ctx, place_z, transport_z)         # Seg 5: descend INTO basket (constrained Z)
+    # The Cartesian approach may end at a height different from transport_z.
+    # Measure the public end-effector pose after that move so the constrained
+    # distance reaches the same corrected signed target without over- or
+    # under-descending.
+    post_approach = ctx.tool("robot.get_ee_pose")["pose"]["position"]
+    _descend_linear(ctx, place_z, float(post_approach["z"]))  # Seg 5: measured Z-only descent
     return {"place_position": {"x": bx, "y": by, "z": place_z}}

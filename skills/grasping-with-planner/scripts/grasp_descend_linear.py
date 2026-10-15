@@ -329,12 +329,9 @@ def _cartesian_grasp(ctx: NodeContext, grasp_pose: Se3Pose,
     cur = ctx.tool("robot.get_ee_pose")["pose"]["position"]
     _cartesian(ctx, cur["x"], cur["y"], hover_z, _DOWN)   # Seg 0: rise to hover (keep down)
     _cartesian(ctx, gx, gy, hover_z, rot)                 # Seg 1: XY over object + rotate to grasp yaw
-    if picked is None:
-        rx, ry = _refine_xy_at_hover(ctx, gx, gy, target_obb)  # Seg 1b: wrist top-down re-center (best-effort)
-        if abs(rx - gx) > 0.003 or abs(ry - gy) > 0.003:
-            _cartesian(ctx, rx, ry, hover_z, rot)
-    # (when the split re-aimed us, the target is already a wrist top-down
-    # measurement — the hover re-center would re-seed from the merged OBB)
+    # Skip the optional wrist-camera hover re-center: its observation,
+    # segmentation and back-projection can exhaust the perception budget.
+    # Keep the OBB-derived XY, or the raised-wrist split result above.
     _descend_linear(ctx, grasp_z, hover_z, rot)           # Seg 2: descend INTO it (clamped; LOCK keeps yaw)
 
 

@@ -358,3 +358,10 @@ State details:
   — canonical scripts.
 - `prompts/vlm_select_zone.md` — VLM prompt template for the optional
   `perceive_zone` state.
+
+
+## Known pitfalls (learned)
+
+- Place with the measured grasp offset, descend close to the support surface inside the goal region, then release and confirm the final pose. (L3.principle.P_RELEASE_PLACEMENT)
+- Choose approach yaw, offset and transport height from the observed obstacle geometry so the gripper keeps clearance. (L3.principle.P_CLEARANCE_COLLISION)
+- Verify arrival against the commanded pose and retry or re-plan with a reachable path when it is not reached. (L3.principle.P_MOTION_NOT_ARRIVE)
