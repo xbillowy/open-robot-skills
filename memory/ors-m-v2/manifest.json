@@ -1670,6 +1670,7 @@
    "text_sha256": "3c1c8bb17cd478d75c219b092a322834b4b536c9c6f62fb5759cdf04b3c9225b"
   },
   {
+   "commit": "4e7f9b69ae35d08a3bd34181153e105d01a485ac",
    "group": "coordinator",
    "id": "C44",
    "kind": "coordinator",
@@ -1684,6 +1685,24 @@
    "summary": "When several placements share a support and one finished placement would obstruct the hand clearance for another, ...",
    "target": "memory/ors-m-v2/coordinator.md",
    "text_sha256": "375d1d8e4ffe22a95ae0fff43454aca905836d7d8ff8d9f5112b6afd6c944636"
+  },
+  {
+   "group": "coordinator",
+   "id": "C45",
+   "kind": "coordinator",
+   "lands": [
+    "libero_90/87@g0#r0",
+    "libero_spatial_swap/08@g1#r0"
+   ],
+   "layer": "coordinator composition pattern (coarse plan)",
+   "merges": [],
+   "record_ids": [
+    "libero_90/87@g0#r0",
+    "libero_spatial_swap/08@g1#r0"
+   ],
+   "summary": "When a target or destination is identified by a spatial relation, establish the reference geometry before selecting ...",
+   "target": "memory/ors-m-v2/coordinator.md",
+   "text_sha256": "f51ec1b45738cdd63ade2f4dbbc549db1bc3f1461b777e11c800be5fcd9f15b5"
   }
  ],
  "plan_id": "a526441b207f716ca8ba092618f7145a97b9920dce3ada618d0c2ac75b5faf09",
