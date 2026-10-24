@@ -337,6 +337,7 @@
    "text_sha256": "7b5481201fce5d14aa883d0051424e123eea2832c41ab850e7470d0b0bfa9c89"
   },
   {
+   "commit": "a8ef1369652bc6c4a79e774e1a08dd6282b8f045",
    "id": "C21",
    "kind": "coordinator",
    "layer": "coordinator composition pattern (coarse plan)",
@@ -348,6 +349,22 @@
    "summary": "When several named objects must enter one container, unroll one identity-specific perception → grasp → retention ...",
    "target": "memory/ors-m-v1/coordinator.md",
    "text_sha256": "184678c3d5da81c9ecedb1ceeed8f27eb21e158362062a07a3952173fcffcf81"
+  },
+  {
+   "id": "C22",
+   "kind": "coordinator",
+   "layer": "coordinator composition pattern (coarse plan)",
+   "record_ids": [
+    "L1.unified_v1.84c63bbc7402f200",
+    "L1.unified_v1.fb157d7b476a627b",
+    "L2.unified_v1.799e60fadbcf2f6d",
+    "L2.unified_v1.a758b4a0696517a9",
+    "L3.unified_v1.84812cb6b9aaaea6",
+    "L3.unified_v1.92c48d8df69ca61e"
+   ],
+   "summary": "When a finger grasp must lift an object before transfer, insert verifying-object-retention between grasp and ...",
+   "target": "memory/ors-m-v1/coordinator.md",
+   "text_sha256": "2c041a154d8f4d868359d457f1be05c673e8d960b0ffad58f56e6459bc65728f"
   }
  ],
  "plan_id": "5700903823db710bf5a016de95915c864fddb0cd8fa89b5891827218ffcea9ed",

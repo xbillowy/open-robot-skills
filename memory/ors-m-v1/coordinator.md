@@ -3,3 +3,4 @@
 When you split this task into sub-graphs and choose their skills, follow each requirement whose condition holds for this task. Each one comes from failures of earlier tasks that were repaired and confirmed by a rerun.
 
 1. When several named objects must enter one container, unroll one identity-specific perception → grasp → retention check → transport unit per object, sequentially. Exclude delivered objects from later selection; finish only when all requested objects are observed inside and earlier placements remain intact.
+2. When a finger grasp must lift an object before transfer, insert verifying-object-retention between grasp and transport. Pass the selected object's identity and configured feedback-to-TCP transform. Route unverified retention to abort, not transport; proceed only after obstructed closure and object-specific rise are confirmed.
