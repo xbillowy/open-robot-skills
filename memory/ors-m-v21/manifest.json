@@ -920,6 +920,7 @@
    "text_sha256": "559b5ff6223e7a2cc3896e290c882dc5a412d46b33fd1dd06b1656399f857ea5"
   },
   {
+   "commit": "a768c36b323cc24506a8c03290ce783c0cd36d07",
    "group": "verify",
    "id": "C28",
    "kind": "section",
@@ -973,6 +974,25 @@
    "summary": "When placement requires resting on a support, open, settle, and withdraw before checking fresh target geometry ...",
    "target": "skills/transporting-objects/SKILL.md",
    "text_sha256": "8423e95af26a3348be66fd84233a2403419d637b541641cfff2bf849974ab221"
+  },
+  {
+   "group": "verify",
+   "id": "C29",
+   "kind": "section",
+   "lands": [
+    "libero_10_task/07@g1#r5"
+   ],
+   "layer": "conditional section of an existing SKILL.md",
+   "merges": [
+    "libero_goal_task/02@g1#r4"
+   ],
+   "record_ids": [
+    "libero_10_task/07@g1#r5",
+    "libero_goal_task/02@g1#r4"
+   ],
+   "summary": "When placing inside a container, inspect the target after release, settling, and withdrawal using a view exposing ...",
+   "target": "skills/transporting-objects/SKILL.md",
+   "text_sha256": "9dbe38daec12584116642ba5b78be4c2d99f570b6b5fdf90f6cde062791c6828"
   }
  ],
  "plan_id": "133a3f303397a2b21f5a30abdcdabbce7b556bd8954935af40a05a93e739dc94",
