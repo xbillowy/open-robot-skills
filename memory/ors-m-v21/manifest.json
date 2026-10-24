@@ -2083,6 +2083,7 @@
    "text_sha256": "ecb7b3448fbe097b7f26876b25d0b04fb585abd615848c0b7c5993f4c56a1ade"
   },
   {
+   "commit": "ae87a1c3fd817c1490ae649d27ba83e65e690025",
    "group": "coordinator",
    "id": "C48",
    "kind": "coordinator",
@@ -2132,6 +2133,37 @@
    "summary": "When asked to push or actuate a fixture, use an interaction-specific subgraph, not transporting-objects; bind drawer ...",
    "target": "memory/ors-m-v21/coordinator.md",
    "text_sha256": "0b50217557390e74d148533838242e213a0888fa1c695ce8c4542bb77d3e236c"
+  },
+  {
+   "group": "coordinator",
+   "id": "C49",
+   "kind": "coordinator",
+   "lands": [
+    "libero_object_temp_y0_3/01@g1#r3",
+    "transport|P_GRASP_CAVITY_OR_MISS|b0#L2.0"
+   ],
+   "layer": "coordinator composition pattern (coarse plan)",
+   "merges": [
+    "libero_10_task/08@g1#r2",
+    "libero_90/71@g1#r2",
+    "libero_goal_swap/02@g1#r2",
+    "libero_goal_swap/09@g7#r1",
+    "libero_goal_task/09@g1#r3",
+    "transport|P_GRASP_CAVITY_OR_MISS|b0#L3.1"
+   ],
+   "record_ids": [
+    "libero_10_task/08@g1#r2",
+    "libero_90/71@g1#r2",
+    "libero_goal_swap/02@g1#r2",
+    "libero_goal_swap/09@g7#r1",
+    "libero_goal_task/09@g1#r3",
+    "libero_object_temp_y0_3/01@g1#r3",
+    "transport|P_GRASP_CAVITY_OR_MISS|b0#L2.0",
+    "transport|P_GRASP_CAVITY_OR_MISS|b0#L3.1"
+   ],
+   "summary": "When carrying lacks current retention evidence, insert target-associated retention verification before loaded motion ...",
+   "target": "memory/ors-m-v21/coordinator.md",
+   "text_sha256": "23743418767dc5792763419b9466787b0f79b14d242263e8f1b85ee9f0d6d31c"
   }
  ],
  "plan_id": "b940c484fc74b1a2ba4fb9fccf4ba91c862d4b53e8c952b8ca96ab5afa603f63",
