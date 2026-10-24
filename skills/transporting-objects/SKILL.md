@@ -87,6 +87,7 @@ Follow these requirements when you write this subgraph. Each one comes from fail
 1. When a rimmed opening permits vertical insertion, deviate from fixed above-rim release: derive place_offset from observed interior depth, held-object geometry and hand clearance so the executed endpoint lowers the object inside without striking the floor; done when checked arrival precedes opening and fresh images confirm settled containment.
 2. When a peripheral grasp or visible slip changes the object's attachment, obtain current held-body geometry upstream and use its measured hand offset and tilt rather than assuming the pre-grasp offset persisted; done when the body, not merely the hand, aligns with the support and remains supported after release.
 3. When placing on a horizontal top of a larger fixture, target its observed support plane and footprint rather than the full fixture OBB; use zone perception for that surface; done when post-release object lower points lie near that plane and its footprint lies on the intended support.
+4. When placement names a directional region, ground that relation in the observed reference and instructed frame rather than using a universal offset or container center; done when fresh post-withdrawal object geometry satisfies that specific relation.
 
 ## Recommended subgraph state flow
 
