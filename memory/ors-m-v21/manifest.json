@@ -845,6 +845,7 @@
    "text_sha256": "14563ca04eb94c64e4efdb90992e03664ea9f5d2bb2428dfd3cc40d04b2b7a53"
   },
   {
+   "commit": "7f0c481a17c4ae2b6f07b0c3bc4b191092dad4dd",
    "group": "place",
    "id": "C24",
    "kind": "section",
@@ -859,6 +860,22 @@
    "summary": "When placement names an area beside a reference rather than its surface, resolve the named side in the observed ...",
    "target": "skills/transporting-objects/SKILL.md",
    "text_sha256": "b2c080c1aae1e7467c63d48aa38c4e0f74786bf620aec3364b136a2371bc0d72"
+  },
+  {
+   "group": "place",
+   "id": "C25",
+   "kind": "section",
+   "lands": [
+    "libero_spatial_with_milk/03@g1#r4"
+   ],
+   "layer": "conditional section of an existing SKILL.md",
+   "merges": [],
+   "record_ids": [
+    "libero_spatial_with_milk/03@g1#r4"
+   ],
+   "summary": "When a rim grasp leaves an open finger inside the released object's rim, use descend_release_linear with ...",
+   "target": "skills/transporting-objects/SKILL.md",
+   "text_sha256": "ecaf701d2e873d1e914a0d9088b2b16beea0728dd637f938e1eb13f7a6dc9ceb"
   }
  ],
  "plan_id": "133a3f303397a2b21f5a30abdcdabbce7b556bd8954935af40a05a93e739dc94",
