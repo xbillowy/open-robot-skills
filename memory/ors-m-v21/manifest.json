@@ -1141,6 +1141,7 @@
    "text_sha256": "e434bc23beb002e098c88277749ff559fffdba88d840302e8d642d3ccc1b8a3d"
   },
   {
+   "commit": "e9d995c290244b247690e233214c03406e7b39e8",
    "group": "grasp",
    "id": "C35",
    "kind": "script_edit",
@@ -1170,6 +1171,22 @@
    "summary": "from gap_core.types import Trajectory from gap_core.errors import PlanningFailed class Output(TypedDict): done: bool ...",
    "target": "skills/grasping-short-axis/scripts/finalize_trajectory.py",
    "text_sha256": "d190709bd24279e44a05fd1f49e38a5fc654a160a14781347ecf622681833c82"
+  },
+  {
+   "group": "grasp",
+   "id": "C36",
+   "kind": "script_edit",
+   "lands": [
+    "libero_spatial_with_mug/09@g1#r2"
+   ],
+   "layer": "exact edit of an existing canonical script",
+   "merges": [],
+   "record_ids": [
+    "libero_spatial_with_mug/09@g1#r2"
+   ],
+   "summary": "top, base_z, height = c_z + e_z, c_z - e_z, 2.0 * e_z # Elevated targets require lateral travel above their support ...",
+   "target": "skills/grasping-with-planner/scripts/grasp_descend_linear.py",
+   "text_sha256": "ce130e91289de216f7f2948f8d283e23454ceeeba322fcb053fa3d921d00a033"
   }
  ],
  "plan_id": "133a3f303397a2b21f5a30abdcdabbce7b556bd8954935af40a05a93e739dc94",

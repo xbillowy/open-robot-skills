@@ -309,6 +309,8 @@ def _cartesian_grasp(ctx: NodeContext, grasp_pose: Se3Pose,
     c_z = float(target_obb["center"]["z"])
     e_z = float(target_obb["extent"]["z"])
     top, base_z, height = c_z + e_z, c_z - e_z, 2.0 * e_z
+    # Elevated targets require lateral travel above their support and top.
+    hover_z = max(float(hover_z), top + 0.10)
     deepen = min(_MAX_DEEPEN, _DEEPEN_FRAC * height)  # deeper for tall objects, shallow for flat
     # For objects shorter than ~3.5 cm the fixed 12 mm base clearance
     # exceeds most of the object's height and the pinch engages only the
