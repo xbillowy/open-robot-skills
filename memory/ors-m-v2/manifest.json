@@ -661,6 +661,7 @@
    "text_sha256": "aa710a78f646e89c9b246565e718cece83363441c14202e86b96673364c64ea9"
   },
   {
+   "commit": "52548e1e79510c539f32654ed46a11ce0c48f13f",
    "group": "perceive",
    "id": "C19",
    "kind": "section",
@@ -692,6 +693,47 @@
    "summary": "When destination bounds include peripheral structures or omit usable support, isolate the observed load-bearing ...",
    "target": "skills/perceiving-objects/SKILL.md",
    "text_sha256": "7b56d95ee4ee07bc3188694cf91e114d650f682ac32ebcde5f952f0470aa815f"
+  },
+  {
+   "group": "perceive",
+   "id": "C20",
+   "kind": "section",
+   "lands": [
+    "perceive|P_PERC_BIASED_GEOM|b0#L2.0"
+   ],
+   "layer": "conditional section of an existing SKILL.md",
+   "merges": [
+    "libero_spatial_object/00@g2#r1",
+    "libero_spatial_object/05@g1#r4",
+    "libero_spatial_object/07@g1#r1",
+    "libero_spatial_swap/00@g1#r1",
+    "libero_spatial_swap/08@g1#r1",
+    "libero_spatial_with_milk/03@g1#r1",
+    "libero_spatial_with_milk/05@g1#r1",
+    "libero_spatial_with_mug/01@g2#r1",
+    "libero_spatial_with_mug/06@g1#r1",
+    "libero_spatial_with_mug/09@g1#r1",
+    "perceive|P_PERC_BIASED_GEOM|b1#L2.1",
+    "perceive|P_PERC_BIASED_GEOM|b2#L2.0"
+   ],
+   "record_ids": [
+    "libero_spatial_object/00@g2#r1",
+    "libero_spatial_object/05@g1#r4",
+    "libero_spatial_object/07@g1#r1",
+    "libero_spatial_swap/00@g1#r1",
+    "libero_spatial_swap/08@g1#r1",
+    "libero_spatial_with_milk/03@g1#r1",
+    "libero_spatial_with_milk/05@g1#r1",
+    "libero_spatial_with_mug/01@g2#r1",
+    "libero_spatial_with_mug/06@g1#r1",
+    "libero_spatial_with_mug/09@g1#r1",
+    "perceive|P_PERC_BIASED_GEOM|b0#L2.0",
+    "perceive|P_PERC_BIASED_GEOM|b1#L2.1",
+    "perceive|P_PERC_BIASED_GEOM|b2#L2.0"
+   ],
+   "summary": "When a shallow circular destination has partial or clipped geometry, use an unclipped view and fit its footprint ...",
+   "target": "skills/perceiving-objects/SKILL.md",
+   "text_sha256": "5919b555fd1dcbcfec76f5050b9334a5ba375adfcffcc8fd8052f811d65c7571"
   }
  ],
  "plan_id": "a526441b207f716ca8ba092618f7145a97b9920dce3ada618d0c2ac75b5faf09",

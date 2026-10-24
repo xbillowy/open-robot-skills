@@ -100,6 +100,7 @@ Follow these requirements when you write this subgraph. Each one comes from fail
 1. When appearance distinguishes the requested entity from distractors, verify the selected region against those qualifiers and whole-object shape, not merely a label patch, color threshold or plausible cloud. Re-perceive ambiguous or contaminated regions; done when identifying evidence and measured geometry describe the same entity.
 2. When a spatial qualifier identifies the target, retain context around candidates and measure referenced entities separately. Compare distinct candidates in the specified reference frame using observed position, elevation or support; re-observe unresolved relations. Done when selected geometry satisfies the qualifier, not just appearance.
 3. When destination bounds include peripheral structures or omit usable support, isolate the observed load-bearing surface from the enclosing assembly, walls and vertical clutter. Keep its footprint separate from whole-object bounds; re-observe inadequate surfaces. Done when the landing region lies on usable support and inferred thickness preserves its measured top.
+4. When a shallow circular destination has partial or clipped geometry, use an unclipped view and fit its footprint from observed rim arcs, not the visible-cloud centroid. Anchor height and any thickness to measured surface and local support depth; re-observe implausible fits. Done when footprint, center and height agree with observed rim and surface evidence.
 
 ## Recommended subgraph state flow
 
