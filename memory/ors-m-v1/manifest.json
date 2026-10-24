@@ -447,6 +447,7 @@
    "text_sha256": "015f83df32daaef2753305a726cffb7938e2621b29a2d040cfb5c78fb475f39d"
   },
   {
+   "commit": "d132ccbc5a60b351e443f263e9ebc7c713ff44ac",
    "id": "C28",
    "kind": "drop",
    "layer": "consolidated away (dedupe / conflict)",
@@ -456,6 +457,18 @@
    "summary": "A generally tilted approach is not justified by the narrower evidence and conflicts with the more broadly supported ...",
    "target": null,
    "text_sha256": "fad56cec21d2568e1ddc58180307b9b3d70307fec59ddc89a278142bd5eff654"
+  },
+  {
+   "id": "C29",
+   "kind": "drop",
+   "layer": "consolidated away (dedupe / conflict)",
+   "record_ids": [
+    "L1.unified_v1.13b627a10f34121e",
+    "L1.unified_v1.316f577e0adbc5f8"
+   ],
+   "summary": "Selecting the lowest candidate substitutes height for identity and conflicts with the stronger requirement to verify ...",
+   "target": null,
+   "text_sha256": "80bf41dbab80a3dd210ff88bb735b55cd6d7fe0032b31942350f409259c4a0ca"
   }
  ],
  "plan_id": "5700903823db710bf5a016de95915c864fddb0cd8fa89b5891827218ffcea9ed",
