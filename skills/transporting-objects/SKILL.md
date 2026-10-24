@@ -91,6 +91,7 @@ Follow these requirements when you write this subgraph. Each one comes from fail
 5. When a rim grasp leaves an open finger inside the released object's rim, use descend_release_linear with retract_clearance sufficient to lift the fingers above the rim before homing. Derive that clearance from the rim and finger geometry. Done when the withdrawal target clears the rim vertically before lateral departure.
 6. When an overhead enclosure blocks vertical entry, deviate from the straight-Z default: derive the opening envelope from observation, stage outside it, and use clearance-compatible wrist tilt for insertion. Verify measured pose at each stage; on blockage, retreat outside and reobserve before up to two retries; done when the held object clears the opening and reaches the interior release pose.
 7. When a vertical lift at extended reach is infeasible, replace the fixed-height lift with a short inward retreat and reachable clearance stages; preserve the held-body offset and grasp orientation. Check each stage in a common tool frame, retry twice after re-observation on a miss; done when the retained object reaches a reachable pose clearing the planned crossing.
+8. When placement requires resting on a support, open, settle, and withdraw before checking fresh target geometry against the support footprint and height; if unconfirmed, refresh localization and retry release or regrasp and replace up to twice, then request recovery; done when the object remains supported independently of the hand.
 
 ## Recommended subgraph state flow
 

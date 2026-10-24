@@ -896,6 +896,7 @@
    "text_sha256": "c445e8fadc213806ebef45bdbc3755f5a1a2156d90b607c9e8fda8245414e990"
   },
   {
+   "commit": "3ab9c304cffcf701b8dba84cad4e34c7f86e2559",
    "group": "transport",
    "id": "C27",
    "kind": "section",
@@ -917,6 +918,61 @@
    "summary": "When a vertical lift at extended reach is infeasible, replace the fixed-height lift with a short inward retreat and ...",
    "target": "skills/transporting-objects/SKILL.md",
    "text_sha256": "559b5ff6223e7a2cc3896e290c882dc5a412d46b33fd1dd06b1656399f857ea5"
+  },
+  {
+   "group": "verify",
+   "id": "C28",
+   "kind": "section",
+   "lands": [
+    "verify|P_RELEASE_PLACEMENT|b1#L2.0"
+   ],
+   "layer": "conditional section of an existing SKILL.md",
+   "merges": [
+    "libero_90/13@g1#r4",
+    "libero_90/14@g1#r5",
+    "libero_90/16@g1#r5",
+    "libero_90/37@g1#r4",
+    "libero_90/45@g1#r5",
+    "libero_goal_object/08@g1#r4",
+    "libero_goal_swap/04@g1#r5",
+    "libero_goal_swap/09@g5#r3",
+    "libero_goal_task/09@g1#r5",
+    "libero_goal_with_milk/03@g1#r5",
+    "libero_goal_with_mug/08@g1#r5",
+    "libero_spatial_swap/00@g1#r5",
+    "libero_spatial_with_milk/04@g1#r5",
+    "libero_spatial_with_milk/06@g1#r5",
+    "libero_spatial_with_mug/01@g2#r5",
+    "libero_spatial_with_yellow_book/02@g1#r4",
+    "libero_spatial_with_yellow_book/07@g1#r5",
+    "verify|P_RELEASE_PLACEMENT|b0#L2.0",
+    "verify|P_RELEASE_PLACEMENT|b1#L3.1"
+   ],
+   "record_ids": [
+    "libero_90/13@g1#r4",
+    "libero_90/14@g1#r5",
+    "libero_90/16@g1#r5",
+    "libero_90/37@g1#r4",
+    "libero_90/45@g1#r5",
+    "libero_goal_object/08@g1#r4",
+    "libero_goal_swap/04@g1#r5",
+    "libero_goal_swap/09@g5#r3",
+    "libero_goal_task/09@g1#r5",
+    "libero_goal_with_milk/03@g1#r5",
+    "libero_goal_with_mug/08@g1#r5",
+    "libero_spatial_swap/00@g1#r5",
+    "libero_spatial_with_milk/04@g1#r5",
+    "libero_spatial_with_milk/06@g1#r5",
+    "libero_spatial_with_mug/01@g2#r5",
+    "libero_spatial_with_yellow_book/02@g1#r4",
+    "libero_spatial_with_yellow_book/07@g1#r5",
+    "verify|P_RELEASE_PLACEMENT|b0#L2.0",
+    "verify|P_RELEASE_PLACEMENT|b1#L2.0",
+    "verify|P_RELEASE_PLACEMENT|b1#L3.1"
+   ],
+   "summary": "When placement requires resting on a support, open, settle, and withdraw before checking fresh target geometry ...",
+   "target": "skills/transporting-objects/SKILL.md",
+   "text_sha256": "8423e95af26a3348be66fd84233a2403419d637b541641cfff2bf849974ab221"
   }
  ],
  "plan_id": "133a3f303397a2b21f5a30abdcdabbce7b556bd8954935af40a05a93e739dc94",
