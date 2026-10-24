@@ -191,6 +191,7 @@
    "text_sha256": "c1e1ef728a21a852d0c86e0ee6c52565503a78267045d2ac2f38b3dc0cf40f91"
   },
   {
+   "commit": "1fe69cfc4f6e3b0c65a0e7e22adf7b6b3a9b3a96",
    "group": "grasp",
    "id": "C02",
    "kind": "section",
@@ -205,6 +206,22 @@
    "summary": "When an attached grasp region is only partly visible near a hinge or body, use the observed body-to-region direction ...",
    "target": "skills/grasping-short-axis/SKILL.md",
    "text_sha256": "118a603d1f40e3561f78021ba0ef52fcc2b7f29e89910c47a0e058e845f26125"
+  },
+  {
+   "group": "grasp",
+   "id": "C03",
+   "kind": "section",
+   "lands": [
+    "libero_90/21@g1#r2"
+   ],
+   "layer": "conditional section of an existing SKILL.md",
+   "merges": [],
+   "record_ids": [
+    "libero_90/21@g1#r2"
+   ],
+   "summary": "When a preferred projecting-handle pose is unreachable or gives insufficient engagement, retain a second ...",
+   "target": "skills/grasping-short-axis/SKILL.md",
+   "text_sha256": "45c7553a1098c931a18c70d7c29eda7af6e4b9702370d179b02237f3acfbdf64"
   }
  ],
  "plan_id": "b940c484fc74b1a2ba4fb9fccf4ba91c862d4b53e8c952b8ca96ab5afa603f63",

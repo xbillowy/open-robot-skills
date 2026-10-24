@@ -193,6 +193,7 @@ uv sync --extra curobo --extra geometry   # (pip: pip install -e "open-robot-ski
 Follow these requirements when you write this subgraph. Each one comes from failures of earlier tasks that were repaired and confirmed by a rerun.
 
 1. When an attached grasp region is only partly visible near a hinge or body, use the observed body-to-region direction and depth to select exposed bar material below the hinge, retaining support clearance; done when the jaws span the bar thickness clear of the body rather than enclosing a hinge fragment.
+2. When a preferred projecting-handle pose is unreachable or gives insufficient engagement, retain a second geometry-derived handle pose for a bounded alternate attempt; done when a candidate reaches usable bar engagement. Refresh geometry before another attempt if both candidates fail.
 
 ## Recommended subgraph state flow
 
