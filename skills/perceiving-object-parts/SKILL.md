@@ -89,6 +89,12 @@ to ~30% of pixels in the cropped image — within SAM3's reliable range.
 > observation source, identical to `perceiving-objects`'s `cameras`
 > input).
 
+## Requirements from confirmed experience
+
+Follow these requirements when you write this subgraph. Each one comes from failures of earlier tasks that were repaired and confirmed by a rerun.
+
+1. When articulated-part geometry is absent or the parent crop excludes the control, deviate from parent-first localization: search the visible part directly in current color and depth. Check fixture association, requested level and geometric plausibility; retry another view if unresolved. Done when the requested part has usable observation-derived geometry.
+
 ## When to use
 
 - The grasp/place affordance is a part of a larger object (pan handle,
