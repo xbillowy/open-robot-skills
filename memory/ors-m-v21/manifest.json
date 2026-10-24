@@ -651,6 +651,7 @@
    "text_sha256": "01f5177fb2f102c8180a8d20102e32f6520cc5ec7bb23dac976d69ffeea7966d"
   },
   {
+   "commit": "72229fdbd23a551ee379640fea175ebe30b59d43",
    "group": "verify",
    "id": "C18",
    "kind": "section",
@@ -668,6 +669,33 @@
    "summary": "When perception is used to verify an action and target association is ambiguous, bind evidence to the affected ...",
    "target": "skills/perceiving-objects/SKILL.md",
    "text_sha256": "1ced70cf6e638d9bb60a28b0738575cf349309371f4cff213ec819b9b4ecaa13"
+  },
+  {
+   "group": "perceive",
+   "id": "C19",
+   "kind": "section",
+   "lands": [
+    "perceive|P_PERC_BIASED_GEOM|b1#L3.2"
+   ],
+   "layer": "conditional section of an existing SKILL.md",
+   "merges": [
+    "libero_10_swap/08@g1#r0",
+    "libero_90/01@g1#r1",
+    "libero_goal_swap/04@g1#r1",
+    "libero_spatial_with_yellow_book/04@g1#r1",
+    "perceive|P_PERC_BIASED_GEOM|b1#L2.0"
+   ],
+   "record_ids": [
+    "libero_10_swap/08@g1#r0",
+    "libero_90/01@g1#r1",
+    "libero_goal_swap/04@g1#r1",
+    "libero_spatial_with_yellow_book/04@g1#r1",
+    "perceive|P_PERC_BIASED_GEOM|b1#L2.0",
+    "perceive|P_PERC_BIASED_GEOM|b1#L3.2"
+   ],
+   "summary": "When destination bounds include peripheral structures or omit the usable supporting region, isolate the broad ...",
+   "target": "skills/perceiving-objects-oneshot/SKILL.md",
+   "text_sha256": "4d1cf57b22c930ec77ea0455c2cb554ea1e0ad8460341694ce1802690fd34d6d"
   }
  ],
  "plan_id": "133a3f303397a2b21f5a30abdcdabbce7b556bd8954935af40a05a93e739dc94",
