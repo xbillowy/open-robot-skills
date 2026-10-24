@@ -193,6 +193,7 @@ uv sync --extra curobo --extra geometry   # (pip: pip install -e "open-robot-ski
 Follow these requirements when you write this subgraph. Each one comes from failures of earlier tasks that were repaired and confirmed by a rerun.
 
 1. When a hollow target's center lacks graspable material, use a fresh depth-derived OBB of an accessible elongated rim-wall segment, not the whole outline. Straddle solid material, preserve support clearance and sufficient pad engagement, and omit the attached-body slide. Done when opposing fingers enclose the wall rather than empty space.
+2. When an attached handle observation covers only a hinge or small patch, recover the usable bar and its body-to-handle direction from fresh depth; align closure across its thickness. Apply the outward offset only if the selected region is not already clear of the body. Done when the pads enclose solid bar material clear of the body and hinge.
 
 ## Recommended subgraph state flow
 

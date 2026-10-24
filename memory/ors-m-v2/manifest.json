@@ -238,6 +238,7 @@
    "text_sha256": "f78a9688ccb300a36e1a4b6bff8473855dbc0a38f433d3b57f12458fec193c3c"
   },
   {
+   "commit": "59f5da8070e9f2ac7c0865803c03e93c421f0a4e",
    "group": "grasp",
    "id": "C05",
    "kind": "section",
@@ -275,6 +276,31 @@
    "summary": "When a hollow target's center lacks graspable material, use a fresh depth-derived OBB of an accessible elongated ...",
    "target": "skills/grasping-short-axis/SKILL.md",
    "text_sha256": "2ee122e19e52475e43c1f9cb03da8d507bdafcac3170969b953239c6e5d0bfec"
+  },
+  {
+   "group": "grasp",
+   "id": "C06",
+   "kind": "section",
+   "lands": [
+    "libero_90/38@g1#r0"
+   ],
+   "layer": "conditional section of an existing SKILL.md",
+   "merges": [
+    "libero_90/18@g0#r1",
+    "libero_90/21@g1#r2",
+    "libero_90/21@g2#r1",
+    "libero_90/87@g0#r1"
+   ],
+   "record_ids": [
+    "libero_90/18@g0#r1",
+    "libero_90/21@g1#r2",
+    "libero_90/21@g2#r1",
+    "libero_90/38@g1#r0",
+    "libero_90/87@g0#r1"
+   ],
+   "summary": "When an attached handle observation covers only a hinge or small patch, recover the usable bar and its ...",
+   "target": "skills/grasping-short-axis/SKILL.md",
+   "text_sha256": "a3f232f2fc5295e2d71652d09104f8380c04263d28dacb40df02d5f6470f565a"
   }
  ],
  "plan_id": "a526441b207f716ca8ba092618f7145a97b9920dce3ada618d0c2ac75b5faf09",
