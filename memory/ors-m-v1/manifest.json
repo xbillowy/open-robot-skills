@@ -419,6 +419,7 @@
    "text_sha256": "a7b0428c7ed397ee124c17950a7e05917011ae760aa9882ac151135a54539516"
   },
   {
+   "commit": "66fc95f39efa0815e92e153613aa6cfa276d6491",
    "id": "C26",
    "kind": "coordinator",
    "layer": "coordinator composition pattern (coarse plan)",
@@ -430,6 +431,19 @@
    "summary": "When containment is through a front opening, plan access-aware insertion rather than the open-top vertical-container ...",
    "target": "memory/ors-m-v1/coordinator.md",
    "text_sha256": "da8356bfe76a7b4d351ba5519a8a26fd347e70609d0ee3ec3e6fbb6c75cbcef6"
+  },
+  {
+   "id": "C27",
+   "kind": "drop",
+   "layer": "consolidated away (dedupe / conflict)",
+   "record_ids": [
+    "L1.unified_v1.bd41716e216b83bb",
+    "L2.unified_v1.adcfbf6e95e58ad6",
+    "L3.unified_v1.617c888dc40bfc1e"
+   ],
+   "summary": "The required visual gate before automatic withdrawal cannot be implemented by the editable atomic release scripts ...",
+   "target": null,
+   "text_sha256": "015f83df32daaef2753305a726cffb7938e2621b29a2d040cfb5c78fb475f39d"
   }
  ],
  "plan_id": "5700903823db710bf5a016de95915c864fddb0cd8fa89b5891827218ffcea9ed",
