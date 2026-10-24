@@ -204,6 +204,7 @@
    "text_sha256": "89ed9ebc152998021a4ea6da5b165e704ead95d3f60f14fa3f17a5e24215abbf"
   },
   {
+   "commit": "054529aa1a5b2d179e6a298e9fbeebbc8979cd3f",
    "id": "C13",
    "kind": "section",
    "layer": "conditional section of an existing SKILL.md",
@@ -219,6 +220,21 @@
    "summary": "When only an object's upper surface is observed, complete vertical extent only if a coherent target footprint and ...",
    "target": "skills/perceiving-objects/SKILL.md",
    "text_sha256": "37d2cb7ddd6997a8c77b4648d9ca203ea6a28618f0730b06cd121f1b5c897e09"
+  },
+  {
+   "id": "C14",
+   "kind": "section",
+   "layer": "conditional section of an existing SKILL.md",
+   "record_ids": [
+    "L1.unified_v1.0301062a2e2f9947",
+    "L1.unified_v1.f066f936efcdfe47",
+    "L2.unified_v1.5174b6ebe8d4e395",
+    "L2.unified_v1.fcf7d3250b72d3b9",
+    "L3.unified_v1.89f41f5e6acae52f"
+   ],
+   "summary": "When repeated transfers share a perception allowance, bound identity recovery to two alternatives and reuse ...",
+   "target": "skills/perceiving-objects/SKILL.md",
+   "text_sha256": "86039e592c48b3c99fb0a5c2fa21041447181af339a8c3fcfe9d9620abdd7785"
   }
  ],
  "plan_id": "5700903823db710bf5a016de95915c864fddb0cd8fa89b5891827218ffcea9ed",
