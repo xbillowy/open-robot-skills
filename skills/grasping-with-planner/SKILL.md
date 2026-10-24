@@ -118,6 +118,7 @@ See `tools/curobo/SKILL.md` for the full recipe and gotchas.
 Follow these requirements when you write this subgraph. Each one comes from failures of earlier tasks that were repaired and confirmed by a rerun.
 
 1. When established geometry already supports a top-down grasp, do not insert optional hover identity or depth refinement between approach and descent; preserve required arm-state observation and collision fallback; done when descent and closure use the established target geometry without a redundant sensing dependency.
+2. When descending to grasp, gate close on fresh endpoint feedback in the same reference as the command, using the configured rigid transform rather than command-minus-feedback calibration. Allow at most two measured-state corrections; done when position and orientation meet configured arrival tolerances, otherwise exit failed.
 
 ## Recommended subgraph state flow
 

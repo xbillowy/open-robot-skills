@@ -80,6 +80,7 @@
    "text_sha256": "12afb2db40799b58e0c907e3b5467832046da5765e708db8e7c5e7cb6934c855"
   },
   {
+   "commit": "e2d46cabd822e2c12c030bb7c1bcf320c98eeb10",
    "id": "C05",
    "kind": "section",
    "layer": "conditional section of an existing SKILL.md",
@@ -91,6 +92,21 @@
    "summary": "When established geometry already supports a top-down grasp, do not insert optional hover identity or depth ...",
    "target": "skills/grasping-with-planner/SKILL.md",
    "text_sha256": "23ec947b96a71997e7279e69fbbc5c7d8083b6415467e90b23911654166daf3c"
+  },
+  {
+   "id": "C06",
+   "kind": "section",
+   "layer": "conditional section of an existing SKILL.md",
+   "record_ids": [
+    "L1.unified_v1.8cb6901447be8dd1",
+    "L1.unified_v1.96a15f9a7a85fd46",
+    "L2.unified_v1.78ae21c13130d065",
+    "L3.unified_v1.30965b3977998df7",
+    "L3.unified_v1.ecad7e3930f8fc3d"
+   ],
+   "summary": "When descending to grasp, gate close on fresh endpoint feedback in the same reference as the command, using the ...",
+   "target": "skills/grasping-with-planner/SKILL.md",
+   "text_sha256": "93ecf38977c40929c7967115a39ee9abfd35f9a4dd3cdc1eeb0114c59a4019db"
   }
  ],
  "plan_id": "5700903823db710bf5a016de95915c864fddb0cd8fa89b5891827218ffcea9ed",
