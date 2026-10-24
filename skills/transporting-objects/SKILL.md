@@ -88,6 +88,7 @@ Follow these requirements when you write this subgraph. Each one comes from fail
 2. When a peripheral grasp or visible slip changes the object's attachment, obtain current held-body geometry upstream and use its measured hand offset and tilt rather than assuming the pre-grasp offset persisted; done when the body, not merely the hand, aligns with the support and remains supported after release.
 3. When placing on a horizontal top of a larger fixture, target its observed support plane and footprint rather than the full fixture OBB; use zone perception for that surface; done when post-release object lower points lie near that plane and its footprint lies on the intended support.
 4. When placement names a directional region, ground that relation in the observed reference and instructed frame rather than using a universal offset or container center; done when fresh post-withdrawal object geometry satisfies that specific relation.
+5. When placement will be followed by articulated closure, verify the entire released object clears the opening and closing sweep in both footprint and height; do not accept a rim-supported protrusion as containment; done when the object is independently supported inside and the hand and object leave the closing path clear.
 
 ## Recommended subgraph state flow
 

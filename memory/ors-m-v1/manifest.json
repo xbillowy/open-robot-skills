@@ -284,6 +284,7 @@
    "text_sha256": "3c27e9279bd4a540ce421d1b51c1c83bda5642b0bb862312674bb5ca178807c8"
   },
   {
+   "commit": "41447acacbc6dc6e05826fd57bfb7dcfac2f6aec",
    "id": "C18",
    "kind": "section",
    "layer": "conditional section of an existing SKILL.md",
@@ -295,6 +296,20 @@
    "summary": "When placement names a directional region, ground that relation in the observed reference and instructed frame ...",
    "target": "skills/transporting-objects/SKILL.md",
    "text_sha256": "d552604815bd0205c16f0ca80a15a49199e77598cee46c94b0d3e69e0b8ff0c3"
+  },
+  {
+   "id": "C19",
+   "kind": "section",
+   "layer": "conditional section of an existing SKILL.md",
+   "record_ids": [
+    "L1.unified_v1.81938744d118172e",
+    "L1.unified_v1.a35c31d75740cf11",
+    "L2.unified_v1.66e17d373ef1eb2b",
+    "L2.unified_v1.dd700b6338b3767e"
+   ],
+   "summary": "When placement will be followed by articulated closure, verify the entire released object clears the opening and ...",
+   "target": "skills/transporting-objects/SKILL.md",
+   "text_sha256": "ceb4bd32a18b26b7c0eb201d1f5e92af2b9671cda793d50cd4324d3279ce60dd"
   }
  ],
  "plan_id": "5700903823db710bf5a016de95915c864fddb0cd8fa89b5891827218ffcea9ed",
