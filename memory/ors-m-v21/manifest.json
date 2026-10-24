@@ -985,6 +985,7 @@
    "text_sha256": "8423e95af26a3348be66fd84233a2403419d637b541641cfff2bf849974ab221"
   },
   {
+   "commit": "1d66582aa7d77b28ff2ce9ed4808890a010eb814",
    "group": "verify",
    "id": "C29",
    "kind": "section",
@@ -1002,6 +1003,22 @@
    "summary": "When placing inside a container, inspect the target after release, settling, and withdrawal using a view exposing ...",
    "target": "skills/transporting-objects/SKILL.md",
    "text_sha256": "9dbe38daec12584116642ba5b78be4c2d99f570b6b5fdf90f6cde062791c6828"
+  },
+  {
+   "group": "verify",
+   "id": "C30",
+   "kind": "section",
+   "lands": [
+    "libero_spatial_with_mug/06@g1#r5"
+   ],
+   "layer": "conditional section of an existing SKILL.md",
+   "merges": [],
+   "record_ids": [
+    "libero_spatial_with_mug/06@g1#r5"
+   ],
+   "summary": "When lowering to a release pose, verify arrival from fresh feedback in the command's reference frame using the ...",
+   "target": "skills/transporting-objects/SKILL.md",
+   "text_sha256": "9fc14359cb8d05d5c6ad2288f972bdf01ca15ede8b4a24ab6abeae0ede3b5188"
   }
  ],
  "plan_id": "b940c484fc74b1a2ba4fb9fccf4ba91c862d4b53e8c952b8ca96ab5afa603f63",
