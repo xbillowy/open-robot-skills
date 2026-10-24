@@ -88,6 +88,7 @@ Follow these requirements when you write this subgraph. Each one comes from fail
 2. When protrusions or surrounding structure bias an available placement reference, use the supporting body, its base, and the usable destination support patch instead of whole-object centers or extents; retain existing zone geometry if adequate; done when the body's supported footprint fits the patch at the measured support height.
 3. When release geometry or separation leaves placement uncertain, override the observation ban: open, settle, clear the hand and inspect fresh resting geometry. Retry occluded checks twice; request corrective replacement for misplacement, or renewed localization and replanning for persistent uncertainty; done when the released object's required resting relation is established.
 4. When observed slip, rotation within the grasp, or grasp recovery invalidates recorded held geometry, permit fresh held-object observation despite the observation ban; remeasure its hand-relative pose and base before computing placement, and again after further observed shift; done when the release target uses the current held configuration.
+5. When placement must leave an articulated closure unobstructed, choose orientation and depth to fit the usable interior. Override the observation ban to inspect after release and withdrawal; request corrective replacement for protrusion or renewed interior localization for uncertainty; done when fresh evidence shows support wholly inside, clear of the closing sweep and hand.
 
 ## Recommended subgraph state flow
 
