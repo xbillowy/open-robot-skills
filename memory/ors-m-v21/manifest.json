@@ -1005,6 +1005,7 @@
    "text_sha256": "9dbe38daec12584116642ba5b78be4c2d99f570b6b5fdf90f6cde062791c6828"
   },
   {
+   "commit": "29f97a4c3e20801d69025da99c352fe13b343894",
    "group": "verify",
    "id": "C30",
    "kind": "section",
@@ -1019,6 +1020,25 @@
    "summary": "When lowering to a release pose, verify arrival from fresh feedback in the command's reference frame using the ...",
    "target": "skills/transporting-objects/SKILL.md",
    "text_sha256": "9fc14359cb8d05d5c6ad2288f972bdf01ca15ede8b4a24ab6abeae0ede3b5188"
+  },
+  {
+   "group": "other",
+   "id": "C31",
+   "kind": "section",
+   "lands": [
+    "libero_10_task/00@g1#r1"
+   ],
+   "layer": "conditional section of an existing SKILL.md",
+   "merges": [
+    "libero_object_object/07@g1#r0"
+   ],
+   "record_ids": [
+    "libero_10_task/00@g1#r1",
+    "libero_object_object/07@g1#r0"
+   ],
+   "summary": "When release requires pose arrival, check measured tool position and orientation against explicit tolerances, ...",
+   "target": "skills/transporting-objects/SKILL.md",
+   "text_sha256": "cc07b9e4be1b0afe5d4feeeda255816efb9d1e760c538e1a7fb0491611040117"
   }
  ],
  "plan_id": "b940c484fc74b1a2ba4fb9fccf4ba91c862d4b53e8c952b8ca96ab5afa603f63",

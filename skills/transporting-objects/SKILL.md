@@ -94,6 +94,7 @@ Follow these requirements when you write this subgraph. Each one comes from fail
 8. When placement requires resting on a support, open, settle, and withdraw before checking fresh target geometry against the support footprint and height; if unconfirmed, refresh localization and retry release or regrasp and replace up to twice, then request recovery; done when the object remains supported independently of the hand.
 9. When placing inside a container, inspect the target after release, settling, and withdrawal using a view exposing the interior; check its footprint and height against the opening and interior, not exterior visibility. If outside or perched, refresh localization and retry placement up to twice, then request recovery; done when fresh geometry establishes containment.
 10. When lowering to a release pose, verify arrival from fresh feedback in the command's reference frame using the configured rigid transform, and verify finger opening before retreating. If either check fails, refresh feedback and retry the failed step up to twice, then request recovery; done when arrival and opening are observed, with placement still subject to its outcome check.
+11. When release requires pose arrival, check measured tool position and orientation against explicit tolerances, including the hand offset. Correct errors with bounded retries; unresolved error uses the failure exit for destination re-perception and retry, never release. Done when arrival is verified.
 
 ## Recommended subgraph state flow
 
