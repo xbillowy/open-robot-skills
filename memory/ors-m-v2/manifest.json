@@ -1219,6 +1219,7 @@
    "text_sha256": "1bf011bfdf89a533129c8951ad035d1f475ded573e8b0ca05eba60217061d758"
   },
   {
+   "commit": "5e6d54560a55aa556eea7ff49fceceef81fefb67",
    "group": "transport",
    "id": "C31",
    "kind": "section",
@@ -1242,6 +1243,31 @@
    "summary": "When carrying feedback indicates slip, empty fingers or uncertain retention, gate placement descent using fresh ...",
    "target": "skills/transporting-objects/SKILL.md",
    "text_sha256": "1f4462fe9949adf0b57f04328eaa3d3e354aebe6c8d2507ff26e62bce36a57b4"
+  },
+  {
+   "group": "transport",
+   "id": "C32",
+   "kind": "section",
+   "lands": [
+    "libero_object_temp_y0_3/01@g1#r3",
+    "libero_spatial_with_milk/03@g1#r3"
+   ],
+   "layer": "conditional section of an existing SKILL.md",
+   "merges": [
+    "libero_90/84@g1#r1",
+    "libero_goal_task/04@g1#r2",
+    "libero_goal_with_milk/03@g1#r3"
+   ],
+   "record_ids": [
+    "libero_90/84@g1#r1",
+    "libero_goal_task/04@g1#r2",
+    "libero_goal_with_milk/03@g1#r3",
+    "libero_object_temp_y0_3/01@g1#r3",
+    "libero_spatial_with_milk/03@g1#r3"
+   ],
+   "summary": "When an extended grasp makes the clearance lift unreachable, refresh held-object extent and offset, then plan a ...",
+   "target": "skills/transporting-objects/SKILL.md",
+   "text_sha256": "8c672c413564b1114b07ade52e466abd44553d0c4cef5d75c87395a25bbdbbb2"
   }
  ],
  "plan_id": "a526441b207f716ca8ba092618f7145a97b9920dce3ada618d0c2ac75b5faf09",
