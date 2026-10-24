@@ -222,6 +222,7 @@
    "text_sha256": "37d2cb7ddd6997a8c77b4648d9ca203ea6a28618f0730b06cd121f1b5c897e09"
   },
   {
+   "commit": "09b5d3fb065132034cf66ce9bdadbb5ded674d04",
    "id": "C14",
    "kind": "section",
    "layer": "conditional section of an existing SKILL.md",
@@ -235,6 +236,19 @@
    "summary": "When repeated transfers share a perception allowance, bound identity recovery to two alternatives and reuse ...",
    "target": "skills/perceiving-objects/SKILL.md",
    "text_sha256": "86039e592c48b3c99fb0a5c2fa21041447181af339a8c3fcfe9d9620abdd7785"
+  },
+  {
+   "id": "C15",
+   "kind": "section",
+   "layer": "conditional section of an existing SKILL.md",
+   "record_ids": [
+    "L1.unified_v1.384227a901a859f2",
+    "L2.unified_v1.de49dae512a5ed06",
+    "L3.unified_v1.54b0ce9785a436d1"
+   ],
+   "summary": "When a rimmed opening permits vertical insertion, deviate from fixed above-rim release: derive place_offset from ...",
+   "target": "skills/transporting-objects/SKILL.md",
+   "text_sha256": "b35508c143cc49a8a915f3898e9381b14d4e9fc81d24b2d66f22d83ee376134b"
   }
  ],
  "plan_id": "5700903823db710bf5a016de95915c864fddb0cd8fa89b5891827218ffcea9ed",

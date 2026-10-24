@@ -80,6 +80,12 @@ moves the held object above the destination container and releases it.
   other scene objects in transit. The current cuRobo v0.8 bundle does not
   advertise attached-object transport planning.
 
+## Requirements from confirmed experience
+
+Follow these requirements when you write this subgraph. Each one comes from failures of earlier tasks that were repaired and confirmed by a rerun.
+
+1. When a rimmed opening permits vertical insertion, deviate from fixed above-rim release: derive place_offset from observed interior depth, held-object geometry and hand clearance so the executed endpoint lowers the object inside without striking the floor; done when checked arrival precedes opening and fresh images confirm settled containment.
+
 ## Recommended subgraph state flow
 
 Choose the flow by WHERE the object must land.
