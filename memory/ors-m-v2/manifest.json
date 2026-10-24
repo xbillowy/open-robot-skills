@@ -1603,6 +1603,7 @@
    "text_sha256": "b71d1fea6b9079b37f4b2e77fde5b3e4ef6267cdd295c6e94a5b9b3b0faee614"
   },
   {
+   "commit": "3810ad9e1371860a48785a0e5afdca521e53e451",
    "group": "coordinator",
    "id": "C41",
    "kind": "coordinator",
@@ -1628,6 +1629,24 @@
    "summary": "When placing into a container, onto a support, or leaving a part closed, verify the requested relation from fresh ...",
    "target": "memory/ors-m-v2/coordinator.md",
    "text_sha256": "7dba66c266b408b16298021c2815ce3b7c2f71355eda92c28164401b91bb1aaa"
+  },
+  {
+   "group": "coordinator",
+   "id": "C42",
+   "kind": "coordinator",
+   "lands": [
+    "libero_10_swap/09@g13#r1",
+    "libero_90/08@g1#r2"
+   ],
+   "layer": "coordinator composition pattern (coarse plan)",
+   "merges": [],
+   "record_ids": [
+    "libero_10_swap/09@g13#r1",
+    "libero_90/08@g1#r2"
+   ],
+   "summary": "When a transfer crosses an articulated opening, inspect access before pickup. If blocked, use ...",
+   "target": "memory/ors-m-v2/coordinator.md",
+   "text_sha256": "bff94e5e924c2765ff1e6984d4b0d066a7baeac295a9d5f7d4b7d7c5538d9f61"
   }
  ],
  "plan_id": "a526441b207f716ca8ba092618f7145a97b9920dce3ada618d0c2ac75b5faf09",
