@@ -321,6 +321,7 @@
    "text_sha256": "cfb57a55d91132f361be0caa6bb1e58cb53d99b7e3d19f21246122f7e1b06f8d"
   },
   {
+   "commit": "d22ae14a79fc06d9a1cde38e4b6d5eb0baac7ac1",
    "group": "verify",
    "id": "C08",
    "kind": "section",
@@ -335,6 +336,25 @@
    "summary": "When hand overlap makes lift evidence ambiguous, compare target surfaces before and after lift, excluding robot and ...",
    "target": "skills/grasping-short-axis/SKILL.md",
    "text_sha256": "1d65cf1e2bea3a894d27cf645a59833c8b841ecc4261671502e6549a6fcbb8e5"
+  },
+  {
+   "group": "other",
+   "id": "C09",
+   "kind": "section",
+   "lands": [
+    "other|P_MOTION_NOT_ARRIVE|b1#L2.1"
+   ],
+   "layer": "conditional section of an existing SKILL.md",
+   "merges": [
+    "libero_90/71@g1#r0"
+   ],
+   "record_ids": [
+    "libero_90/71@g1#r0",
+    "other|P_MOTION_NOT_ARRIVE|b1#L2.1"
+   ],
+   "summary": "When preparing to close, compare live robot pose with the target using the calibrated tool offset and explicit ...",
+   "target": "skills/grasping-short-axis/SKILL.md",
+   "text_sha256": "f78a9688ccb300a36e1a4b6bff8473855dbc0a38f433d3b57f12458fec193c3c"
   }
  ],
  "plan_id": "a526441b207f716ca8ba092618f7145a97b9920dce3ada618d0c2ac75b5faf09",
