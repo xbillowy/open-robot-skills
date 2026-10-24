@@ -80,6 +80,12 @@ moves the held object above the destination container and releases it.
   other scene objects in transit. The current cuRobo v0.8 bundle does not
   advertise attached-object transport planning.
 
+## Requirements from confirmed experience
+
+Follow these requirements when you write this subgraph. Each one comes from failures of earlier tasks that were repaired and confirmed by a rerun.
+
+1. When a displaced grasp makes hand alignment differ from object alignment, convert the desired object pose into a hand target using the recorded object-to-hand transform; account for lateral offset and base clearance without extra sensing if existing geometry suffices; done when the object footprint fits the destination and its base is near support.
+
 ## Recommended subgraph state flow
 
 Choose the flow by WHERE the object must land.
