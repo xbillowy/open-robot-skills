@@ -597,6 +597,7 @@
    "text_sha256": "948e210f95cf2984127d72b99649cabeee22b2d7584ea12299a908a955a89ea5"
   },
   {
+   "commit": "cdbda3a6a00e7c85f6646f6876f4163224968e79",
    "group": "perceive",
    "id": "C16",
    "kind": "section",
@@ -622,6 +623,31 @@
    "summary": "When visible surfaces demonstrably omit body extent needed for grasping, infer missing extent only from a coherent ...",
    "target": "skills/perceiving-objects/SKILL.md",
    "text_sha256": "ab145366f421cce4628548028e84948a8d0a8c74ce32cd6b2ae1b987f21f6cef"
+  },
+  {
+   "group": "perceive",
+   "id": "C17",
+   "kind": "section",
+   "lands": [
+    "libero_object_with_mug/03@g1#r1"
+   ],
+   "layer": "conditional section of an existing SKILL.md",
+   "merges": [
+    "libero_goal_swap/08@g2#r0",
+    "libero_object_temp_y0_2/00@g1#r1",
+    "libero_object_temp_y0_2/06@g5#r0",
+    "libero_object_with_mug/03@g1#r0"
+   ],
+   "record_ids": [
+    "libero_goal_swap/08@g2#r0",
+    "libero_object_temp_y0_2/00@g1#r1",
+    "libero_object_temp_y0_2/06@g5#r0",
+    "libero_object_with_mug/03@g1#r0",
+    "libero_object_with_mug/03@g1#r1"
+   ],
+   "summary": "When a selected mask includes disconnected, oversized, or depth-inconsistent regions, retain measured components ...",
+   "target": "skills/perceiving-objects/SKILL.md",
+   "text_sha256": "01f5177fb2f102c8180a8d20102e32f6520cc5ec7bb23dac976d69ffeea7966d"
   }
  ],
  "plan_id": "133a3f303397a2b21f5a30abdcdabbce7b556bd8954935af40a05a93e739dc94",
