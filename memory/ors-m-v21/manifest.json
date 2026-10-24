@@ -819,6 +819,7 @@
    "text_sha256": "b85d9d50133f1e2f2565aa7194ac2004c9f78c4559833ff23fbf9ec6c674b577"
   },
   {
+   "commit": "197aee8197a227823ba10b38eee55dca53317f3f",
    "group": "place",
    "id": "C23",
    "kind": "section",
@@ -842,6 +843,22 @@
    "summary": "When an interior opening constrains insertion, choose object orientation and depth from the usable opening and ...",
    "target": "skills/transporting-objects/SKILL.md",
    "text_sha256": "14563ca04eb94c64e4efdb90992e03664ea9f5d2bb2428dfd3cc40d04b2b7a53"
+  },
+  {
+   "group": "place",
+   "id": "C24",
+   "kind": "section",
+   "lands": [
+    "libero_90/37@g1#r2"
+   ],
+   "layer": "conditional section of an existing SKILL.md",
+   "merges": [],
+   "record_ids": [
+    "libero_90/37@g1#r2"
+   ],
+   "summary": "When placement names an area beside a reference rather than its surface, resolve the named side in the observed ...",
+   "target": "skills/transporting-objects/SKILL.md",
+   "text_sha256": "b2c080c1aae1e7467c63d48aa38c4e0f74786bf620aec3364b136a2371bc0d72"
   }
  ],
  "plan_id": "133a3f303397a2b21f5a30abdcdabbce7b556bd8954935af40a05a93e739dc94",
