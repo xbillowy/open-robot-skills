@@ -49,6 +49,7 @@
    "text_sha256": "a8747cc4caf4bad0edea6fbf5284f2e54d8da3b81572b178a0fe54db08fe2ec9"
   },
   {
+   "commit": "474ab9bf34c2691421396149342fd0e9fd5346fd",
    "id": "C03",
    "kind": "section",
    "layer": "conditional section of an existing SKILL.md",
@@ -62,6 +63,20 @@
    "summary": "When finalize returns, verify fresh arrival before close rather than treating trajectory execution as convergence. ...",
    "target": "skills/grasping-short-axis/SKILL.md",
    "text_sha256": "b5d695853df198c937e4f5119f11ccae0e666a4661b9688cd54c8b3c717ddf0c"
+  },
+  {
+   "id": "C04",
+   "kind": "section",
+   "layer": "conditional section of an existing SKILL.md",
+   "record_ids": [
+    "L1.unified_v1.b1957f611628b5cd",
+    "L2.unified_v1.6a4af0703f371139",
+    "L2.unified_v1.7b1301aa24e6bcd6",
+    "L3.unified_v1.96d6368149995da8"
+   ],
+   "summary": "When target_obb represents a selected rim or wall segment, align the opening axis across its local thickness and ...",
+   "target": "skills/grasping-short-axis/SKILL.md",
+   "text_sha256": "12afb2db40799b58e0c907e3b5467832046da5765e708db8e7c5e7cb6934c855"
   }
  ],
  "plan_id": "5700903823db710bf5a016de95915c864fddb0cd8fa89b5891827218ffcea9ed",
