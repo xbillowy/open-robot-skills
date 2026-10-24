@@ -350,6 +350,7 @@
    "text_sha256": "4a5081b579ca4818460e62687357e86f5779ca7e415a364e22f3fc134d8f4d3d"
   },
   {
+   "commit": "678d6e79f59442859016d53473fcbb3331854e3e",
    "group": "perceive",
    "id": "C10",
    "kind": "section",
@@ -364,6 +365,22 @@
    "summary": "When similar parents have nearby handles, establish the intended parent from its visible shape and dimensions before ...",
    "target": "skills/perceiving-object-parts/SKILL.md",
    "text_sha256": "116c03dc35ad786163db5d433b71944f923f0ff5ea1f9a9e6bafc64db9f78008"
+  },
+  {
+   "group": "perceive",
+   "id": "C11",
+   "kind": "section",
+   "lands": [
+    "libero_90/45@g1#r1"
+   ],
+   "layer": "conditional section of an existing SKILL.md",
+   "merges": [],
+   "record_ids": [
+    "libero_90/45@g1#r1"
+   ],
+   "summary": "When a projecting handle query selects the body junction, use the complete parent silhouette and metric depth to ...",
+   "target": "skills/perceiving-object-parts/SKILL.md",
+   "text_sha256": "ca1ee3fcd8927fb7584736fc8509ce85c6d87a3d08555d5c53b7831452fa0ec1"
   }
  ],
  "plan_id": "b940c484fc74b1a2ba4fb9fccf4ba91c862d4b53e8c952b8ca96ab5afa603f63",
