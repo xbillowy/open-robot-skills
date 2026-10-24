@@ -401,6 +401,7 @@
    "text_sha256": "31877c36c21294f79afab64ab259524258d4d5d2f4e33e8ca47cb7eb09eea787"
   },
   {
+   "commit": "dc36a82b72faf71efc949a6672f4805513cb78d8",
    "id": "C25",
    "kind": "coordinator",
    "layer": "coordinator composition pattern (coarse plan)",
@@ -416,6 +417,19 @@
    "summary": "When spatial language distinguishes similar objects or destinations, include the reference and requested relation ...",
    "target": "memory/ors-m-v1/coordinator.md",
    "text_sha256": "a7b0428c7ed397ee124c17950a7e05917011ae760aa9882ac151135a54539516"
+  },
+  {
+   "id": "C26",
+   "kind": "coordinator",
+   "layer": "coordinator composition pattern (coarse plan)",
+   "record_ids": [
+    "L1.unified_v1.26804311f4ef830e",
+    "L2.unified_v1.67f1f3d670986d1f",
+    "L3.unified_v1.b3216c9d9ee06a46"
+   ],
+   "summary": "When containment is through a front opening, plan access-aware insertion rather than the open-top vertical-container ...",
+   "target": "memory/ors-m-v1/coordinator.md",
+   "text_sha256": "da8356bfe76a7b4d351ba5519a8a26fd347e70609d0ee3ec3e6fbb6c75cbcef6"
   }
  ],
  "plan_id": "5700903823db710bf5a016de95915c864fddb0cd8fa89b5891827218ffcea9ed",
