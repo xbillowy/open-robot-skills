@@ -384,6 +384,7 @@
    "text_sha256": "80fb275809eabadce70378d7eeb0b7957b8e22045d7105fe9ccda08a8591e3fa"
   },
   {
+   "commit": "3ff5381dc00f1933670831e487c8efa86167bd58",
    "id": "C24",
    "kind": "coordinator",
    "layer": "coordinator composition pattern (coarse plan)",
@@ -398,6 +399,23 @@
    "summary": "When a hollow object's cavity can admit both fingers, plan subpart perception of an accessible solid rim or wall and ...",
    "target": "memory/ors-m-v1/coordinator.md",
    "text_sha256": "31877c36c21294f79afab64ab259524258d4d5d2f4e33e8ca47cb7eb09eea787"
+  },
+  {
+   "id": "C25",
+   "kind": "coordinator",
+   "layer": "coordinator composition pattern (coarse plan)",
+   "record_ids": [
+    "L1.unified_v1.07f2ade39f413474",
+    "L1.unified_v1.f2aecb0929919e82",
+    "L2.unified_v1.541a9c39a0b655b7",
+    "L2.unified_v1.8068fe65ce7e7f85",
+    "L3.unified_v1.0917723b10886755",
+    "L3.unified_v1.5f5fd20d9a249981",
+    "L3.unified_v1.cf951650c0259e95"
+   ],
+   "summary": "When spatial language distinguishes similar objects or destinations, include the reference and requested relation ...",
+   "target": "memory/ors-m-v1/coordinator.md",
+   "text_sha256": "a7b0428c7ed397ee124c17950a7e05917011ae760aa9882ac151135a54539516"
   }
  ],
  "plan_id": "5700903823db710bf5a016de95915c864fddb0cd8fa89b5891827218ffcea9ed",
