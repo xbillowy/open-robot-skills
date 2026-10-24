@@ -96,6 +96,7 @@ Follow these requirements when you write this subgraph. Each one comes from fail
 10. When supported placement leaves detachment, alignment or stability unconfirmed, check arrival in a compatible reference, open, withdraw and observe target-specific depth after settling; done when footprint, resting height and stability establish support. Otherwise refresh localization and retry release or regrasp-and-place within a bound, then recheck.
 11. When containment is required and release leaves interior occupancy uncertain, open, withdraw and inspect the destination interior using fresh target segmentation and depth; done when target geometry lies inside the footprint at a settled height, not perched on the rim. Otherwise reobserve and use bounded release or replacement recovery, then recheck.
 12. When the hand or container walls obscure a final placement check, clear the hand and acquire fresh target-specific segmentation or depth from a view exposing the relevant region; done when that view resolves the requested relation. If still hidden, change view and re-perceive within a bound; route unresolved evidence to replanning, not completion.
+13. When preparing to release, compare live robot pose with the target using the calibrated tool offset and explicit position/orientation tolerances. Correct residual error with bounded retries; on mismatch, route failure to re-perception/replanning; done when both tolerances pass before release.
 
 ## Recommended subgraph state flow
 

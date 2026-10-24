@@ -1351,6 +1351,7 @@
    "text_sha256": "aa1fbe861e4ed661a33000d68feb3d094c333f7d4db4572f403477c54e691552"
   },
   {
+   "commit": "60e6e28fee220da1cd3eebcc191541c01b24f8cf",
    "group": "verify",
    "id": "C35",
    "kind": "section",
@@ -1370,6 +1371,27 @@
    "summary": "When the hand or container walls obscure a final placement check, clear the hand and acquire fresh target-specific ...",
    "target": "skills/transporting-objects/SKILL.md",
    "text_sha256": "8cb16b39ced76cab90d94ab16ca1f9e4013367dc8ede754e3efa903b9e9ecd43"
+  },
+  {
+   "group": "other",
+   "id": "C36",
+   "kind": "section",
+   "lands": [
+    "other|P_MOTION_NOT_ARRIVE|b0#L2.0"
+   ],
+   "layer": "conditional section of an existing SKILL.md",
+   "merges": [
+    "libero_10_task/00@g1#r1",
+    "libero_object_object/07@g1#r0"
+   ],
+   "record_ids": [
+    "libero_10_task/00@g1#r1",
+    "libero_object_object/07@g1#r0",
+    "other|P_MOTION_NOT_ARRIVE|b0#L2.0"
+   ],
+   "summary": "When preparing to release, compare live robot pose with the target using the calibrated tool offset and explicit ...",
+   "target": "skills/transporting-objects/SKILL.md",
+   "text_sha256": "06075bc6666f64582bd03a701cb994a12d7de391e1cd97c4dcaa72cf9921726b"
   }
  ],
  "plan_id": "a526441b207f716ca8ba092618f7145a97b9920dce3ada618d0c2ac75b5faf09",
