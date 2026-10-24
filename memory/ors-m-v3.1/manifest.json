@@ -1,0 +1,63 @@
+{
+ "accounting": {
+  "clusters": [
+   "K1",
+   "K2",
+   "K4"
+  ],
+  "kept": [
+   "K2"
+  ],
+  "refused": [
+   "K1",
+   "K4"
+  ]
+ },
+ "baseline": {
+  "commit": "c1e393d",
+  "root": "/mnt/data/home/xietao/projects/agent/recast-dev/development/ors-vlm-v5-frozen-c1e393d"
+ },
+ "changes": [
+  {
+   "group": "K2",
+   "id": "C01",
+   "kind": "new_skill",
+   "layer": "new skill bundle with scripts",
+   "record_ids": [
+    "gstar:libero_10_swap/06#place_chocolate_pudding",
+    "gstar:libero_10_task/08#transport_target",
+    "gstar:libero_90/01#place_black_bowl",
+    "gstar:libero_90/16#place_target",
+    "gstar:libero_90/43#place_white_bowl",
+    "gstar:libero_goal_swap/09#place_wine_bottle_on_rack",
+    "libero_10_swap/06@g1#r4",
+    "libero_10_swap/06@g1#r5",
+    "libero_10_swap/06@g2#r2",
+    "other|P_RELEASE_PLACEMENT|b0#L3.1",
+    "place|P_PERC_BIASED_GEOM|b0#L2.0",
+    "place|P_PERC_BIASED_GEOM|b0#L3.1",
+    "place|P_RELEASE_PLACEMENT|b1#L2.0",
+    "place|P_RELEASE_PLACEMENT|b1#L2.1",
+    "place|P_RELEASE_PLACEMENT|b1#L3.2",
+    "place|P_RELEASE_PLACEMENT|b4#L2.0",
+    "place|P_RELEASE_PLACEMENT|b4#L3.2",
+    "place|P_STALE_REFERENCE|b0#L2.0",
+    "place|P_STALE_REFERENCE|b0#L3.1",
+    "transport|P_GRASP_CAVITY_OR_MISS|b0#L2.0",
+    "transport|P_GRASP_CAVITY_OR_MISS|b0#L3.1",
+    "transport|P_MOTION_NOT_ARRIVE|b2#L2.0",
+    "verify|P_OCCLUSION_STACK|b0#L2.0",
+    "verify|P_OCCLUSION_STACK|b0#L3.1",
+    "verify|P_RELEASE_PLACEMENT|b0#L2.0"
+   ],
+   "summary": "K2 placing-carried-objects-on-supports: Place a retained object on an observed support while compensating the grasp offset. Lift, ",
+   "target": "skills/placing-carried-objects-on-supports/",
+   "text_sha256": "0b48cff0f87062960853d2d5676d892eacf37a33ec85ad9c0548501f58ad8498"
+  }
+ ],
+ "plan_id": "daaeb51b1121ddd32cfccba413049acc1a1946358aaa8a85ff4084985fdd996e",
+ "schema": "ors_m_manifest_v1",
+ "translation_id": "79cce36fa5c8ccdb5b86371fcd0b00ea7dc956fb875c8f155d78ac3d3ed53a6d",
+ "version": "ors-m-v3.1",
+ "view_id": "d258b01de39aef4901e4a7a8499d57801db4b0515866849245bed05ec72ab610"
+}
