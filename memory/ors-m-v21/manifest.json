@@ -1013,6 +1013,7 @@
    "text_sha256": "9fc14359cb8d05d5c6ad2288f972bdf01ca15ede8b4a24ab6abeae0ede3b5188"
   },
   {
+   "commit": "cbb30bc07a4c25d4280b0e969fc70355f2d436b6",
    "group": "other",
    "id": "C31",
    "kind": "section",
@@ -1030,6 +1031,27 @@
    "summary": "When release requires pose arrival, check measured tool position and orientation against explicit tolerances, ...",
    "target": "skills/transporting-objects/SKILL.md",
    "text_sha256": "cc07b9e4be1b0afe5d4feeeda255816efb9d1e760c538e1a7fb0491611040117"
+  },
+  {
+   "group": "other",
+   "id": "C32",
+   "kind": "section",
+   "lands": [
+    "other|NP_TIME_BUDGET|b0#L3.1"
+   ],
+   "layer": "conditional section of an existing SKILL.md",
+   "merges": [
+    "libero_object_temp_y0_3/01@g1#r4",
+    "other|NP_TIME_BUDGET|b0#L2.0"
+   ],
+   "record_ids": [
+    "libero_object_temp_y0_3/01@g1#r4",
+    "other|NP_TIME_BUDGET|b0#L2.0",
+    "other|NP_TIME_BUDGET|b0#L3.1"
+   ],
+   "summary": "When release is stable and no further manipulation needs clearance, omit terminal retreat and excess dwell; preserve ...",
+   "target": "skills/transporting-objects/SKILL.md",
+   "text_sha256": "78d01a0ab288fef27a27aa0e55d7e76aaa0e33e039e04a4dd80bc088b9b3454f"
   }
  ],
  "plan_id": "133a3f303397a2b21f5a30abdcdabbce7b556bd8954935af40a05a93e739dc94",
