@@ -472,6 +472,7 @@
    "text_sha256": "80bf41dbab80a3dd210ff88bb735b55cd6d7fe0032b31942350f409259c4a0ca"
   },
   {
+   "commit": "a918971fa285bb9c3e33ae0667f34d8dd1a022c4",
    "id": "C30",
    "kind": "drop",
    "layer": "consolidated away (dedupe / conflict)",
@@ -481,6 +482,18 @@
    "summary": "The exposed-tip lateral-stroke alternative has narrower support than verified geometry-aligned engagement and cannot ...",
    "target": null,
    "text_sha256": "ec08eabccfba22bd6ab32cdfa1999eaf1435953c0b11b053324d89adb20b7a6e"
+  },
+  {
+   "id": "C31",
+   "kind": "drop",
+   "layer": "consolidated away (dedupe / conflict)",
+   "record_ids": [
+    "L1.unified_v1.a65a5423319ef027",
+    "L1.unified_v1.b98d33e3c5084db9"
+   ],
+   "summary": "Unconditional deeper or diagonal engagement from narrow evidence would override support-clearance and ...",
+   "target": null,
+   "text_sha256": "fccd512d17b610bbc315e6e6efae60db00f289ce1819c81862cf3c884f7ca83e"
   }
  ],
  "plan_id": "5700903823db710bf5a016de95915c864fddb0cd8fa89b5891827218ffcea9ed",
