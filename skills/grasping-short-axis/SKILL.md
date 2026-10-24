@@ -195,6 +195,7 @@ Follow these requirements when you write this subgraph. Each one comes from fail
 1. When an attached grasp region is only partly visible near a hinge or body, use the observed body-to-region direction and depth to select exposed bar material below the hinge, retaining support clearance; done when the jaws span the bar thickness clear of the body rather than enclosing a hinge fragment.
 2. When a preferred projecting-handle pose is unreachable or gives insufficient engagement, retain a second geometry-derived handle pose for a bounded alternate attempt; done when a candidate reaches usable bar engagement. Refresh geometry before another attempt if both candidates fail.
 3. When upstream geometry already selects a distal handle region clear of its attached body, omit the additional outward slide and preserve the observed body-to-handle direction as the long axis; done when the resulting pose remains on observed handle material with jaws across its thickness.
+4. When approaching for closure, check measured fingertip pose against explicit position and orientation tolerances, including the hand offset. Correct errors with bounded retries; unresolved error uses the failure exit for re-perception and retry. Done when arrival is verified before closure.
 
 ## Recommended subgraph state flow
 
