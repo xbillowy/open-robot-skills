@@ -118,6 +118,7 @@ See `tools/curobo/SKILL.md` for the full recipe and gotchas.
 Follow these requirements when you write this subgraph. Each one comes from failures of earlier tasks that were repaired and confirmed by a rerun.
 
 1. When approach arrival is unverified, check fresh joints or compatible-reference poses before closure. Preserve the candidate during at most three corrections, then reobserve and plan another candidate if unresolved. Done when feedback establishes usable jaw alignment; do not globally tighten tolerances or reject an obstructed descent solely for endpoint error.
+2. When observed surrounding geometry intersects the nominal swept hand volume, replace the unchecked fast approach with collision-aware candidate planning using that geometry. Adapt yaw while preserving pad engagement; if blocked, reobserve and plan another candidate. Done when measured arrival establishes usable jaw alignment with whole-hand clearance.
 
 ## Recommended subgraph state flow
 
