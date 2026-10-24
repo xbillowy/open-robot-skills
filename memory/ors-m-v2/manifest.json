@@ -939,6 +939,7 @@
    "text_sha256": "eb2da59ce89e9b11de0657883d15541969e49980e34d408bdd32960c1aad02a0"
   },
   {
+   "commit": "8ec8a4f282f43e62e99dd7d0bd0dc7c352561720",
    "group": "place",
    "id": "C26",
    "kind": "section",
@@ -1016,6 +1017,41 @@
    "summary": "When release geometry or separation leaves placement uncertain, override the observation ban: open, settle, clear ...",
    "target": "skills/transporting-objects/SKILL.md",
    "text_sha256": "83540aa88b33319c1cdd166ab58dc37e39c01f1d72479f413da7590d1628719a"
+  },
+  {
+   "group": "place",
+   "id": "C27",
+   "kind": "section",
+   "lands": [
+    "place|P_STALE_REFERENCE|b0#L2.0"
+   ],
+   "layer": "conditional section of an existing SKILL.md",
+   "merges": [
+    "libero_10_swap/05@g3#r0",
+    "libero_90/13@g1#r3",
+    "libero_90/21@g1#r3",
+    "libero_goal_swap/08@g2#r3",
+    "libero_goal_swap/09@g7#r2",
+    "libero_goal_with_mug/08@g1#r4",
+    "libero_spatial_object/02@g1#r4",
+    "libero_spatial_swap/00@g1#r4",
+    "libero_spatial_with_yellow_book/02@g1#r3"
+   ],
+   "record_ids": [
+    "libero_10_swap/05@g3#r0",
+    "libero_90/13@g1#r3",
+    "libero_90/21@g1#r3",
+    "libero_goal_swap/08@g2#r3",
+    "libero_goal_swap/09@g7#r2",
+    "libero_goal_with_mug/08@g1#r4",
+    "libero_spatial_object/02@g1#r4",
+    "libero_spatial_swap/00@g1#r4",
+    "libero_spatial_with_yellow_book/02@g1#r3",
+    "place|P_STALE_REFERENCE|b0#L2.0"
+   ],
+   "summary": "When observed slip, rotation within the grasp, or grasp recovery invalidates recorded held geometry, permit fresh ...",
+   "target": "skills/transporting-objects/SKILL.md",
+   "text_sha256": "6baefdfc881ed9e03d71d77d37459d63100c2e3a33bb25e7adf20929707b3e34"
   }
  ],
  "plan_id": "a526441b207f716ca8ba092618f7145a97b9920dce3ada618d0c2ac75b5faf09",
