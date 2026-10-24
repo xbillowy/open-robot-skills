@@ -124,6 +124,7 @@
    "text_sha256": "8886a4b17e06db26a26b822b2da2670bbc596a07e84201b788621c66c37a963d"
   },
   {
+   "commit": "2e956a208b02a6f884d26adf439b584570b0c136",
    "id": "C08",
    "kind": "section",
    "layer": "conditional section of an existing SKILL.md",
@@ -135,6 +136,22 @@
    "summary": "When only specified items are requested, name exactly that set and exclude already delivered items and the ...",
    "target": "skills/perceiving-next-item/SKILL.md",
    "text_sha256": "7e9553ce58121a2ffa7147ba4a58ebefc63c54cfd5a31920ee695d12545e06f3"
+  },
+  {
+   "id": "C09",
+   "kind": "section",
+   "layer": "conditional section of an existing SKILL.md",
+   "record_ids": [
+    "L1.unified_v1.fc721975125960f9",
+    "L2.unified_v1.6a4af0703f371139",
+    "L2.unified_v1.7b1301aa24e6bcd6",
+    "L2.unified_v1.bf521cac95c214a8",
+    "L3.unified_v1.31b3c93c8b63de06",
+    "L3.unified_v1.96d6368149995da8"
+   ],
+   "summary": "When localizing a hollow object's grasp boundary, select an exposed solid wall segment with room for fingers on ...",
+   "target": "skills/perceiving-object-parts/SKILL.md",
+   "text_sha256": "d4348cc78fc20c4aa40fb11ae769c177b64180a5336f83c030d90b0468468674"
   }
  ],
  "plan_id": "5700903823db710bf5a016de95915c864fddb0cd8fa89b5891827218ffcea9ed",
