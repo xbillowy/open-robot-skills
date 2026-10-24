@@ -101,6 +101,7 @@ Follow these requirements when you write this subgraph. Each one comes from fail
 2. When a spatial qualifier distinguishes similar candidates, compare them in full-scene context with separately observed reference geometry; retain the qualifier through segmentation and use its stated reference frame, not an assumed image ordering. Reconsider inconsistent candidates; done when the selected instance satisfies the observed relation.
 3. When repeated broad searches or duplicate projections would repeat work without new evidence, use bounded target-directed queries and reuse projections only for identical images, depth, and calibration. Preserve identity and geometry checks; done when usable target geometry is available without redundant calls.
 4. When a shallow circular destination is clipped or partly hidden, prefer an unclipped exterior view and recover its footprint from measured rim arcs rather than the visible-cloud center. Ground height and any inferred thickness in local measured surfaces; reobserve if implausible. Done when center, footprint, and height agree with the observed rim and support.
+5. When visible surfaces demonstrably omit body extent needed for grasping, infer missing extent only from a coherent object cloud and measured local support. Preserve the measured exterior and do not include a separate raised support in the object. Done when the completed body remains aligned with observed surfaces and its own support boundary.
 
 ## Recommended subgraph state flow
 
