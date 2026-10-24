@@ -138,6 +138,7 @@
    "text_sha256": "7e9553ce58121a2ffa7147ba4a58ebefc63c54cfd5a31920ee695d12545e06f3"
   },
   {
+   "commit": "ce6a7cf08e9b57772d314769eac2241e7f2352bb",
    "id": "C09",
    "kind": "section",
    "layer": "conditional section of an existing SKILL.md",
@@ -152,6 +153,21 @@
    "summary": "When localizing a hollow object's grasp boundary, select an exposed solid wall segment with room for fingers on ...",
    "target": "skills/perceiving-object-parts/SKILL.md",
    "text_sha256": "d4348cc78fc20c4aa40fb11ae769c177b64180a5336f83c030d90b0468468674"
+  },
+  {
+   "id": "C10",
+   "kind": "section",
+   "layer": "conditional section of an existing SKILL.md",
+   "record_ids": [
+    "L1.unified_v1.8f5f03122f27c7de",
+    "L1.unified_v1.d07bc037fb9f4b1c",
+    "L2.unified_v1.63727af3c5e8f054",
+    "L3.unified_v1.75af102992332c7d",
+    "L3.unified_v1.94a430176491870a"
+   ],
+   "summary": "When distractors or fragments could match the label, require complete-target identity verification before publishing ...",
+   "target": "skills/perceiving-objects/SKILL.md",
+   "text_sha256": "1911456a67309860c4cebfeed92465855e55ccc11acadb55b6809e72288ca0fa"
   }
  ],
  "plan_id": "5700903823db710bf5a016de95915c864fddb0cd8fa89b5891827218ffcea9ed",
