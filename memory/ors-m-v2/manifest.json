@@ -489,6 +489,7 @@
    "text_sha256": "f78a9688ccb300a36e1a4b6bff8473855dbc0a38f433d3b57f12458fec193c3c"
   },
   {
+   "commit": "0f6e9d979c4c74e47b151b117612919bd96eb428",
    "group": "perceive",
    "id": "C15",
    "kind": "section",
@@ -516,6 +517,25 @@
    "summary": "When articulated-part geometry is absent or the parent crop excludes the control, deviate from parent-first ...",
    "target": "skills/perceiving-object-parts/SKILL.md",
    "text_sha256": "b2b0fca02dfe05261b47eb09933484f897cc10c99668aac1f1cd03b372330c65"
+  },
+  {
+   "group": "perceive",
+   "id": "C16",
+   "kind": "section",
+   "lands": [
+    "libero_90/45@g1#r1"
+   ],
+   "layer": "conditional section of an existing SKILL.md",
+   "merges": [
+    "libero_90/21@g2#r0"
+   ],
+   "record_ids": [
+    "libero_90/21@g2#r0",
+    "libero_90/45@g1#r1"
+   ],
+   "summary": "When a handle query selects a junction or another object's handle, verify the parent using its full silhouette, then ...",
+   "target": "skills/perceiving-object-parts/SKILL.md",
+   "text_sha256": "920e1e3274dd1d4ebdf74b20e1da920384cc8e2d64a109123cd17f647b10d2c5"
   }
  ],
  "plan_id": "a526441b207f716ca8ba092618f7145a97b9920dce3ada618d0c2ac75b5faf09",
