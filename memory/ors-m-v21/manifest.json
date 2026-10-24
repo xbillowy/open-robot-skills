@@ -2135,6 +2135,7 @@
    "text_sha256": "0b50217557390e74d148533838242e213a0888fa1c695ce8c4542bb77d3e236c"
   },
   {
+   "commit": "e3ba827b003ae901be4ce35fa7479c45dd4f7e9a",
    "group": "coordinator",
    "id": "C49",
    "kind": "coordinator",
@@ -2164,6 +2165,35 @@
    "summary": "When carrying lacks current retention evidence, insert target-associated retention verification before loaded motion ...",
    "target": "memory/ors-m-v21/coordinator.md",
    "text_sha256": "23743418767dc5792763419b9466787b0f79b14d242263e8f1b85ee9f0d6d31c"
+  },
+  {
+   "group": "coordinator",
+   "id": "C50",
+   "kind": "coordinator",
+   "lands": [
+    "perceive|P_PERC_EMPTY|b0#L2.0"
+   ],
+   "layer": "coordinator composition pattern (coarse plan)",
+   "merges": [
+    "libero_90/08@g1#r0",
+    "libero_90/21@g1#r0",
+    "libero_90/28@g1#r0",
+    "libero_90/39@g1#r0",
+    "libero_goal_swap/07@g1#r0",
+    "libero_goal_task/07@g1#r0"
+   ],
+   "record_ids": [
+    "libero_90/08@g1#r0",
+    "libero_90/21@g1#r0",
+    "libero_90/28@g1#r0",
+    "libero_90/39@g1#r0",
+    "libero_goal_swap/07@g1#r0",
+    "libero_goal_task/07@g1#r0",
+    "perceive|P_PERC_EMPTY|b0#L2.0"
+   ],
+   "summary": "When parent-first localization of an articulated part is empty or ambiguous, schedule bounded direct full-scene part ...",
+   "target": "memory/ors-m-v21/coordinator.md",
+   "text_sha256": "c86732089508bf2e0e63fcb959408a9fc004a5b0b26d3a6d4b3add0c17684f10"
   }
  ],
  "plan_id": "b940c484fc74b1a2ba4fb9fccf4ba91c862d4b53e8c952b8ca96ab5afa603f63",
