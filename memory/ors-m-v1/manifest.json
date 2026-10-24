@@ -94,6 +94,7 @@
    "text_sha256": "23ec947b96a71997e7279e69fbbc5c7d8083b6415467e90b23911654166daf3c"
   },
   {
+   "commit": "141a36bf1523013fa283574ba820a271ddd1f0c4",
    "id": "C06",
    "kind": "section",
    "layer": "conditional section of an existing SKILL.md",
@@ -107,6 +108,19 @@
    "summary": "When descending to grasp, gate close on fresh endpoint feedback in the same reference as the command, using the ...",
    "target": "skills/grasping-with-planner/SKILL.md",
    "text_sha256": "93ecf38977c40929c7967115a39ee9abfd35f9a4dd3cdc1eeb0114c59a4019db"
+  },
+  {
+   "id": "C07",
+   "kind": "section",
+   "layer": "conditional section of an existing SKILL.md",
+   "record_ids": [
+    "L1.unified_v1.c6c679b23d705263",
+    "L2.unified_v1.44f613509c3a94a0",
+    "L3.unified_v1.8075bae30b76c835"
+   ],
+   "summary": "When raised geometry lies along the approach, set hover clearance from observed obstacle tops before lateral travel; ...",
+   "target": "skills/grasping-with-planner/SKILL.md",
+   "text_sha256": "8886a4b17e06db26a26b822b2da2670bbc596a07e84201b788621c66c37a963d"
   }
  ],
  "plan_id": "5700903823db710bf5a016de95915c864fddb0cd8fa89b5891827218ffcea9ed",
