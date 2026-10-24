@@ -593,6 +593,7 @@
    "text_sha256": "acdce2844c78b6e526f72fa90ee54dae6eef62dcff5881c74e5dec5c9a4302b7"
   },
   {
+   "commit": "62ce11cd7341002aeaadd4ed2560ec5c14e7e47a",
    "group": "perceive",
    "id": "C18",
    "kind": "section",
@@ -658,6 +659,39 @@
    "summary": "When a spatial qualifier identifies the target, retain context around candidates and measure referenced entities ...",
    "target": "skills/perceiving-objects/SKILL.md",
    "text_sha256": "aa710a78f646e89c9b246565e718cece83363441c14202e86b96673364c64ea9"
+  },
+  {
+   "group": "perceive",
+   "id": "C19",
+   "kind": "section",
+   "lands": [
+    "perceive|P_PERC_BIASED_GEOM|b1#L3.2"
+   ],
+   "layer": "conditional section of an existing SKILL.md",
+   "merges": [
+    "libero_10_swap/08@g1#r0",
+    "libero_90/01@g1#r1",
+    "libero_90/05@g1#r1",
+    "libero_90/21@g1#r1",
+    "libero_goal_swap/04@g1#r1",
+    "libero_spatial_with_yellow_book/04@g1#r1",
+    "perceive|P_PERC_BIASED_GEOM|b1#L2.0",
+    "perceive|P_PERC_BIASED_GEOM|b2#L3.1"
+   ],
+   "record_ids": [
+    "libero_10_swap/08@g1#r0",
+    "libero_90/01@g1#r1",
+    "libero_90/05@g1#r1",
+    "libero_90/21@g1#r1",
+    "libero_goal_swap/04@g1#r1",
+    "libero_spatial_with_yellow_book/04@g1#r1",
+    "perceive|P_PERC_BIASED_GEOM|b1#L2.0",
+    "perceive|P_PERC_BIASED_GEOM|b1#L3.2",
+    "perceive|P_PERC_BIASED_GEOM|b2#L3.1"
+   ],
+   "summary": "When destination bounds include peripheral structures or omit usable support, isolate the observed load-bearing ...",
+   "target": "skills/perceiving-objects/SKILL.md",
+   "text_sha256": "7b56d95ee4ee07bc3188694cf91e114d650f682ac32ebcde5f952f0470aa815f"
   }
  ],
  "plan_id": "a526441b207f716ca8ba092618f7145a97b9920dce3ada618d0c2ac75b5faf09",
