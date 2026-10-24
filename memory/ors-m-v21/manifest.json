@@ -1,0 +1,189 @@
+{
+ "accounting": {
+  "added_chars": 19119,
+  "by_kind": {
+   "coordinator": 14,
+   "new_skill": 1,
+   "script_edit": 4,
+   "section": 32
+  },
+  "by_level": {
+   "L1": {
+    "landed": 33,
+    "merged": 471,
+    "rejected": 108
+   },
+   "L2": {
+    "landed": 20,
+    "merged": 55,
+    "rejected": 15
+   },
+   "L3": {
+    "landed": 26,
+    "merged": 27,
+    "rejected": 7
+   }
+  },
+  "by_phase_layer": {
+   "articulate|coordinator_composition": {
+    "landed": 2,
+    "merged": 0,
+    "rejected": 0
+   },
+   "articulate|skill_rule": {
+    "landed": 3,
+    "merged": 2,
+    "rejected": 0
+   },
+   "articulate|skill_script": {
+    "landed": 8,
+    "merged": 12,
+    "rejected": 15
+   },
+   "grasp|coordinator_composition": {
+    "landed": 0,
+    "merged": 0,
+    "rejected": 1
+   },
+   "grasp|skill_rule": {
+    "landed": 0,
+    "merged": 3,
+    "rejected": 0
+   },
+   "grasp|skill_script": {
+    "landed": 8,
+    "merged": 103,
+    "rejected": 50
+   },
+   "other|coordinator_composition": {
+    "landed": 1,
+    "merged": 25,
+    "rejected": 3
+   },
+   "other|skill_script": {
+    "landed": 6,
+    "merged": 10,
+    "rejected": 1
+   },
+   "perceive|coordinator_composition": {
+    "landed": 0,
+    "merged": 6,
+    "rejected": 4
+   },
+   "perceive|skill_rule": {
+    "landed": 2,
+    "merged": 4,
+    "rejected": 2
+   },
+   "perceive|skill_script": {
+    "landed": 19,
+    "merged": 152,
+    "rejected": 25
+   },
+   "place|coordinator_composition": {
+    "landed": 1,
+    "merged": 4,
+    "rejected": 0
+   },
+   "place|skill_rule": {
+    "landed": 1,
+    "merged": 2,
+    "rejected": 0
+   },
+   "place|skill_script": {
+    "landed": 11,
+    "merged": 117,
+    "rejected": 17
+   },
+   "transport|coordinator_composition": {
+    "landed": 0,
+    "merged": 2,
+    "rejected": 0
+   },
+   "transport|skill_rule": {
+    "landed": 1,
+    "merged": 0,
+    "rejected": 0
+   },
+   "transport|skill_script": {
+    "landed": 7,
+    "merged": 61,
+    "rejected": 6
+   },
+   "verify|coordinator_composition": {
+    "landed": 0,
+    "merged": 9,
+    "rejected": 0
+   },
+   "verify|skill_rule": {
+    "landed": 0,
+    "merged": 3,
+    "rejected": 0
+   },
+   "verify|skill_script": {
+    "landed": 9,
+    "merged": 38,
+    "rejected": 6
+   }
+  },
+  "deduped": [],
+  "handed_off": 360,
+  "handoff_by_group": {
+   "articulate": 4,
+   "grasp": 104,
+   "perceive": 71,
+   "place": 90,
+   "transport": 64,
+   "verify": 27
+  },
+  "handoff_final": {
+   "landed": 30,
+   "merged": 315,
+   "rejected": 15
+  },
+  "landed": 79,
+  "merged": 553,
+  "rejected": 130,
+  "rejected_held_out": 37,
+  "rejected_unaccounted": 0,
+  "rules": 762
+ },
+ "baseline": {
+  "commit": "c1e393debe19f91d21baf9097185a9444e28bbfe",
+  "root": "/mnt/data/home/xietao/projects/agent/recast-dev/development/ors-vlm-v5-frozen-c1e393d"
+ },
+ "changes": [
+  {
+   "group": "other",
+   "id": "C01",
+   "kind": "section",
+   "lands": [
+    "other|P_MOTION_NOT_ARRIVE|b1#L3.2"
+   ],
+   "layer": "conditional section of an existing SKILL.md",
+   "merges": [
+    "libero_90/09@g1#r1",
+    "libero_90/71@g1#r0",
+    "libero_goal_with_mug/08@g2#r0",
+    "libero_spatial_with_yellow_book/07@g1#r2",
+    "other|P_MOTION_NOT_ARRIVE|b1#L2.1"
+   ],
+   "record_ids": [
+    "libero_90/09@g1#r1",
+    "libero_90/71@g1#r0",
+    "libero_goal_with_mug/08@g2#r0",
+    "libero_spatial_with_yellow_book/07@g1#r2",
+    "other|P_MOTION_NOT_ARRIVE|b1#L2.1",
+    "other|P_MOTION_NOT_ARRIVE|b1#L3.2"
+   ],
+   "summary": "When closure requires approach arrival, check measured fingertip position and orientation against explicit ...",
+   "target": "skills/grasping-direct-ik/SKILL.md",
+   "text_sha256": "c1e1ef728a21a852d0c86e0ee6c52565503a78267045d2ac2f38b3dc0cf40f91"
+  }
+ ],
+ "plan_id": "133a3f303397a2b21f5a30abdcdabbce7b556bd8954935af40a05a93e739dc94",
+ "schema": "ors_m_manifest_v1",
+ "translation_id": "ab221e5ef6b939485720642c3d1b7cd0b49ac8b72cede29aa15a6e6243d4f832",
+ "version": "ors-m-v21",
+ "view_id": "39daf29b27e7fed2d84e6ecc1ca378349f0b79028d6ec22f2e9e37116e98a757"
+}
