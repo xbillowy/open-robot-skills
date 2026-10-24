@@ -459,6 +459,7 @@
    "text_sha256": "fad56cec21d2568e1ddc58180307b9b3d70307fec59ddc89a278142bd5eff654"
   },
   {
+   "commit": "151be563c344a6c098de5805f586b978e1c29682",
    "id": "C29",
    "kind": "drop",
    "layer": "consolidated away (dedupe / conflict)",
@@ -469,6 +470,17 @@
    "summary": "Selecting the lowest candidate substitutes height for identity and conflicts with the stronger requirement to verify ...",
    "target": null,
    "text_sha256": "80bf41dbab80a3dd210ff88bb735b55cd6d7fe0032b31942350f409259c4a0ca"
+  },
+  {
+   "id": "C30",
+   "kind": "drop",
+   "layer": "consolidated away (dedupe / conflict)",
+   "record_ids": [
+    "L1.unified_v1.74afa7f7731aaf0c"
+   ],
+   "summary": "The exposed-tip lateral-stroke alternative has narrower support than verified geometry-aligned engagement and cannot ...",
+   "target": null,
+   "text_sha256": "ec08eabccfba22bd6ab32cdfa1999eaf1435953c0b11b053324d89adb20b7a6e"
   }
  ],
  "plan_id": "5700903823db710bf5a016de95915c864fddb0cd8fa89b5891827218ffcea9ed",
