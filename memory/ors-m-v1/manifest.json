@@ -19,6 +19,7 @@
  },
  "changes": [
   {
+   "commit": "30f2fa705bd5a521f0365c6ef8574d6990f63f0d",
    "id": "C01",
    "kind": "section",
    "layer": "conditional section of an existing SKILL.md",
@@ -32,6 +33,19 @@
    "summary": "When descending to grasp, gate close on fresh endpoint feedback transformed into the command's reference using the ...",
    "target": "skills/grasping-direct-ik/SKILL.md",
    "text_sha256": "a51a9ebb7f77544990e361fb44cea25ccb18024b1572d5e585e0f35b4a400bfd"
+  },
+  {
+   "id": "C02",
+   "kind": "section",
+   "layer": "conditional section of an existing SKILL.md",
+   "record_ids": [
+    "L1.unified_v1.c6c679b23d705263",
+    "L2.unified_v1.44f613509c3a94a0",
+    "L3.unified_v1.8075bae30b76c835"
+   ],
+   "summary": "When nearby raised geometry makes straight-line approach unsafe, do not use this bundle merely because the grasp ...",
+   "target": "skills/grasping-direct-ik/SKILL.md",
+   "text_sha256": "a8747cc4caf4bad0edea6fbf5284f2e54d8da3b81572b178a0fe54db08fe2ec9"
   }
  ],
  "plan_id": "5700903823db710bf5a016de95915c864fddb0cd8fa89b5891827218ffcea9ed",
