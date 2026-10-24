@@ -555,6 +555,7 @@
    "text_sha256": "45c09210b555466f841f772033da4315e87521ec23b10166d49a47c897e8914a"
   },
   {
+   "commit": "fc66cad1041b7106e0f0f7d2b714533a64be350d",
    "group": "perceive",
    "id": "C15",
    "kind": "section",
@@ -594,6 +595,33 @@
    "summary": "When a shallow circular destination is clipped or partly hidden, prefer an unclipped exterior view and recover its ...",
    "target": "skills/perceiving-objects/SKILL.md",
    "text_sha256": "948e210f95cf2984127d72b99649cabeee22b2d7584ea12299a908a955a89ea5"
+  },
+  {
+   "group": "perceive",
+   "id": "C16",
+   "kind": "section",
+   "lands": [
+    "perceive|P_PERC_BIASED_GEOM|b3#L2.0"
+   ],
+   "layer": "conditional section of an existing SKILL.md",
+   "merges": [
+    "libero_10_swap/06@g1#r0",
+    "libero_90/37@g1#r0",
+    "libero_goal_task/09@g1#r0",
+    "libero_object_temp_y0_3/06@g2#r1",
+    "perceive|P_PERC_BIASED_GEOM|b3#L3.1"
+   ],
+   "record_ids": [
+    "libero_10_swap/06@g1#r0",
+    "libero_90/37@g1#r0",
+    "libero_goal_task/09@g1#r0",
+    "libero_object_temp_y0_3/06@g2#r1",
+    "perceive|P_PERC_BIASED_GEOM|b3#L2.0",
+    "perceive|P_PERC_BIASED_GEOM|b3#L3.1"
+   ],
+   "summary": "When visible surfaces demonstrably omit body extent needed for grasping, infer missing extent only from a coherent ...",
+   "target": "skills/perceiving-objects/SKILL.md",
+   "text_sha256": "ab145366f421cce4628548028e84948a8d0a8c74ce32cd6b2ae1b987f21f6cef"
   }
  ],
  "plan_id": "133a3f303397a2b21f5a30abdcdabbce7b556bd8954935af40a05a93e739dc94",
