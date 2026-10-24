@@ -1322,6 +1322,7 @@
    "text_sha256": "a48fa1550b8a48e4a5bee5a529e68d265d1a9dc68ac40339b815066b3f2fa12a"
   },
   {
+   "commit": "35fc670c2f1e901cdbcd8c37423615cd51f3e3df",
    "group": "coordinator",
    "id": "C38",
    "kind": "coordinator",
@@ -1413,6 +1414,35 @@
    "summary": "When source and destination are separately specified, compose distinct identity-specific perception stages with ...",
    "target": "memory/ors-m-v21/coordinator.md",
    "text_sha256": "988f2d8268d4f3269230832821c46961a3b386491a36f78e77467909313bb561"
+  },
+  {
+   "group": "coordinator",
+   "id": "C39",
+   "kind": "coordinator",
+   "lands": [
+    "libero_10_swap/03@g1#r0",
+    "libero_10_swap/09@g13#r1",
+    "libero_10_task/03@g1#r0",
+    "libero_90/08@g1#r2"
+   ],
+   "layer": "coordinator composition pattern (coarse plan)",
+   "merges": [
+    "libero_90/03@g1#r0",
+    "libero_90/05@g1#r0",
+    "libero_spatial_with_mug/04@g1#r0"
+   ],
+   "record_ids": [
+    "libero_10_swap/03@g1#r0",
+    "libero_10_swap/09@g13#r1",
+    "libero_10_task/03@g1#r0",
+    "libero_90/03@g1#r0",
+    "libero_90/05@g1#r0",
+    "libero_90/08@g1#r2",
+    "libero_spatial_with_mug/04@g1#r0"
+   ],
+   "summary": "When transfer needs compartment access, inspect its parent-associated aperture and interior or item first. If ...",
+   "target": "memory/ors-m-v21/coordinator.md",
+   "text_sha256": "5b540d5e49bd6cc2127ee309c090d0bc1486b3257aeffe7f95d18d4abd648664"
   }
  ],
  "plan_id": "b940c484fc74b1a2ba4fb9fccf4ba91c862d4b53e8c952b8ca96ab5afa603f63",
