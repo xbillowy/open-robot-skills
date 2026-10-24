@@ -188,6 +188,12 @@ uv sync --extra curobo --extra geometry   # (pip: pip install -e "open-robot-ski
 - You genuinely want multiple sampled candidates for the planner to
   choose from — use `grasping-with-planner`.
 
+## Requirements from confirmed experience
+
+Follow these requirements when you write this subgraph. Each one comes from failures of earlier tasks that were repaired and confirmed by a rerun.
+
+1. When an attached grasp region is only partly visible near a hinge or body, use the observed body-to-region direction and depth to select exposed bar material below the hinge, retaining support clearance; done when the jaws span the bar thickness clear of the body rather than enclosing a hinge fragment.
+
 ## Recommended subgraph state flow
 
 10 states, in order:

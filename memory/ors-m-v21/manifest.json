@@ -163,6 +163,7 @@
  },
  "changes": [
   {
+   "commit": "c3bbbf128141c58b5cb8fc3f2ce9ea7c9a59df9f",
    "group": "other",
    "id": "C01",
    "kind": "section",
@@ -188,6 +189,22 @@
    "summary": "When closure requires approach arrival, check measured fingertip position and orientation against explicit ...",
    "target": "skills/grasping-direct-ik/SKILL.md",
    "text_sha256": "c1e1ef728a21a852d0c86e0ee6c52565503a78267045d2ac2f38b3dc0cf40f91"
+  },
+  {
+   "group": "grasp",
+   "id": "C02",
+   "kind": "section",
+   "lands": [
+    "libero_90/38@g1#r0"
+   ],
+   "layer": "conditional section of an existing SKILL.md",
+   "merges": [],
+   "record_ids": [
+    "libero_90/38@g1#r0"
+   ],
+   "summary": "When an attached grasp region is only partly visible near a hinge or body, use the observed body-to-region direction ...",
+   "target": "skills/grasping-short-axis/SKILL.md",
+   "text_sha256": "118a603d1f40e3561f78021ba0ef52fcc2b7f29e89910c47a0e058e845f26125"
   }
  ],
  "plan_id": "b940c484fc74b1a2ba4fb9fccf4ba91c862d4b53e8c952b8ca96ab5afa603f63",
