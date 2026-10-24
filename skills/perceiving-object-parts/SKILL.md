@@ -95,6 +95,7 @@ Follow these requirements when you write this subgraph. Each one comes from fail
 
 1. When the requested destination is a compartment, derive its interior footprint from observed openings, enclosing axes, and the specified viewing relation rather than the parent center. Exclude dividers, fronts, and roofs from cavity-floor geometry; reobserve ambiguous openings. Done when the selected region is the requested usable interior.
 2. When similar parents have nearby handles, establish the intended parent from its visible shape and dimensions before selecting an attached part. Done when the part is visibly attached to the identified parent, not merely near it; otherwise reconsider parent candidates.
+3. When a projecting handle query selects the body junction, use the complete parent silhouette and metric depth to separate the broad body from the narrow projecting stem. Reconsider the part estimate if it remains on the junction; done when grasp geometry lies on the observed stem.
 
 ## When to use
 
