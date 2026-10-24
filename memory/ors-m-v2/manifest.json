@@ -1245,6 +1245,7 @@
    "text_sha256": "1f4462fe9949adf0b57f04328eaa3d3e354aebe6c8d2507ff26e62bce36a57b4"
   },
   {
+   "commit": "0c0e1f8a9887ca32747f303e548e70c4d8908b6a",
    "group": "transport",
    "id": "C32",
    "kind": "section",
@@ -1268,6 +1269,63 @@
    "summary": "When an extended grasp makes the clearance lift unreachable, refresh held-object extent and offset, then plan a ...",
    "target": "skills/transporting-objects/SKILL.md",
    "text_sha256": "8c672c413564b1114b07ade52e466abd44553d0c4cef5d75c87395a25bbdbbb2"
+  },
+  {
+   "group": "verify",
+   "id": "C33",
+   "kind": "section",
+   "lands": [
+    "verify|P_RELEASE_PLACEMENT|b0#L2.0",
+    "verify|P_RELEASE_PLACEMENT|b1#L2.0",
+    "verify|P_RELEASE_PLACEMENT|b1#L3.1"
+   ],
+   "layer": "conditional section of an existing SKILL.md",
+   "merges": [
+    "libero_90/13@g1#r4",
+    "libero_90/14@g1#r5",
+    "libero_90/16@g1#r5",
+    "libero_90/37@g1#r4",
+    "libero_90/45@g1#r5",
+    "libero_goal_object/08@g1#r4",
+    "libero_goal_swap/04@g1#r5",
+    "libero_goal_swap/09@g5#r3",
+    "libero_goal_task/09@g1#r5",
+    "libero_goal_with_milk/03@g1#r5",
+    "libero_goal_with_mug/08@g1#r5",
+    "libero_spatial_swap/00@g1#r5",
+    "libero_spatial_with_milk/04@g1#r5",
+    "libero_spatial_with_milk/06@g1#r5",
+    "libero_spatial_with_mug/01@g2#r5",
+    "libero_spatial_with_mug/06@g1#r5",
+    "libero_spatial_with_yellow_book/02@g1#r4",
+    "libero_spatial_with_yellow_book/07@g1#r5"
+   ],
+   "record_ids": [
+    "libero_90/13@g1#r4",
+    "libero_90/14@g1#r5",
+    "libero_90/16@g1#r5",
+    "libero_90/37@g1#r4",
+    "libero_90/45@g1#r5",
+    "libero_goal_object/08@g1#r4",
+    "libero_goal_swap/04@g1#r5",
+    "libero_goal_swap/09@g5#r3",
+    "libero_goal_task/09@g1#r5",
+    "libero_goal_with_milk/03@g1#r5",
+    "libero_goal_with_mug/08@g1#r5",
+    "libero_spatial_swap/00@g1#r5",
+    "libero_spatial_with_milk/04@g1#r5",
+    "libero_spatial_with_milk/06@g1#r5",
+    "libero_spatial_with_mug/01@g2#r5",
+    "libero_spatial_with_mug/06@g1#r5",
+    "libero_spatial_with_yellow_book/02@g1#r4",
+    "libero_spatial_with_yellow_book/07@g1#r5",
+    "verify|P_RELEASE_PLACEMENT|b0#L2.0",
+    "verify|P_RELEASE_PLACEMENT|b1#L2.0",
+    "verify|P_RELEASE_PLACEMENT|b1#L3.1"
+   ],
+   "summary": "When supported placement leaves detachment, alignment or stability unconfirmed, check arrival in a compatible ...",
+   "target": "skills/transporting-objects/SKILL.md",
+   "text_sha256": "69af7e267a35f6051be005da9218a2800c9752f6738cbd7d0a786a54b446ccb8"
   }
  ],
  "plan_id": "a526441b207f716ca8ba092618f7145a97b9920dce3ada618d0c2ac75b5faf09",
