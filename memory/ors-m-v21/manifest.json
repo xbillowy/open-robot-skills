@@ -1042,6 +1042,7 @@
    "text_sha256": "cc07b9e4be1b0afe5d4feeeda255816efb9d1e760c538e1a7fb0491611040117"
   },
   {
+   "commit": "c0f284d13d90a178943ce675d492e57bef7acef7",
    "group": "other",
    "id": "C32",
    "kind": "section",
@@ -1061,6 +1062,63 @@
    "summary": "When release is stable and no further manipulation needs clearance, omit terminal retreat and excess dwell; preserve ...",
    "target": "skills/transporting-objects/SKILL.md",
    "text_sha256": "78d01a0ab288fef27a27aa0e55d7e76aaa0e33e039e04a4dd80bc088b9b3454f"
+  },
+  {
+   "group": "articulate",
+   "id": "C33",
+   "kind": "new_skill",
+   "lands": [
+    "articulate|P_CLEARANCE_COLLISION|b0#L2.0",
+    "articulate|P_CLEARANCE_COLLISION|b0#L3.1",
+    "articulate|P_GRASP_CAVITY_OR_MISS|b0#L2.0",
+    "articulate|P_GRASP_CAVITY_OR_MISS|b0#L3.2",
+    "articulate|P_MOTION_NOT_ARRIVE|b0#L2.0",
+    "articulate|P_MOTION_NOT_ARRIVE|b0#L2.1",
+    "articulate|P_MOTION_NOT_ARRIVE|b0#L3.2",
+    "articulate|P_STALE_REFERENCE|b0#L2.0",
+    "articulate|P_STALE_REFERENCE|b0#L3.1"
+   ],
+   "layer": "new skill bundle with scripts",
+   "merges": [
+    "libero_10_swap/03@g1#r3",
+    "libero_10_task/03@g1#r3",
+    "libero_90/00@g1#r1",
+    "libero_90/00@g1#r2",
+    "libero_90/01@g1#r0",
+    "libero_90/03@g1#r4",
+    "libero_90/04@g2#r1",
+    "libero_90/04@g2#r2",
+    "libero_90/05@g1#r5",
+    "libero_90/08@g1#r1",
+    "libero_90/28@g1#r1",
+    "libero_90/28@g1#r3"
+   ],
+   "record_ids": [
+    "articulate|P_CLEARANCE_COLLISION|b0#L2.0",
+    "articulate|P_CLEARANCE_COLLISION|b0#L3.1",
+    "articulate|P_GRASP_CAVITY_OR_MISS|b0#L2.0",
+    "articulate|P_GRASP_CAVITY_OR_MISS|b0#L3.2",
+    "articulate|P_MOTION_NOT_ARRIVE|b0#L2.0",
+    "articulate|P_MOTION_NOT_ARRIVE|b0#L2.1",
+    "articulate|P_MOTION_NOT_ARRIVE|b0#L3.2",
+    "articulate|P_STALE_REFERENCE|b0#L2.0",
+    "articulate|P_STALE_REFERENCE|b0#L3.1",
+    "libero_10_swap/03@g1#r3",
+    "libero_10_task/03@g1#r3",
+    "libero_90/00@g1#r1",
+    "libero_90/00@g1#r2",
+    "libero_90/01@g1#r0",
+    "libero_90/03@g1#r4",
+    "libero_90/04@g2#r1",
+    "libero_90/04@g2#r2",
+    "libero_90/05@g1#r5",
+    "libero_90/08@g1#r1",
+    "libero_90/28@g1#r1",
+    "libero_90/28@g1#r3"
+   ],
+   "summary": "Locate and actuate a sliding panel through its handle or front pushing surface. Use for requested drawer opening or ...",
+   "target": "skills/actuating-sliding-parts/",
+   "text_sha256": "a2bcafcb813ab0aae2580251e87c9787f5d6d4c4cfd6014f0c21576ae5a635e8"
   }
  ],
  "plan_id": "b940c484fc74b1a2ba4fb9fccf4ba91c862d4b53e8c952b8ca96ab5afa603f63",
