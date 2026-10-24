@@ -1815,6 +1815,7 @@
    "text_sha256": "237b62a7724dcb1f99e58e13d74a561a7bc3bef417ee8e0b2b86530ce2a6e67c"
   },
   {
+   "commit": "c2527d3a81de5c64fcfe0f708667cda38b5f1930",
    "group": "coordinator",
    "id": "C45",
    "kind": "coordinator",
@@ -1934,6 +1935,28 @@
    "summary": "When release, closure stability or final-region visibility is uncertain, add fresh verification after hand ...",
    "target": "memory/ors-m-v21/coordinator.md",
    "text_sha256": "6b062f9059b6d642ad8c4286f045201d907664c2107c34a0ed430573eb1c8290"
+  },
+  {
+   "group": "coordinator",
+   "id": "C46",
+   "kind": "coordinator",
+   "lands": [
+    "libero_10_swap/08@g1#r2",
+    "libero_10_task/00@g1#r4",
+    "libero_10_task/06@g1#r0",
+    "libero_10_task/07@g1#r4"
+   ],
+   "layer": "coordinator composition pattern (coarse plan)",
+   "merges": [],
+   "record_ids": [
+    "libero_10_swap/08@g1#r2",
+    "libero_10_task/00@g1#r4",
+    "libero_10_task/06@g1#r0",
+    "libero_10_task/07@g1#r4"
+   ],
+   "summary": "When several placements share a destination or neighboring approach space, sequence one transfer per object and pass ...",
+   "target": "memory/ors-m-v21/coordinator.md",
+   "text_sha256": "86b2c0382c9767faac8089f0396a307aac338884b98c5ca6a95520152ed14e6f"
   }
  ],
  "plan_id": "133a3f303397a2b21f5a30abdcdabbce7b556bd8954935af40a05a93e739dc94",
