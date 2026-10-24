@@ -66,6 +66,7 @@ uncluttered scenes where planning is overkill.
 Follow these requirements when you write this subgraph. Each one comes from failures of earlier tasks that were repaired and confirmed by a rerun.
 
 1. When observed surfaces disagree with the exterior box, derive a compact grasp-region OBB from the selected target's mask and depth before computing candidates; preserve target association rather than choosing a neighboring cluster by height. Done when the candidate lies on the intended target surface.
+2. When feedback and commands use different hand or fingertip references, apply the configured rigid transform before checking position and orientation. Use fresh feedback before closure; on unresolved discrepancy, reobserve and try at most three corrections, then another candidate. Done when compatible feedback establishes usable grasp alignment.
 
 ## Recommended subgraph state flow
 

@@ -139,6 +139,7 @@
  },
  "changes": [
   {
+   "commit": "f125f1dc310ed425657e326fda1c0bdcfa834d36",
    "group": "grasp",
    "id": "C01",
    "kind": "section",
@@ -166,6 +167,33 @@
    "summary": "When observed surfaces disagree with the exterior box, derive a compact grasp-region OBB from the selected target's ...",
    "target": "skills/grasping-direct-ik/SKILL.md",
    "text_sha256": "1476b27054732b63e40ed74fc177aad19e01d8dbc5719050e28188040ce42740"
+  },
+  {
+   "group": "grasp",
+   "id": "C02",
+   "kind": "section",
+   "lands": [
+    "libero_10_swap/06@g1#r1"
+   ],
+   "layer": "conditional section of an existing SKILL.md",
+   "merges": [
+    "libero_10_task/03@g1#r1",
+    "libero_90/03@g1#r2",
+    "libero_goal_swap/09@g1#r0",
+    "libero_goal_task/06@g1#r1",
+    "libero_goal_task/09@g1#r1"
+   ],
+   "record_ids": [
+    "libero_10_swap/06@g1#r1",
+    "libero_10_task/03@g1#r1",
+    "libero_90/03@g1#r2",
+    "libero_goal_swap/09@g1#r0",
+    "libero_goal_task/06@g1#r1",
+    "libero_goal_task/09@g1#r1"
+   ],
+   "summary": "When feedback and commands use different hand or fingertip references, apply the configured rigid transform before ...",
+   "target": "skills/grasping-direct-ik/SKILL.md",
+   "text_sha256": "7c76fd6b6a4695f2532a2972ab5cdb99486f96b994232f21f37be05397d94f4d"
   }
  ],
  "plan_id": "a526441b207f716ca8ba092618f7145a97b9920dce3ada618d0c2ac75b5faf09",
