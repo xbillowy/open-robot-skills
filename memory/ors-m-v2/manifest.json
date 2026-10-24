@@ -1373,6 +1373,7 @@
    "text_sha256": "8cb16b39ced76cab90d94ab16ca1f9e4013367dc8ede754e3efa903b9e9ecd43"
   },
   {
+   "commit": "990889f16be2e4bff7d61123a0c82c62a47b530f",
    "group": "other",
    "id": "C36",
    "kind": "section",
@@ -1392,6 +1393,29 @@
    "summary": "When preparing to release, compare live robot pose with the target using the calibrated tool offset and explicit ...",
    "target": "skills/transporting-objects/SKILL.md",
    "text_sha256": "06075bc6666f64582bd03a701cb994a12d7de391e1cd97c4dcaa72cf9921726b"
+  },
+  {
+   "group": "other",
+   "id": "C37",
+   "kind": "section",
+   "lands": [
+    "other|NP_TIME_BUDGET|b0#L3.1"
+   ],
+   "layer": "conditional section of an existing SKILL.md",
+   "merges": [
+    "libero_90/21@g1#r4",
+    "libero_object_temp_y0_3/01@g1#r4",
+    "other|NP_TIME_BUDGET|b0#L2.0"
+   ],
+   "record_ids": [
+    "libero_90/21@g1#r4",
+    "libero_object_temp_y0_3/01@g1#r4",
+    "other|NP_TIME_BUDGET|b0#L2.0",
+    "other|NP_TIME_BUDGET|b0#L3.1"
+   ],
+   "summary": "When a dwell or extra movement serves no clearance, retention, release, or further-manipulation need, omit that ...",
+   "target": "skills/transporting-objects/SKILL.md",
+   "text_sha256": "2ebf1ab09de78830835bcb2147936c61f3d97fa29647719f935fa19e629fa6db"
   }
  ],
  "plan_id": "a526441b207f716ca8ba092618f7145a97b9920dce3ada618d0c2ac75b5faf09",

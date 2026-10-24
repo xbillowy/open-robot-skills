@@ -97,6 +97,7 @@ Follow these requirements when you write this subgraph. Each one comes from fail
 11. When containment is required and release leaves interior occupancy uncertain, open, withdraw and inspect the destination interior using fresh target segmentation and depth; done when target geometry lies inside the footprint at a settled height, not perched on the rim. Otherwise reobserve and use bounded release or replacement recovery, then recheck.
 12. When the hand or container walls obscure a final placement check, clear the hand and acquire fresh target-specific segmentation or depth from a view exposing the relevant region; done when that view resolves the requested relation. If still hidden, change view and re-perceive within a bound; route unresolved evidence to replanning, not completion.
 13. When preparing to release, compare live robot pose with the target using the calibrated tool offset and explicit position/orientation tolerances. Correct residual error with bounded retries; on mismatch, route failure to re-perception/replanning; done when both tolerances pass before release.
+14. When a dwell or extra movement serves no clearance, retention, release, or further-manipulation need, omit that excess while preserving reliable settling; done when placement is stable. Do not shorten already adequate settling merely because placement is required.
 
 ## Recommended subgraph state flow
 
