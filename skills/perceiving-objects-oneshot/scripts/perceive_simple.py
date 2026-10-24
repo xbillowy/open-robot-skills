@@ -92,21 +92,31 @@ def _parse_pick(text: str, n: int) -> int | None:
     """Return the index of the picked letter, or ``None`` if the VLM
     replied "none" / unparseable. Only labels in ``_LABELS[:n]`` count.
     """
-    s = text.strip().lower()
-    if "none" in s:
+    if not isinstance(text, str):
         return None
-    # Prefer a single-letter response.
-    up = s.upper()
-    if len(up) == 1 and up in _LABELS[:n]:
-        return _LABELS.index(up)
-    # Otherwise pick the LAST capital letter mentioned (the typical
-    # "Answer: B" pattern ends with the letter).
-    last = None
-    for m in re.finditer(r"\b([A-H])\b", text):
-        idx = _LABELS.index(m.group(1)) if m.group(1) in _LABELS[:n] else -1
-        if idx >= 0:
-            last = idx
-    return last  # may be None
+    s = text.strip().upper()
+    # Accept a bare choice or an explicit answer line, never incidental letters.
+    choices = []
+    for line in s.split("\n"):
+        value = line.strip(" \t*`_#")
+        explicit = False
+        for marker in ["FINAL ANSWER:", "ANSWER:", "CHOICE:"]:
+            if value.startswith(marker):
+                value = value[len(marker):].strip(" \t*`_")
+                explicit = True
+                break
+        token = value.strip(" \t*`_.,:;!()[]")
+        if token == "NONE":
+            choices.append("NONE")
+        elif token in _LABELS[:n]:
+            choices.append(token)
+        elif explicit:
+            return None
+    if not choices or any(choice != choices[0] for choice in choices):
+        return None
+    if choices[0] == "NONE":
+        return None
+    return _LABELS.index(choices[0])
 
 
 class Output(TypedDict):
