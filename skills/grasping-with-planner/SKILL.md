@@ -119,6 +119,7 @@ Follow these requirements when you write this subgraph. Each one comes from fail
 
 1. When approach arrival is unverified, check fresh joints or compatible-reference poses before closure. Preserve the candidate during at most three corrections, then reobserve and plan another candidate if unresolved. Done when feedback establishes usable jaw alignment; do not globally tighten tolerances or reject an obstructed descent solely for endpoint error.
 2. When observed surrounding geometry intersects the nominal swept hand volume, replace the unchecked fast approach with collision-aware candidate planning using that geometry. Adapt yaw while preserving pad engagement; if blocked, reobserve and plan another candidate. Done when measured arrival establishes usable jaw alignment with whole-hand clearance.
+3. When the observed target or its supporting structure extends above the nominal hover, set hover_z above both with whole-hand clearance before invoking motion. Done when fresh compatible feedback confirms overhead staging before descent; otherwise reobserve and replan the approach rather than proceeding.
 
 ## Recommended subgraph state flow
 
