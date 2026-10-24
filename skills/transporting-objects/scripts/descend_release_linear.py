@@ -55,17 +55,26 @@ def run(
     ctx: NodeContext,
     drop_position: Vec3,
     drop_rotation: Quaternion | None = None,
+    retract_clearance: float = 0.0,
 ) -> Output:
     rotation = drop_rotation if drop_rotation is not None else _DOWN
     end_pose: Se3Pose = {"position": drop_position, "rotation": rotation}
 
     ctx.tool("robot.go_to_pose_cartesian", pose=end_pose)
 
-    # Open the gripper and settle long enough for the object to land
-    # before the retract starts moving the arm laterally.
     ctx.tool("robot.open_gripper", settle_steps=60)
 
-    # Retract home so the just-placed object isn't disturbed.
+    if retract_clearance > 0.0:
+        withdrawal: Se3Pose = {
+            "position": {
+                "x": float(drop_position["x"]),
+                "y": float(drop_position["y"]),
+                "z": float(drop_position["z"]) + float(retract_clearance),
+            },
+            "rotation": rotation,
+        }
+        ctx.tool("robot.go_to_pose_cartesian", pose=withdrawal)
+
     ctx.tool("robot.go_home")
 
     return {"drop_position": drop_position}
