@@ -197,6 +197,7 @@
    "text_sha256": "7c76fd6b6a4695f2532a2972ab5cdb99486f96b994232f21f37be05397d94f4d"
   },
   {
+   "commit": "41935845ba1eab43fa9bad65313db3e4d6674ba9",
    "group": "verify",
    "id": "C03",
    "kind": "section",
@@ -211,6 +212,29 @@
    "summary": "When a rim pinch may close on air, lift and combine aperture short of empty closure with fresh target-specific ...",
    "target": "skills/grasping-direct-ik/SKILL.md",
    "text_sha256": "b933bff5b915aa54014c220ba3b5c18ce2762a2c0114e8acff09024fd4b5b5a3"
+  },
+  {
+   "group": "other",
+   "id": "C04",
+   "kind": "section",
+   "lands": [
+    "other|P_MOTION_NOT_ARRIVE|b1#L3.2"
+   ],
+   "layer": "conditional section of an existing SKILL.md",
+   "merges": [
+    "libero_90/09@g1#r1",
+    "libero_goal_with_mug/08@g2#r0",
+    "libero_spatial_with_yellow_book/07@g1#r2"
+   ],
+   "record_ids": [
+    "libero_90/09@g1#r1",
+    "libero_goal_with_mug/08@g2#r0",
+    "libero_spatial_with_yellow_book/07@g1#r2",
+    "other|P_MOTION_NOT_ARRIVE|b1#L3.2"
+   ],
+   "summary": "When preparing to close, compare live robot pose with the target using the calibrated tool offset and explicit ...",
+   "target": "skills/grasping-direct-ik/SKILL.md",
+   "text_sha256": "f78a9688ccb300a36e1a4b6bff8473855dbc0a38f433d3b57f12458fec193c3c"
   }
  ],
  "plan_id": "a526441b207f716ca8ba092618f7145a97b9920dce3ada618d0c2ac75b5faf09",
