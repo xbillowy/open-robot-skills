@@ -93,6 +93,12 @@ measured slip-during-transport failure mode on tall bottles/cartons.
 - Clean-all-items / multi-item loops that need a clean "no match" loop
   terminator. Prefer `perceiving-objects-oneshot`.
 
+## Requirements from confirmed experience
+
+Follow these requirements when you write this subgraph. Each one comes from failures of earlier tasks that were repaired and confirmed by a rerun.
+
+1. When appearance distinguishes nearby candidates, verify the selected physical extent against all supplied appearance and shape qualifiers before publishing geometry; do not accept a label patch, surrounding surface, or plausible cloud as identity evidence. Reconsider alternatives if inconsistent; done when the accepted extent belongs to the requested entity.
+
 ## Recommended subgraph state flow
 
 3 states:
