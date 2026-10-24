@@ -65,6 +65,7 @@
    "text_sha256": "b5d695853df198c937e4f5119f11ccae0e666a4661b9688cd54c8b3c717ddf0c"
   },
   {
+   "commit": "55b0f0a6b642d98d9e39e35f3d0c7e4d707d7326",
    "id": "C04",
    "kind": "section",
    "layer": "conditional section of an existing SKILL.md",
@@ -77,6 +78,19 @@
    "summary": "When target_obb represents a selected rim or wall segment, align the opening axis across its local thickness and ...",
    "target": "skills/grasping-short-axis/SKILL.md",
    "text_sha256": "12afb2db40799b58e0c907e3b5467832046da5765e708db8e7c5e7cb6934c855"
+  },
+  {
+   "id": "C05",
+   "kind": "section",
+   "layer": "conditional section of an existing SKILL.md",
+   "record_ids": [
+    "L1.unified_v1.34d8d8d5851a9513",
+    "L2.unified_v1.d16e8326a82aeb3b",
+    "L3.unified_v1.ffd62cd8c338d4a9"
+   ],
+   "summary": "When established geometry already supports a top-down grasp, do not insert optional hover identity or depth ...",
+   "target": "skills/grasping-with-planner/SKILL.md",
+   "text_sha256": "23ec947b96a71997e7279e69fbbc5c7d8083b6415467e90b23911654166daf3c"
   }
  ],
  "plan_id": "5700903823db710bf5a016de95915c864fddb0cd8fa89b5891827218ffcea9ed",

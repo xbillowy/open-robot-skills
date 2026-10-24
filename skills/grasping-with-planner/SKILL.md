@@ -113,6 +113,12 @@ See `tools/curobo/SKILL.md` for the full recipe and gotchas.
   on hollow centers and miss handles. Use `grasping-short-axis` for elongated
   handles, where the centroid is graspable but orientation is what matters.
 
+## Requirements from confirmed experience
+
+Follow these requirements when you write this subgraph. Each one comes from failures of earlier tasks that were repaired and confirmed by a rerun.
+
+1. When established geometry already supports a top-down grasp, do not insert optional hover identity or depth refinement between approach and descent; preserve required arm-state observation and collision fallback; done when descent and closure use the established target geometry without a redundant sensing dependency.
+
 ## Recommended subgraph state flow
 
 6 states, in order:
