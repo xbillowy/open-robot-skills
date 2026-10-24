@@ -695,6 +695,7 @@
    "text_sha256": "7b56d95ee4ee07bc3188694cf91e114d650f682ac32ebcde5f952f0470aa815f"
   },
   {
+   "commit": "68007d598a532f8cf87a53470ead329dac29e88c",
    "group": "perceive",
    "id": "C20",
    "kind": "section",
@@ -734,6 +735,37 @@
    "summary": "When a shallow circular destination has partial or clipped geometry, use an unclipped view and fit its footprint ...",
    "target": "skills/perceiving-objects/SKILL.md",
    "text_sha256": "5919b555fd1dcbcfec76f5050b9334a5ba375adfcffcc8fd8052f811d65c7571"
+  },
+  {
+   "group": "perceive",
+   "id": "C21",
+   "kind": "section",
+   "lands": [
+    "perceive|P_PERC_BIASED_GEOM|b3#L2.0"
+   ],
+   "layer": "conditional section of an existing SKILL.md",
+   "merges": [
+    "libero_10_swap/06@g1#r0",
+    "libero_10_task/09@g2#r1",
+    "libero_90/37@g1#r0",
+    "libero_goal_task/09@g1#r0",
+    "libero_object_swap/03@g3#r1",
+    "libero_object_temp_y0_3/06@g2#r1",
+    "perceive|P_PERC_BIASED_GEOM|b3#L3.1"
+   ],
+   "record_ids": [
+    "libero_10_swap/06@g1#r0",
+    "libero_10_task/09@g2#r1",
+    "libero_90/37@g1#r0",
+    "libero_goal_task/09@g1#r0",
+    "libero_object_swap/03@g3#r1",
+    "libero_object_temp_y0_3/06@g2#r1",
+    "perceive|P_PERC_BIASED_GEOM|b3#L2.0",
+    "perceive|P_PERC_BIASED_GEOM|b3#L3.1"
+   ],
+   "summary": "When visible surfaces demonstrably omit body extent, estimate the object's own local support from depth before ...",
+   "target": "skills/perceiving-objects/SKILL.md",
+   "text_sha256": "bded34db632b5a379836c9d17f54cfe720a5361e42514a6357bb1c33ac17800f"
   }
  ],
  "plan_id": "a526441b207f716ca8ba092618f7145a97b9920dce3ada618d0c2ac75b5faf09",
