@@ -1416,6 +1416,7 @@
    "text_sha256": "988f2d8268d4f3269230832821c46961a3b386491a36f78e77467909313bb561"
   },
   {
+   "commit": "9441d978626212970b0f22a23d65f1bf162dfeaf",
    "group": "coordinator",
    "id": "C39",
    "kind": "coordinator",
@@ -1443,6 +1444,45 @@
    "summary": "When transfer needs compartment access, inspect its parent-associated aperture and interior or item first. If ...",
    "target": "memory/ors-m-v21/coordinator.md",
    "text_sha256": "5b540d5e49bd6cc2127ee309c090d0bc1486b3257aeffe7f95d18d4abd648664"
+  },
+  {
+   "group": "coordinator",
+   "id": "C40",
+   "kind": "coordinator",
+   "lands": [
+    "grasp|P_GRASP_CAVITY_OR_MISS|b3#L2.0"
+   ],
+   "layer": "coordinator composition pattern (coarse plan)",
+   "merges": [
+    "grasp|P_GRASP_CAVITY_OR_MISS|b2#L2.1",
+    "libero_10_task/06@g1#r2",
+    "libero_90/08@g1#r4",
+    "libero_90/13@g1#r1",
+    "libero_90/30@g1#r0",
+    "libero_90/60@g1#r1",
+    "libero_goal_with_milk/03@g1#r0",
+    "libero_goal_with_mug/08@g1#r1",
+    "libero_goal_with_yellow_book/08@g1#r1",
+    "libero_goal_with_yellow_book/08@g2#r0",
+    "libero_spatial_object/07@g1#r2"
+   ],
+   "record_ids": [
+    "grasp|P_GRASP_CAVITY_OR_MISS|b2#L2.1",
+    "grasp|P_GRASP_CAVITY_OR_MISS|b3#L2.0",
+    "libero_10_task/06@g1#r2",
+    "libero_90/08@g1#r4",
+    "libero_90/13@g1#r1",
+    "libero_90/30@g1#r0",
+    "libero_90/60@g1#r1",
+    "libero_goal_with_milk/03@g1#r0",
+    "libero_goal_with_mug/08@g1#r1",
+    "libero_goal_with_yellow_book/08@g1#r1",
+    "libero_goal_with_yellow_book/08@g2#r0",
+    "libero_spatial_object/07@g1#r2"
+   ],
+   "summary": "When observed cavity geometry would put both fingers in empty space or exceed usable jaw span, compose fresh ...",
+   "target": "memory/ors-m-v21/coordinator.md",
+   "text_sha256": "22fe8178181aa9517bb3cc8884f8229291de90ca9a5fabb2895408cf54cb68bf"
   }
  ],
  "plan_id": "b940c484fc74b1a2ba4fb9fccf4ba91c862d4b53e8c952b8ca96ab5afa603f63",
