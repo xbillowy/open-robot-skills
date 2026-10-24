@@ -792,6 +792,7 @@
    "text_sha256": "7b146a44785d52be17e42ea97f24450368e148af62ff892d6a5eaa5203717ce8"
   },
   {
+   "commit": "f1d8008234156fe9144b7cdf1fee9e3a60f7bfaa",
    "group": "place",
    "id": "C22",
    "kind": "section",
@@ -825,6 +826,31 @@
    "summary": "When protrusions bias the supplied object or destination box, use the supporting body and usable support patch ...",
    "target": "skills/transporting-objects/SKILL.md",
    "text_sha256": "b85d9d50133f1e2f2565aa7194ac2004c9f78c4559833ff23fbf9ec6c674b577"
+  },
+  {
+   "group": "place",
+   "id": "C23",
+   "kind": "section",
+   "lands": [
+    "place|P_CLEARANCE_COLLISION|b0#L2.0"
+   ],
+   "layer": "conditional section of an existing SKILL.md",
+   "merges": [
+    "libero_10_swap/05@g1#r3",
+    "libero_10_task/03@g1#r2",
+    "libero_10_task/03@g2#r0",
+    "libero_10_task/09@g2#r4"
+   ],
+   "record_ids": [
+    "libero_10_swap/05@g1#r3",
+    "libero_10_task/03@g1#r2",
+    "libero_10_task/03@g2#r0",
+    "libero_10_task/09@g2#r4",
+    "place|P_CLEARANCE_COLLISION|b0#L2.0"
+   ],
+   "summary": "When an interior opening constrains insertion, choose object orientation and depth from the usable opening and ...",
+   "target": "skills/transporting-objects/SKILL.md",
+   "text_sha256": "14563ca04eb94c64e4efdb90992e03664ea9f5d2bb2428dfd3cc40d04b2b7a53"
   }
  ],
  "plan_id": "b940c484fc74b1a2ba4fb9fccf4ba91c862d4b53e8c952b8ca96ab5afa603f63",
