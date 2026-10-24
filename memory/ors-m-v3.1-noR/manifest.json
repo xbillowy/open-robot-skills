@@ -1,0 +1,44 @@
+{
+ "accounting": {
+  "clusters": [
+   "K1",
+   "K2",
+   "K4"
+  ],
+  "kept": [
+   "K2"
+  ],
+  "refused": [
+   "K1",
+   "K4"
+  ]
+ },
+ "baseline": {
+  "commit": "c1e393d",
+  "root": "/mnt/data/home/xietao/projects/agent/recast-dev/development/ors-vlm-v5-frozen-c1e393d"
+ },
+ "changes": [
+  {
+   "group": "K2",
+   "id": "C01",
+   "kind": "new_skill",
+   "layer": "new skill bundle with scripts",
+   "record_ids": [
+    "gstar:libero_10_swap/06#place_chocolate_pudding",
+    "gstar:libero_10_task/08#transport_target",
+    "gstar:libero_90/01#place_black_bowl",
+    "gstar:libero_90/16#place_target",
+    "gstar:libero_90/43#place_white_bowl",
+    "gstar:libero_goal_swap/09#place_wine_bottle_on_rack"
+   ],
+   "summary": "K2 placing-held-objects-on-supports: Place a held object on a perceived support using the measured grasp displacement, TCP-awar",
+   "target": "skills/placing-held-objects-on-supports/",
+   "text_sha256": "9d4c2fdf7f459620021ac0dc6ec9b448c1271ae4cfa7e039891373eaa438d816"
+  }
+ ],
+ "plan_id": "28a72a8e9e0ff95d5f5d81338d304fb636176a8a6553e629ad386696af732da0",
+ "schema": "ors_m_manifest_v1",
+ "translation_id": "416ed8e2a8fd8783cb1a3c5d13bec98df32bdeb0c9638f4bb5270778c8a69bd6",
+ "version": "ors-m-v3.1-noR",
+ "view_id": "57678a7864052ad8da4ae16f849306b302f0eada76927791f32896cc07256f14"
+}
