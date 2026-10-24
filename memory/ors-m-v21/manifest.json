@@ -625,6 +625,7 @@
    "text_sha256": "ab145366f421cce4628548028e84948a8d0a8c74ce32cd6b2ae1b987f21f6cef"
   },
   {
+   "commit": "3afdc89db67101bcaa70c6e321b9614416384509",
    "group": "perceive",
    "id": "C17",
    "kind": "section",
@@ -648,6 +649,25 @@
    "summary": "When a selected mask includes disconnected, oversized, or depth-inconsistent regions, retain measured components ...",
    "target": "skills/perceiving-objects/SKILL.md",
    "text_sha256": "01f5177fb2f102c8180a8d20102e32f6520cc5ec7bb23dac976d69ffeea7966d"
+  },
+  {
+   "group": "verify",
+   "id": "C18",
+   "kind": "section",
+   "lands": [
+    "verify|P_PERC_WRONG_INSTANCE|b0#L3.1"
+   ],
+   "layer": "conditional section of an existing SKILL.md",
+   "merges": [
+    "libero_10_swap/06@g1#r5"
+   ],
+   "record_ids": [
+    "libero_10_swap/06@g1#r5",
+    "verify|P_PERC_WRONG_INSTANCE|b0#L3.1"
+   ],
+   "summary": "When perception is used to verify an action and target association is ambiguous, bind evidence to the affected ...",
+   "target": "skills/perceiving-objects/SKILL.md",
+   "text_sha256": "1ced70cf6e638d9bb60a28b0738575cf349309371f4cff213ec819b9b4ecaa13"
   }
  ],
  "plan_id": "133a3f303397a2b21f5a30abdcdabbce7b556bd8954935af40a05a93e739dc94",
