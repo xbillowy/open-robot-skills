@@ -278,6 +278,7 @@
    "text_sha256": "2ee122e19e52475e43c1f9cb03da8d507bdafcac3170969b953239c6e5d0bfec"
   },
   {
+   "commit": "b5a4e735d0feae65a42104192fdb69f410bd504d",
    "group": "grasp",
    "id": "C06",
    "kind": "section",
@@ -301,6 +302,22 @@
    "summary": "When an attached handle observation covers only a hinge or small patch, recover the usable bar and its ...",
    "target": "skills/grasping-short-axis/SKILL.md",
    "text_sha256": "a3f232f2fc5295e2d71652d09104f8380c04263d28dacb40df02d5f6470f565a"
+  },
+  {
+   "group": "grasp",
+   "id": "C07",
+   "kind": "section",
+   "lands": [
+    "libero_10_swap/08@g1#r1"
+   ],
+   "layer": "conditional section of an existing SKILL.md",
+   "merges": [],
+   "record_ids": [
+    "libero_10_swap/08@g1#r1"
+   ],
+   "summary": "When closing after a planned handle approach, check fresh joints against the final commanded configuration after ...",
+   "target": "skills/grasping-short-axis/SKILL.md",
+   "text_sha256": "cfb57a55d91132f361be0caa6bb1e58cb53d99b7e3d19f21246122f7e1b06f8d"
   }
  ],
  "plan_id": "a526441b207f716ca8ba092618f7145a97b9920dce3ada618d0c2ac75b5faf09",
