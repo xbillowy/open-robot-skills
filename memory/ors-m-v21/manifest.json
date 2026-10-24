@@ -1173,6 +1173,7 @@
    "text_sha256": "d190709bd24279e44a05fd1f49e38a5fc654a160a14781347ecf622681833c82"
   },
   {
+   "commit": "4ee1ab31f949fd48776bc22e1dd034da2eec0db6",
    "group": "grasp",
    "id": "C36",
    "kind": "script_edit",
@@ -1187,6 +1188,22 @@
    "summary": "top, base_z, height = c_z + e_z, c_z - e_z, 2.0 * e_z # Elevated targets require lateral travel above their support ...",
    "target": "skills/grasping-with-planner/scripts/grasp_descend_linear.py",
    "text_sha256": "ce130e91289de216f7f2948f8d283e23454ceeeba322fcb053fa3d921d00a033"
+  },
+  {
+   "group": "place",
+   "id": "C37",
+   "kind": "script_edit",
+   "lands": [
+    "libero_goal_with_milk/03@g1#r4"
+   ],
+   "layer": "exact edit of an existing canonical script",
+   "merges": [],
+   "record_ids": [
+    "libero_goal_with_milk/03@g1#r4"
+   ],
+   "summary": "drop_rotation: Quaternion | None = None, retract_clearance: float = 0.0, ) -> Output: rotation = drop_rotation if ...",
+   "target": "skills/transporting-objects/scripts/descend_release_linear.py",
+   "text_sha256": "f6b3d2897043f1060f195d826b7c7d282b7b4f04d3cedd8587602551154028b2"
   }
  ],
  "plan_id": "133a3f303397a2b21f5a30abdcdabbce7b556bd8954935af40a05a93e739dc94",
