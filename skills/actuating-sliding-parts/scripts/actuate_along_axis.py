@@ -37,11 +37,14 @@ def run(ctx: NodeContext, grasp_pose: Se3Pose, pull_axis: Vec3, direction: str =
     def arrive(target, cartesian):
         # Three attempts bound residual-pose corrections.
         for unused in range(3):
-            if cartesian:
-                ctx.tool('robot.go_to_pose_cartesian', pose=target)
-            else:
-                ctx.tool('robot.go_to_pose', pose=target)
-            measured = transform_feedback(ctx.tool('robot.get_ee_pose')['pose'])
+            try:
+                if cartesian:
+                    ctx.tool('robot.go_to_pose_cartesian', pose=target)
+                else:
+                    ctx.tool('robot.go_to_pose', pose=target)
+                measured = transform_feedback(ctx.tool('robot.get_ee_pose')['pose'])
+            except Exception:
+                return False
             error = np.linalg.norm(vector(measured['position']) - vector(target['position']))
             angle = (rot(target['rotation']).inv() * rot(measured['rotation'])).magnitude()
             # Arrival limits bound translation and angular mismatch.
@@ -89,10 +92,19 @@ def run(ctx: NodeContext, grasp_pose: Se3Pose, pull_axis: Vec3, direction: str =
         remaining = distance - max(displacement, 0.0)
         increment = min(step, remaining)
         target = shifted(command, travel_axis * increment)
-        ctx.tool('robot.go_to_pose_cartesian', pose=target)
-        raw_pose = ctx.tool('robot.get_ee_pose')['pose']
-        measured = transform_feedback(raw_pose)
-        displacement = float((vector(measured['position']) - origin) @ travel_axis)
+        motion_failed = False
+        try:
+            ctx.tool('robot.go_to_pose_cartesian', pose=target)
+        except Exception:
+            motion_failed = True
+        try:
+            raw_pose = ctx.tool('robot.get_ee_pose')['pose']
+            measured = transform_feedback(raw_pose)
+            displacement = float((vector(measured['position']) - origin) @ travel_axis)
+        except Exception:
+            return {'moved': False, 'displacement_m': float(displacement), 'arrival_ok': True, 'retry_needed': True}
+        if motion_failed:
+            return {'moved': False, 'displacement_m': float(displacement), 'arrival_ok': True, 'retry_needed': True}
         # A fifth of the requested step is minimum useful measured progress.
         if displacement - previous < increment * 0.2:
             stalled += 1

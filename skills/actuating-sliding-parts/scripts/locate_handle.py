@@ -27,8 +27,11 @@ def vec(v):
 
 def run(ctx: NodeContext, parent_prompt: str = 'cabinet', subpart_prompt: str = 'drawer handle. pull. knob.', height_rank: str = '') -> Output:
     empty = {'found': False, 'handle_obb': None, 'grasp_pose': None, 'pull_axis': None}
-    obs = ctx.tool('robot.get_observation')
-    hand = vector(ctx.tool('robot.get_ee_pose')['pose']['position'])
+    try:
+        obs = ctx.tool('robot.get_observation')
+        hand = vector(ctx.tool('robot.get_ee_pose')['pose']['position'])
+    except Exception:
+        return empty
     candidates = []
     # Three views bound acquisition work.
     for camera in obs['cameras'][:3]:
@@ -36,22 +39,19 @@ def run(ctx: NodeContext, parent_prompt: str = 'cabinet', subpart_prompt: str = 
         camera_pose = camera.get('pose', camera.get('camera_pose'))
         if image is None or camera_pose is None or camera.get('depth') is None:
             continue
-        parents = ctx.tool('grounding-dino.detect', image=image, query=parent_prompt)['detections']
-        if not parents:
-            continue
-        parent_box = max(parents, key=lambda d: d['score'])['box']
-        masks = ctx.tool('sam3.segment_box', image=image, box=parent_box)['masks']
-        if not masks:
-            continue
-        points = ctx.tool('geometry.mask_to_world_points', mask=masks[0], depth=camera['depth'], intrinsics=camera['intrinsics'], camera_pose=camera_pose)['points']
         try:
+            parents = ctx.tool('grounding-dino.detect', image=image, query=parent_prompt)['detections']
+            if not parents:
+                continue
+            parent_box = max(parents, key=lambda d: d['score'])['box']
+            masks = ctx.tool('sam3.segment_box', image=image, box=parent_box)['masks']
+            if not masks:
+                continue
+            points = ctx.tool('geometry.mask_to_world_points', mask=masks[0], depth=camera['depth'], intrinsics=camera['intrinsics'], camera_pose=camera_pose)['points']
             parent = ctx.tool('geometry.compute_obb', points=points)['obb']
-        except PerceptionFailed:
-            continue
-        center = vector(parent['center'])
-        try:
+            center = vector(parent['center'])
             front = ctx.tool('geometry.front_grasp_from_obb', obb=parent, approach_hint=vec(hand-center))
-        except PlanningFailed:
+        except Exception:
             continue
         normal = vector(front['approach_direction'])
         normal[2] = 0.0
@@ -75,16 +75,19 @@ def run(ctx: NodeContext, parent_prompt: str = 'cabinet', subpart_prompt: str = 
         projected = (parent_points-center) @ axes
         # Robust percentiles suppress isolated depth outliers.
         low, high = np.percentile(projected, [2, 98], axis=0)
-        detections = ctx.tool('grounding-dino.detect', image=image, query=subpart_prompt)['detections']
+        try:
+            detections = ctx.tool('grounding-dino.detect', image=image, query=subpart_prompt)['detections']
+        except Exception:
+            continue
         # Sixteen candidates bound segmentation work.
         for detection in sorted(detections, key=lambda d: d['score'], reverse=True)[:16]:
-            masks = ctx.tool('sam3.segment_box', image=image, box=detection['box'])['masks']
-            if not masks:
-                continue
-            part_points = ctx.tool('geometry.mask_to_world_points', mask=masks[0], depth=camera['depth'], intrinsics=camera['intrinsics'], camera_pose=camera_pose)['points']
             try:
+                masks = ctx.tool('sam3.segment_box', image=image, box=detection['box'])['masks']
+                if not masks:
+                    continue
+                part_points = ctx.tool('geometry.mask_to_world_points', mask=masks[0], depth=camera['depth'], intrinsics=camera['intrinsics'], camera_pose=camera_pose)['points']
                 part = ctx.tool('geometry.compute_obb', points=part_points)['obb']
-            except PerceptionFailed:
+            except Exception:
                 continue
             p = vector(part['center'])
             local = (p-center) @ axes
@@ -95,11 +98,14 @@ def run(ctx: NodeContext, parent_prompt: str = 'cabinet', subpart_prompt: str = 
             if local[1] < high[1] - 0.10:
                 continue
             sizes = np.sort(vector(part['extent']))
+            # OBB extents are half-sizes; two full dimensions must be small.
+            if not np.all(np.isfinite(sizes)) or np.any(sizes <= 0.0) or sizes[1] * 2.0 > 0.06:
+                continue
             # Millimetre floor bounds the elongation denominator.
             elongation = float(sizes[2] / max(sizes[1], 0.001))
             try:
                 grasp = ctx.tool('geometry.front_grasp_from_obb', obb=part, approach_hint=vec(normal))['grasp_pose']
-            except PlanningFailed:
+            except Exception:
                 continue
             candidates.append((float(p[2]), elongation, float(detection['score']), part, grasp, vec(normal)))
         if candidates:

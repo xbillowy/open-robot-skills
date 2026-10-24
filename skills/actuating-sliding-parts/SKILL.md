@@ -14,8 +14,8 @@ metadata:
 gap:
   exit_conditions:
     completed: The operation's observed completion checks hold; outputs bound.
-    failed: The operation could not be completed or verified (reached by raising). Coordinator routes
-      on.
+    failed: The operation could not be completed or verified. Retryable script failures return
+      found false or moved false so the coordinator can re-perceive and retry.
   canonical_scripts:
   - locate_handle: scripts/locate_handle.py
   - actuate_along_axis: scripts/actuate_along_axis.py

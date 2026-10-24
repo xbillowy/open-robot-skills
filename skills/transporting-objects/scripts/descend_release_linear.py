@@ -73,7 +73,10 @@ def run(
             },
             "rotation": rotation,
         }
-        ctx.tool("robot.go_to_pose_cartesian", pose=withdrawal)
+        try:
+            ctx.tool("robot.go_to_pose_cartesian", pose=withdrawal)
+        except Exception:
+            pass
 
     ctx.tool("robot.go_home")
 

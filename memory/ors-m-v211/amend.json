@@ -1,0 +1,246 @@
+{
+ "amend_id": "b08488f12881a91013de1331155f6225b2edf036d2ae43b68a4c721fddb4df3a",
+ "attempts": [
+  {
+   "attempt": 1,
+   "edits": 10,
+   "problems": [],
+   "reply_sha256": "318d51b6b4a6e18356b9d887a8bb3f678c6e7c7a8382dfc5ed53542e323ca69d",
+   "usage": null
+  }
+ ],
+ "backend": {
+  "effort": "medium",
+  "model": "gpt-6.1-sol",
+  "provider": "openrouter",
+  "route": "gpt_registry[3|4|5|7-14] via sub gateway :18970 (never sub2, never block 2)"
+ },
+ "baseline_root": "/mnt/data/home/xietao/projects/agent/recast-dev/development/ors-vlm-v5-frozen-c1e393d",
+ "edits": [
+  {
+   "new": "        try:\n            ctx.tool(\"robot.go_to_pose_cartesian\", pose=withdrawal)\n        except Exception:\n            pass",
+   "old": "        ctx.tool(\"robot.go_to_pose_cartesian\", pose=withdrawal)",
+   "path": "skills/transporting-objects/scripts/descend_release_linear.py",
+   "reason": "Make the optional withdrawal best-effort while preserving the default release path."
+  },
+  {
+   "new": "            try:\n                if cartesian:\n                    ctx.tool('robot.go_to_pose_cartesian', pose=target)\n                else:\n                    ctx.tool('robot.go_to_pose', pose=target)\n                measured = transform_feedback(ctx.tool('robot.get_ee_pose')['pose'])\n            except Exception:\n                return False",
+   "old": "            if cartesian:\n                ctx.tool('robot.go_to_pose_cartesian', pose=target)\n            else:\n                ctx.tool('robot.go_to_pose', pose=target)\n            measured = transform_feedback(ctx.tool('robot.get_ee_pose')['pose'])",
+   "path": "skills/actuating-sliding-parts/scripts/actuate_along_axis.py",
+   "reason": "Convert approach or engagement motion failures into the existing retryable failure result."
+  },
+  {
+   "new": "        motion_failed = False\n        try:\n            ctx.tool('robot.go_to_pose_cartesian', pose=target)\n        except Exception:\n            motion_failed = True\n        try:\n            raw_pose = ctx.tool('robot.get_ee_pose')['pose']\n            measured = transform_feedback(raw_pose)\n            displacement = float((vector(measured['position']) - origin) @ travel_axis)\n        except Exception:\n            return {'moved': False, 'displacement_m': float(displacement), 'arrival_ok': True, 'retry_needed': True}\n        if motion_failed:\n            return {'moved': False, 'displacement_m': float(displacement), 'arrival_ok': True, 'retry_needed': True}",
+   "old": "        ctx.tool('robot.go_to_pose_cartesian', pose=target)\n        raw_pose = ctx.tool('robot.get_ee_pose')['pose']\n        measured = transform_feedback(raw_pose)\n        displacement = float((vector(measured['position']) - origin) @ travel_axis)",
+   "path": "skills/actuating-sliding-parts/scripts/actuate_along_axis.py",
+   "reason": "Return a retryable failed stroke with fresh measured displacement when available instead of propagating a motion error."
+  },
+  {
+   "new": "    try:\n        obs = ctx.tool('robot.get_observation')\n        hand = vector(ctx.tool('robot.get_ee_pose')['pose']['position'])\n    except Exception:\n        return empty",
+   "old": "    obs = ctx.tool('robot.get_observation')\n    hand = vector(ctx.tool('robot.get_ee_pose')['pose']['position'])",
+   "path": "skills/actuating-sliding-parts/scripts/locate_handle.py",
+   "reason": "Return found false if initial observation acquisition fails."
+  },
+  {
+   "new": "        try:\n            parents = ctx.tool('grounding-dino.detect', image=image, query=parent_prompt)['detections']\n            if not parents:\n                continue\n            parent_box = max(parents, key=lambda d: d['score'])['box']\n            masks = ctx.tool('sam3.segment_box', image=image, box=parent_box)['masks']\n            if not masks:\n                continue\n            points = ctx.tool('geometry.mask_to_world_points', mask=masks[0], depth=camera['depth'], intrinsics=camera['intrinsics'], camera_pose=camera_pose)['points']\n            parent = ctx.tool('geometry.compute_obb', points=points)['obb']\n            center = vector(parent['center'])\n            front = ctx.tool('geometry.front_grasp_from_obb', obb=parent, approach_hint=vec(hand-center))\n        except Exception:\n            continue",
+   "old": "        parents = ctx.tool('grounding-dino.detect', image=image, query=parent_prompt)['detections']\n        if not parents:\n            continue\n        parent_box = max(parents, key=lambda d: d['score'])['box']\n        masks = ctx.tool('sam3.segment_box', image=image, box=parent_box)['masks']\n        if not masks:\n            continue\n        points = ctx.tool('geometry.mask_to_world_points', mask=masks[0], depth=camera['depth'], intrinsics=camera['intrinsics'], camera_pose=camera_pose)['points']\n        try:\n            parent = ctx.tool('geometry.compute_obb', points=points)['obb']\n        except PerceptionFailed:\n            continue\n        center = vector(parent['center'])\n        try:\n            front = ctx.tool('geometry.front_grasp_from_obb', obb=parent, approach_hint=vec(hand-center))\n        except PlanningFailed:\n            continue",
+   "path": "skills/actuating-sliding-parts/scripts/locate_handle.py",
+   "reason": "Try the next view when any parent-perception or front-geometry tool fails."
+  },
+  {
+   "new": "        try:\n            detections = ctx.tool('grounding-dino.detect', image=image, query=subpart_prompt)['detections']\n        except Exception:\n            continue",
+   "old": "        detections = ctx.tool('grounding-dino.detect', image=image, query=subpart_prompt)['detections']",
+   "path": "skills/actuating-sliding-parts/scripts/locate_handle.py",
+   "reason": "Allow another view after a failed handle-detection request."
+  },
+  {
+   "new": "            try:\n                masks = ctx.tool('sam3.segment_box', image=image, box=detection['box'])['masks']\n                if not masks:\n                    continue\n                part_points = ctx.tool('geometry.mask_to_world_points', mask=masks[0], depth=camera['depth'], intrinsics=camera['intrinsics'], camera_pose=camera_pose)['points']\n                part = ctx.tool('geometry.compute_obb', points=part_points)['obb']\n            except Exception:\n                continue",
+   "old": "            masks = ctx.tool('sam3.segment_box', image=image, box=detection['box'])['masks']\n            if not masks:\n                continue\n            part_points = ctx.tool('geometry.mask_to_world_points', mask=masks[0], depth=camera['depth'], intrinsics=camera['intrinsics'], camera_pose=camera_pose)['points']\n            try:\n                part = ctx.tool('geometry.compute_obb', points=part_points)['obb']\n            except PerceptionFailed:\n                continue",
+   "path": "skills/actuating-sliding-parts/scripts/locate_handle.py",
+   "reason": "Skip a candidate whose segmentation or spatial reconstruction fails without bypassing graph recovery."
+  },
+  {
+   "new": "            sizes = np.sort(vector(part['extent']))\n            # OBB extents are half-sizes; two full dimensions must be small.\n            if not np.all(np.isfinite(sizes)) or np.any(sizes <= 0.0) or sizes[1] * 2.0 > 0.06:\n                continue\n            # Millimetre floor bounds the elongation denominator.",
+   "old": "            sizes = np.sort(vector(part['extent']))\n            # Millimetre floor bounds the elongation denominator.",
+   "path": "skills/actuating-sliding-parts/scripts/locate_handle.py",
+   "reason": "Reject broad flat parts before ranking by requiring two dimensions to fit plausible handle or knob thickness."
+  },
+  {
+   "new": "            except Exception:\n                continue",
+   "old": "            except PlanningFailed:\n                continue",
+   "path": "skills/actuating-sliding-parts/scripts/locate_handle.py",
+   "reason": "Skip a candidate when its grasp-geometry tool raises any connector error."
+  },
+  {
+   "new": "    failed: The operation could not be completed or verified. Retryable script failures return\n      found false or moved false so the coordinator can re-perceive and retry.",
+   "old": "    failed: The operation could not be completed or verified (reached by raising). Coordinator routes\n      on.",
+   "path": "skills/actuating-sliding-parts/SKILL.md",
+   "reason": "Document failure outputs rather than implying that retryable failures should raise."
+  }
+ ],
+ "files_before": {
+  "skills/actuating-sliding-parts/SKILL.md": "846c735fdc64f543eda2af47a03395c539170327324c2e47f608c1d3d632e693",
+  "skills/actuating-sliding-parts/scripts/actuate_along_axis.py": "c4c5c55a91bdeb006b12d999606caa2a5a60e4e736dce7ed2bdf10c60b6dae52",
+  "skills/actuating-sliding-parts/scripts/locate_handle.py": "996c3d9c2bcbd948fbfc8b2e3bb0f366527e464e1973a21ccb8b14f5c2d9c9f8",
+  "skills/grasping-with-planner/scripts/grasp_descend_linear.py": "d66c1c6217913abded420937ed3e86c234e443a24fb888c606cb1c8c5cce34ac",
+  "skills/perceiving-objects-oneshot/scripts/perceive_simple.py": "2515a34145c5cf277bcecc9af66eef19a89b51d7d32edd55823588e444472a72",
+  "skills/transporting-objects/scripts/descend_release_linear.py": "7751a2a3506b2f0342264293e196f04df92fecda2aec9e409ad9b26469c4a89a"
+ },
+ "input_plan_id": "ors-m-v21-b940c484fc74",
+ "ok": true,
+ "problems_after": [],
+ "problems_before": [
+  "skills/transporting-objects/scripts/descend_release_linear.py: the edit adds 1 motion command(s) (robot.go_to_pose_cartesian) outside a try/except; when that motion fails (no IK solution, planning failure) the script raises and the whole sub-graph goes to on_error. Catch the tool error and fall back (skip an optional move, or return the failure Output)",
+  "offline smoke: locate_handle chose a large flat part in front of the cabinet (about 22 x 16 cm, 4 mm thick) over the cabinet's round knobs: reject implausible handle candidates (a handle or knob is small in at least two of its three dimensions, a few centimetres at most) before ranking",
+  "offline smoke: locate_handle raised when its first perception call failed (ToolError: grounding-dino.detect: perception service request failed); a script that raises sends its whole sub-graph to on_error and skips the graph's retry branch: catch the tool error, try the next view or return found=False",
+  "offline smoke: actuate_along_axis raised when robot motion failed with 'IK failed for target pose' from its first motion command (ToolError: robot.go_to_pose: IK failed for target pose); motion failures must return the failure Output (moved=False, the measured displacement) so the graph's moved=false retry branch runs; a raise routes the whole sub-graph to on_error",
+  "offline smoke: actuate_along_axis raised when robot motion failed with 'IK failed for target pose' during the stroke (ToolError: robot.go_to_pose_cartesian: IK failed for target pose); motion failures must return the failure Output (moved=False, the measured displacement) so the graph's moved=false retry branch runs; a raise routes the whole sub-graph to on_error"
+ ],
+ "prompt_file_sha256": "64d4ad091b7bb840b4a9ca755438fc3be22111e20ed679be5bb0de5e4a1cb2c8",
+ "prompt_version": "global_ors_v211_amend",
+ "request_chars": 80851,
+ "request_sha256": "3c41703ad7c83c275756e1b3bd2c8b544fb242d5f8bcfe73133cfb7c00154224",
+ "schema": "apply_global_ors_amend_v211",
+ "smoke_after": {
+  "ok": true,
+  "problems": [],
+  "scenarios": {
+   "free": {
+    "calls": 17,
+    "displacement_m": 0.049999985082506665,
+    "error": null,
+    "motions": 7,
+    "moved": true,
+    "part_steps": 5,
+    "travel_m": 0.05
+   },
+   "ik_mid_stroke": {
+    "calls": 11,
+    "displacement_m": 0.009999999005500321,
+    "error": null,
+    "motions": 4,
+    "moved": false,
+    "part_steps": 1,
+    "travel_m": 0.01
+   },
+   "knobs": {
+    "calls": 26,
+    "error": null,
+    "found": true,
+    "handle_error_m": 0.0001
+   },
+   "locate": {
+    "axis_cos": 1.0,
+    "calls": 23,
+    "error": null,
+    "handle_error_m": 0.0001,
+    "tools": [
+     "geometry.compute_obb",
+     "geometry.front_grasp_from_obb",
+     "geometry.mask_to_world_points",
+     "grounding-dino.detect",
+     "robot.get_ee_pose",
+     "robot.get_observation",
+     "sam3.segment_box"
+    ]
+   },
+   "locked": {
+    "calls": 13,
+    "displacement_m": 0.0,
+    "error": null,
+    "motions": 5,
+    "moved": false,
+    "part_steps": 0,
+    "travel_m": 0.0
+   },
+   "perception_error": {
+    "calls": 24,
+    "error": null,
+    "found": true
+   },
+   "unreachable": {
+    "calls": 2,
+    "displacement_m": 0.0,
+    "error": null,
+    "motions": 1,
+    "moved": false,
+    "part_steps": 0,
+    "travel_m": 0.0
+   }
+  }
+ },
+ "smoke_before": {
+  "ok": false,
+  "problems": [
+   "locate_handle chose a large flat part in front of the cabinet (about 22 x 16 cm, 4 mm thick) over the cabinet's round knobs: reject implausible handle candidates (a handle or knob is small in at least two of its three dimensions, a few centimetres at most) before ranking",
+   "locate_handle raised when its first perception call failed (ToolError: grounding-dino.detect: perception service request failed); a script that raises sends its whole sub-graph to on_error and skips the graph's retry branch: catch the tool error, try the next view or return found=False",
+   "actuate_along_axis raised when robot motion failed with 'IK failed for target pose' from its first motion command (ToolError: robot.go_to_pose: IK failed for target pose); motion failures must return the failure Output (moved=False, the measured displacement) so the graph's moved=false retry branch runs; a raise routes the whole sub-graph to on_error",
+   "actuate_along_axis raised when robot motion failed with 'IK failed for target pose' during the stroke (ToolError: robot.go_to_pose_cartesian: IK failed for target pose); motion failures must return the failure Output (moved=False, the measured displacement) so the graph's moved=false retry branch runs; a raise routes the whole sub-graph to on_error"
+  ],
+  "scenarios": {
+   "free": {
+    "calls": 17,
+    "displacement_m": 0.049999985082506665,
+    "error": null,
+    "motions": 7,
+    "moved": true,
+    "part_steps": 5,
+    "travel_m": 0.05
+   },
+   "ik_mid_stroke": {
+    "calls": 10,
+    "displacement_m": null,
+    "error": "ToolError: robot.go_to_pose_cartesian: IK failed for target pose",
+    "motions": 4,
+    "moved": null,
+    "part_steps": 1,
+    "travel_m": 0.01
+   },
+   "knobs": {
+    "calls": 27,
+    "error": null,
+    "found": true,
+    "handle_error_m": 0.0838
+   },
+   "locate": {
+    "axis_cos": 1.0,
+    "calls": 23,
+    "error": null,
+    "handle_error_m": 0.0001,
+    "tools": [
+     "geometry.compute_obb",
+     "geometry.front_grasp_from_obb",
+     "geometry.mask_to_world_points",
+     "grounding-dino.detect",
+     "robot.get_ee_pose",
+     "robot.get_observation",
+     "sam3.segment_box"
+    ]
+   },
+   "locked": {
+    "calls": 13,
+    "displacement_m": 0.0,
+    "error": null,
+    "motions": 5,
+    "moved": false,
+    "part_steps": 0,
+    "travel_m": 0.0
+   },
+   "perception_error": {
+    "calls": 3,
+    "error": "ToolError: grounding-dino.detect: perception service request failed",
+    "found": null
+   },
+   "unreachable": {
+    "calls": 2,
+    "displacement_m": null,
+    "error": "ToolError: robot.go_to_pose: IK failed for target pose",
+    "motions": 1,
+    "moved": null,
+    "part_steps": 0,
+    "travel_m": 0.0
+   }
+  }
+ },
+ "version": "ors-m-v211"
+}
