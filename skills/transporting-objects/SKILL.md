@@ -85,6 +85,7 @@ moves the held object above the destination container and releases it.
 Follow these requirements when you write this subgraph. Each one comes from failures of earlier tasks that were repaired and confirmed by a rerun.
 
 1. When a rimmed opening permits vertical insertion, deviate from fixed above-rim release: derive place_offset from observed interior depth, held-object geometry and hand clearance so the executed endpoint lowers the object inside without striking the floor; done when checked arrival precedes opening and fresh images confirm settled containment.
+2. When a peripheral grasp or visible slip changes the object's attachment, obtain current held-body geometry upstream and use its measured hand offset and tilt rather than assuming the pre-grasp offset persisted; done when the body, not merely the hand, aligns with the support and remains supported after release.
 
 ## Recommended subgraph state flow
 

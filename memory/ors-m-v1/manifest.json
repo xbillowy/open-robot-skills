@@ -238,6 +238,7 @@
    "text_sha256": "86039e592c48b3c99fb0a5c2fa21041447181af339a8c3fcfe9d9620abdd7785"
   },
   {
+   "commit": "010a35d58bab03bb5d5d62fd50e086f1a221917b",
    "id": "C15",
    "kind": "section",
    "layer": "conditional section of an existing SKILL.md",
@@ -249,6 +250,23 @@
    "summary": "When a rimmed opening permits vertical insertion, deviate from fixed above-rim release: derive place_offset from ...",
    "target": "skills/transporting-objects/SKILL.md",
    "text_sha256": "b35508c143cc49a8a915f3898e9381b14d4e9fc81d24b2d66f22d83ee376134b"
+  },
+  {
+   "id": "C16",
+   "kind": "section",
+   "layer": "conditional section of an existing SKILL.md",
+   "record_ids": [
+    "L1.unified_v1.7b0282a0be5dfa49",
+    "L1.unified_v1.a82c05076ff2b340",
+    "L2.unified_v1.044a5bb19c39fcd3",
+    "L2.unified_v1.1de72aa0a4d2c7fe",
+    "L3.unified_v1.147ce4a1a87b5012",
+    "L3.unified_v1.25cf4c8aa61c32de",
+    "L3.unified_v1.93447c4c991859ae"
+   ],
+   "summary": "When a peripheral grasp or visible slip changes the object's attachment, obtain current held-body geometry upstream ...",
+   "target": "skills/transporting-objects/SKILL.md",
+   "text_sha256": "5b1cfbed675edaeb8ab9142e6ad8a1b8c8d652ae4bcf0997c4d1c695be82ce32"
   }
  ],
  "plan_id": "5700903823db710bf5a016de95915c864fddb0cd8fa89b5891827218ffcea9ed",
