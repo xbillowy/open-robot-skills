@@ -169,6 +169,7 @@
    "text_sha256": "1476b27054732b63e40ed74fc177aad19e01d8dbc5719050e28188040ce42740"
   },
   {
+   "commit": "5fb6ad7bd3d1378cd45c111b37b762f6c7ca16e2",
    "group": "grasp",
    "id": "C02",
    "kind": "section",
@@ -194,6 +195,22 @@
    "summary": "When feedback and commands use different hand or fingertip references, apply the configured rigid transform before ...",
    "target": "skills/grasping-direct-ik/SKILL.md",
    "text_sha256": "7c76fd6b6a4695f2532a2972ab5cdb99486f96b994232f21f37be05397d94f4d"
+  },
+  {
+   "group": "verify",
+   "id": "C03",
+   "kind": "section",
+   "lands": [
+    "libero_goal_with_mug/08@g1#r2"
+   ],
+   "layer": "conditional section of an existing SKILL.md",
+   "merges": [],
+   "record_ids": [
+    "libero_goal_with_mug/08@g1#r2"
+   ],
+   "summary": "When a rim pinch may close on air, lift and combine aperture short of empty closure with fresh target-specific ...",
+   "target": "skills/grasping-direct-ik/SKILL.md",
+   "text_sha256": "b933bff5b915aa54014c220ba3b5c18ce2762a2c0114e8acff09024fd4b5b5a3"
   }
  ],
  "plan_id": "a526441b207f716ca8ba092618f7145a97b9920dce3ada618d0c2ac75b5faf09",
