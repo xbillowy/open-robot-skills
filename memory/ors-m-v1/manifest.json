@@ -110,6 +110,7 @@
    "text_sha256": "93ecf38977c40929c7967115a39ee9abfd35f9a4dd3cdc1eeb0114c59a4019db"
   },
   {
+   "commit": "bbc5b9ca63f8897ed4569e12f055d3e8cf8ec942",
    "id": "C07",
    "kind": "section",
    "layer": "conditional section of an existing SKILL.md",
@@ -121,6 +122,19 @@
    "summary": "When raised geometry lies along the approach, set hover clearance from observed obstacle tops before lateral travel; ...",
    "target": "skills/grasping-with-planner/SKILL.md",
    "text_sha256": "8886a4b17e06db26a26b822b2da2670bbc596a07e84201b788621c66c37a963d"
+  },
+  {
+   "id": "C08",
+   "kind": "section",
+   "layer": "conditional section of an existing SKILL.md",
+   "record_ids": [
+    "L1.unified_v1.0301062a2e2f9947",
+    "L2.unified_v1.32326e3cfb8fe683",
+    "L2.unified_v1.5174b6ebe8d4e395"
+   ],
+   "summary": "When only specified items are requested, name exactly that set and exclude already delivered items and the ...",
+   "target": "skills/perceiving-next-item/SKILL.md",
+   "text_sha256": "7e9553ce58121a2ffa7147ba4a58ebefc63c54cfd5a31920ee695d12545e06f3"
   }
  ],
  "plan_id": "5700903823db710bf5a016de95915c864fddb0cd8fa89b5891827218ffcea9ed",

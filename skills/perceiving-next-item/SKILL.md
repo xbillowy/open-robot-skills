@@ -178,6 +178,12 @@ and **co-localizes the container**, so both the "is anything left?" decision and
 the downstream place are more reliable — at the cost of a second perception per
 pass.
 
+## Requirements from confirmed experience
+
+Follow these requirements when you write this subgraph. Each one comes from failures of earlier tasks that were repaired and confirmed by a rerun.
+
+1. When only specified items are requested, name exactly that set and exclude already delivered items and the destination interior from next-item selection; done when none means no requested undelivered item remains, not merely that the container is the most prominent detection.
+
 ## Recommended subgraph state flow
 
 ```text
