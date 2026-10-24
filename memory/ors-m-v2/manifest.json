@@ -1169,6 +1169,7 @@
    "text_sha256": "c3d4083998335890123298beb096aad3f32dbaff9163532451fc38bcb0cc2b1a"
   },
   {
+   "commit": "ef1a9d9a408d99dd358f658cf0e194dbe42af54c",
    "group": "transport",
    "id": "C30",
    "kind": "section",
@@ -1216,6 +1217,31 @@
    "summary": "When observed geometry intersects the carried object's swept volume, replace the best-effort lift shortcut with ...",
    "target": "skills/transporting-objects/SKILL.md",
    "text_sha256": "1bf011bfdf89a533129c8951ad035d1f475ded573e8b0ca05eba60217061d758"
+  },
+  {
+   "group": "transport",
+   "id": "C31",
+   "kind": "section",
+   "lands": [
+    "transport|P_GRASP_CAVITY_OR_MISS|b0#L3.1"
+   ],
+   "layer": "conditional section of an existing SKILL.md",
+   "merges": [
+    "libero_90/71@g1#r2",
+    "libero_goal_swap/02@g1#r2",
+    "libero_goal_swap/09@g7#r1",
+    "transport|P_GRASP_CAVITY_OR_MISS|b0#L2.0"
+   ],
+   "record_ids": [
+    "libero_90/71@g1#r2",
+    "libero_goal_swap/02@g1#r2",
+    "libero_goal_swap/09@g7#r1",
+    "transport|P_GRASP_CAVITY_OR_MISS|b0#L2.0",
+    "transport|P_GRASP_CAVITY_OR_MISS|b0#L3.1"
+   ],
+   "summary": "When carrying feedback indicates slip, empty fingers or uncertain retention, gate placement descent using fresh ...",
+   "target": "skills/transporting-objects/SKILL.md",
+   "text_sha256": "1f4462fe9949adf0b57f04328eaa3d3e354aebe6c8d2507ff26e62bce36a57b4"
   }
  ],
  "plan_id": "a526441b207f716ca8ba092618f7145a97b9920dce3ada618d0c2ac75b5faf09",
