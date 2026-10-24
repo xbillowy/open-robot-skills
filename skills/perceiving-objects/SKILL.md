@@ -100,6 +100,7 @@ Follow these requirements when you write this subgraph. Each one comes from fail
 1. When distractors or fragments could match the label, require complete-target identity verification before publishing geometry; after explicit rejection, try at most two alternative candidates rather than accepting the rejected region; done when identity and isolated geometry both agree, otherwise exit not_found.
 2. When target geometry overlaps a neighbor or support, reconstruct from depth belonging to the verified target mask and reject unrelated surfaces before OBB fitting; do not preserve a merged region's height or center; done when projected geometry agrees with the selected image region and excludes adjacent objects.
 3. When the description identifies an instance by position or supporting relation, retain shared-scene context and compare distinct candidates against the named reference in the instructed frame; done when the selected instance satisfies that relation, not merely its appearance.
+4. When only an object's upper surface is observed, complete vertical extent only if a coherent target footprint and its support are established. Project unchanged surrounding support evidence once and share the points; otherwise retain measured geometry; done when extent agrees with observed top and support without bridging unrelated surfaces.
 
 ## Recommended subgraph state flow
 

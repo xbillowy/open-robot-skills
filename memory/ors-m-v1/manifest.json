@@ -187,6 +187,7 @@
    "text_sha256": "d8cc0d2172378227fc7dd2aec0d99d9a1a88b5eddf6ad36feacbe756baa0daf2"
   },
   {
+   "commit": "df92cacfea69f21019ec1b3dc1f603c1a67cc945",
    "id": "C12",
    "kind": "section",
    "layer": "conditional section of an existing SKILL.md",
@@ -201,6 +202,23 @@
    "summary": "When the description identifies an instance by position or supporting relation, retain shared-scene context and ...",
    "target": "skills/perceiving-objects/SKILL.md",
    "text_sha256": "89ed9ebc152998021a4ea6da5b165e704ead95d3f60f14fa3f17a5e24215abbf"
+  },
+  {
+   "id": "C13",
+   "kind": "section",
+   "layer": "conditional section of an existing SKILL.md",
+   "record_ids": [
+    "L1.taskgraph_v1.d3e39e03e6765e82",
+    "L1.unified_v1.2cab460528d32e32",
+    "L1.unified_v1.8ebeb1471ace2d10",
+    "L1.unified_v1.de48abc5cc0bdc40",
+    "L2.unified_v1.5d4f7bac55c74fd8",
+    "L3.unified_v1.6b9ef2e01db0f833",
+    "L3.unified_v1.e9636e19c7f72599"
+   ],
+   "summary": "When only an object's upper surface is observed, complete vertical extent only if a coherent target footprint and ...",
+   "target": "skills/perceiving-objects/SKILL.md",
+   "text_sha256": "37d2cb7ddd6997a8c77b4648d9ca203ea6a28618f0730b06cd121f1b5c897e09"
   }
  ],
  "plan_id": "5700903823db710bf5a016de95915c864fddb0cd8fa89b5891827218ffcea9ed",
