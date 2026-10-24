@@ -86,6 +86,7 @@ Follow these requirements when you write this subgraph. Each one comes from fail
 
 1. When an off-center grasp displaces the carried body from the hand, convert the desired body pose through the recorded grasp relationship, including lateral displacement and base height; do not substitute a post-lift hand pose for the grasp-time reference. Done when the body footprint aligns with the destination and its base has suitable release clearance.
 2. When protrusions bias the supplied object or destination box, use the supporting body and usable support patch instead of their enclosing boxes; retain adequate existing geometry without extra reconstruction. Done when body alignment and base clearance are derived from the actual supporting regions, not a handle, raised attachment, or surrounding fixture.
+3. When an interior opening constrains insertion, choose object orientation and depth from the usable opening and carried-body dimensions rather than preserving an unsuitable carrying pose. If subsequent closure is required, reserve its swept clearance. Done when the body fits fully on the interior support without spanning a divider or protruding into the closing path.
 
 ## Recommended subgraph state flow
 
