@@ -88,6 +88,7 @@ observe → perceive → filter_obb
 Follow these requirements when you write this subgraph. Each one comes from failures of earlier tasks that were repaired and confirmed by a rerun.
 
 1. When destination bounds include peripheral structures or omit the usable supporting region, isolate the broad measured support separately from its enclosing assembly; do not use rails, dividers, or vertical clutter as the landing surface. Reobserve if no adequate surface remains; done when the destination footprint represents usable physical support.
+2. When several masks are ranked for the same already resolved identity, validate geometry in descending score order and stop at the first valid cloud; consider lower-ranked masks only if earlier ones fail. Done when the retained geometry is the highest-ranked valid candidate, without projecting unused alternatives.
 
 ## Recommended subgraph state flow
 
