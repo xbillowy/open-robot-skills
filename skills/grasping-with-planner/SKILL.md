@@ -113,16 +113,6 @@ See `tools/curobo/SKILL.md` for the full recipe and gotchas.
   on hollow centers and miss handles. Use `grasping-short-axis` for elongated
   handles, where the centroid is graspable but orientation is what matters.
 
-## Requirements from confirmed experience
-
-Follow these requirements when you write this subgraph. Each one comes from failures of earlier tasks that were repaired and confirmed by a rerun.
-
-1. When approach arrival is unverified, check fresh joints or compatible-reference poses before closure. Preserve the candidate during at most three corrections, then reobserve and plan another candidate if unresolved. Done when feedback establishes usable jaw alignment; do not globally tighten tolerances or reject an obstructed descent solely for endpoint error.
-2. When observed surrounding geometry intersects the nominal swept hand volume, replace the unchecked fast approach with collision-aware candidate planning using that geometry. Adapt yaw while preserving pad engagement; if blocked, reobserve and plan another candidate. Done when measured arrival establishes usable jaw alignment with whole-hand clearance.
-3. When the observed target or its supporting structure extends above the nominal hover, set hover_z above both with whole-hand clearance before invoking motion. Done when fresh compatible feedback confirms overhead staging before descent; otherwise reobserve and replan the approach rather than proceeding.
-4. When capture is uncertain from hollow geometry or ambiguous hand-area evidence, combine aperture short of empty closure with fresh target-specific geometry rising near the held position; done when both agree. Otherwise reobserve, then retry grasp within a bound or request replanning; never accept unrelated geometry.
-5. When preparing to close, compare live robot pose with the target using the calibrated tool offset and explicit position/orientation tolerances. Correct residual error with bounded retries; on mismatch, route failure to re-perception/replanning; done when both tolerances pass before closure.
-
 ## Recommended subgraph state flow
 
 6 states, in order:

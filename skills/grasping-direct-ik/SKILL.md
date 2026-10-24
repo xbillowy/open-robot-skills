@@ -61,15 +61,6 @@ uncluttered scenes where planning is overkill.
 - Cluttered scenes where the arm must thread between obstacles. Prefer
   `grasping-with-planner` if available.
 
-## Requirements from confirmed experience
-
-Follow these requirements when you write this subgraph. Each one comes from failures of earlier tasks that were repaired and confirmed by a rerun.
-
-1. When observed surfaces disagree with the exterior box, derive a compact grasp-region OBB from the selected target's mask and depth before computing candidates; preserve target association rather than choosing a neighboring cluster by height. Done when the candidate lies on the intended target surface.
-2. When feedback and commands use different hand or fingertip references, apply the configured rigid transform before checking position and orientation. Use fresh feedback before closure; on unresolved discrepancy, reobserve and try at most three corrections, then another candidate. Done when compatible feedback establishes usable grasp alignment.
-3. When a rim pinch may close on air, lift and combine aperture short of empty closure with fresh target-specific geometry rising with the hand; done when both confirm capture. Preserve the verified hold. Otherwise reobserve and retry grasp within a bound, then request replanning rather than transport an unverified load.
-4. When preparing to close, compare live robot pose with the target using the calibrated tool offset and explicit position/orientation tolerances. Correct residual error with bounded retries; on mismatch, route failure to re-perception/replanning; done when both tolerances pass before closure.
-
 ## Recommended subgraph state flow
 
 The subgraph state machine the agent generates should look like (6 states):

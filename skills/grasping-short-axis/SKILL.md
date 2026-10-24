@@ -188,16 +188,6 @@ uv sync --extra curobo --extra geometry   # (pip: pip install -e "open-robot-ski
 - You genuinely want multiple sampled candidates for the planner to
   choose from — use `grasping-with-planner`.
 
-## Requirements from confirmed experience
-
-Follow these requirements when you write this subgraph. Each one comes from failures of earlier tasks that were repaired and confirmed by a rerun.
-
-1. When a hollow target's center lacks graspable material, use a fresh depth-derived OBB of an accessible elongated rim-wall segment, not the whole outline. Straddle solid material, preserve support clearance and sufficient pad engagement, and omit the attached-body slide. Done when opposing fingers enclose the wall rather than empty space.
-2. When an attached handle observation covers only a hinge or small patch, recover the usable bar and its body-to-handle direction from fresh depth; align closure across its thickness. Apply the outward offset only if the selected region is not already clear of the body. Done when the pads enclose solid bar material clear of the body and hinge.
-3. When closing after a planned handle approach, check fresh joints against the final commanded configuration after finalize. On unresolved lag, repeat settling at most twice, then reobserve and replan another candidate rather than closing. Done when final joint agreement establishes settled arrival before closure.
-4. When hand overlap makes lift evidence ambiguous, compare target surfaces before and after lift, excluding robot and support-plane points, and require jaws short of empty closure; done when target motion with the hand and aperture agree. Otherwise reobserve and retry within a bound, then request replanning.
-5. When preparing to close, compare live robot pose with the target using the calibrated tool offset and explicit position/orientation tolerances. Correct residual error with bounded retries; on mismatch, route failure to re-perception/replanning; done when both tolerances pass before closure.
-
 ## Recommended subgraph state flow
 
 10 states, in order:

@@ -93,18 +93,6 @@ measured slip-during-transport failure mode on tall bottles/cartons.
 - Clean-all-items / multi-item loops that need a clean "no match" loop
   terminator. Prefer `perceiving-objects-oneshot`.
 
-## Requirements from confirmed experience
-
-Follow these requirements when you write this subgraph. Each one comes from failures of earlier tasks that were repaired and confirmed by a rerun.
-
-1. When appearance distinguishes the requested entity from distractors, verify the selected region against those qualifiers and whole-object shape, not merely a label patch, color threshold or plausible cloud. Re-perceive ambiguous or contaminated regions; done when identifying evidence and measured geometry describe the same entity.
-2. When a spatial qualifier identifies the target, retain context around candidates and measure referenced entities separately. Compare distinct candidates in the specified reference frame using observed position, elevation or support; re-observe unresolved relations. Done when selected geometry satisfies the qualifier, not just appearance.
-3. When destination bounds include peripheral structures or omit usable support, isolate the observed load-bearing surface from the enclosing assembly, walls and vertical clutter. Keep its footprint separate from whole-object bounds; re-observe inadequate surfaces. Done when the landing region lies on usable support and inferred thickness preserves its measured top.
-4. When a shallow circular destination has partial or clipped geometry, use an unclipped view and fit its footprint from observed rim arcs, not the visible-cloud centroid. Anchor height and any thickness to measured surface and local support depth; re-observe implausible fits. Done when footprint, center and height agree with observed rim and surface evidence.
-5. When visible surfaces demonstrably omit body extent, estimate the object's own local support from depth before completing geometry toward it. Preserve measured surfaces and exclude the supporting object itself; do not extrude adequate geometry. Re-observe uncertain support. Done when inferred body extent remains aligned with measurements and its own support.
-6. When repeated broad identification threatens acquisition of remaining geometry, constrain detection with the requested entity's category and distinguishing description. Run one focused pass before recovery rather than restarting broad comparisons on unchanged views; retain identity and depth checks. Done when usable target geometry is available without redundant search.
-7. When perception supplies an action-effect check, associate evidence with the affected entity and its expected location or motion; do not infer absence from a support mask or unrelated geometry. Done when fresh target-specific evidence resolves the change; if ambiguous, exclude robot points and retry another view within a bound before requesting replanning.
-
 ## Recommended subgraph state flow
 
 3 states:
