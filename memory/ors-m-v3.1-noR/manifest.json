@@ -19,6 +19,7 @@
  },
  "changes": [
   {
+   "commit": "618b769c61194cff2baef9fee6ad3f4be2d3d5cc",
    "group": "K2",
    "id": "C01",
    "kind": "new_skill",
@@ -34,6 +35,23 @@
    "summary": "K2 placing-held-objects-on-supports: Place a held object on a perceived support using the measured grasp displacement, TCP-awar",
    "target": "skills/placing-held-objects-on-supports/",
    "text_sha256": "9d4c2fdf7f459620021ac0dc6ec9b448c1271ae4cfa7e039891373eaa438d816"
+  },
+  {
+   "group": "K2",
+   "id": "C02",
+   "kind": "coordinator",
+   "layer": "coordinator composition pattern (coarse plan)",
+   "record_ids": [
+    "gstar:libero_10_swap/06#place_chocolate_pudding",
+    "gstar:libero_10_task/08#transport_target",
+    "gstar:libero_90/01#place_black_bowl",
+    "gstar:libero_90/16#place_target",
+    "gstar:libero_90/43#place_white_bowl",
+    "gstar:libero_goal_swap/09#place_wine_bottle_on_rack"
+   ],
+   "summary": "When a step matches: The object is already held, and its pre-grasp OBB, grasp-time hand pose, and destination OBB are av",
+   "target": "memory/ors-m-v3.1-noR/coordinator.md",
+   "text_sha256": "596075c26654e1222979517e4cdd6355b86f355e16d7d1d58b522873e841803a"
   }
  ],
  "plan_id": "28a72a8e9e0ff95d5f5d81338d304fb636176a8a6553e629ad386696af732da0",
