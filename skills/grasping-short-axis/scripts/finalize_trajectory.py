@@ -21,6 +21,7 @@ from typing import TypedDict
 
 from gap import NodeContext
 from gap_core.types import Trajectory
+from gap_core.errors import PlanningFailed
 
 
 class Output(TypedDict):
@@ -34,12 +35,20 @@ def run(
     max_steps: int = 120,
 ) -> Output:
     if not trajectory.get("waypoints"):
-        raise RuntimeError("finalize_trajectory: empty trajectory")
+        raise PlanningFailed("No endpoint available; refresh geometry and replan")
     final = trajectory["waypoints"][-1]
-    ctx.tool(
-        "robot.move_to_joints",
-        joint_config={"positions": list(final["positions"])},
-        tolerance=tolerance,
-        max_steps=max_steps,
-    )
-    return {"done": True}
+    target = list(final["positions"])
+    limit = tolerance if tolerance > 0 else 0.01
+    for attempt in range(2):
+        ctx.tool(
+            "robot.move_to_joints",
+            joint_config={"positions": target},
+            tolerance=tolerance,
+            max_steps=max_steps,
+        )
+        obs = ctx.tool("robot.get_observation")
+        measured = obs["arms"][0]["joint_state"].get("positions", [])
+        if len(measured) == len(target) and len(target) > 0:
+            if max(abs(float(a) - float(b)) for a, b in zip(measured, target)) <= limit:
+                return {"done": True}
+    raise PlanningFailed("Endpoint unverified; refresh geometry and try another grasp candidate")

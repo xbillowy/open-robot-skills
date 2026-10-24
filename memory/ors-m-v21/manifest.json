@@ -1113,6 +1113,7 @@
    "text_sha256": "a2bcafcb813ab0aae2580251e87c9787f5d6d4c4cfd6014f0c21576ae5a635e8"
   },
   {
+   "commit": "b61ab9992e0792ace355a99e82c50e24d52452c3",
    "group": "perceive",
    "id": "C34",
    "kind": "script_edit",
@@ -1138,6 +1139,37 @@
    "summary": "if not isinstance(text, str): return None s = text.strip().upper() # Accept a bare choice or an explicit answer ...",
    "target": "skills/perceiving-objects-oneshot/scripts/perceive_simple.py",
    "text_sha256": "e434bc23beb002e098c88277749ff559fffdba88d840302e8d642d3ccc1b8a3d"
+  },
+  {
+   "group": "grasp",
+   "id": "C35",
+   "kind": "script_edit",
+   "lands": [
+    "grasp|P_MOTION_NOT_ARRIVE|b0#L3.1"
+   ],
+   "layer": "exact edit of an existing canonical script",
+   "merges": [
+    "grasp|P_MOTION_NOT_ARRIVE|b0#L2.0",
+    "libero_object_temp_x0_2/08@g1#r0",
+    "libero_object_temp_y0_2/01@g2#r1",
+    "libero_object_temp_y0_2/03@g12#r0",
+    "libero_object_temp_y0_3/08@g2#r0",
+    "libero_object_with_mug/09@g3#r0",
+    "libero_spatial_object/00@g2#r3"
+   ],
+   "record_ids": [
+    "grasp|P_MOTION_NOT_ARRIVE|b0#L2.0",
+    "grasp|P_MOTION_NOT_ARRIVE|b0#L3.1",
+    "libero_object_temp_x0_2/08@g1#r0",
+    "libero_object_temp_y0_2/01@g2#r1",
+    "libero_object_temp_y0_2/03@g12#r0",
+    "libero_object_temp_y0_3/08@g2#r0",
+    "libero_object_with_mug/09@g3#r0",
+    "libero_spatial_object/00@g2#r3"
+   ],
+   "summary": "from gap_core.types import Trajectory from gap_core.errors import PlanningFailed class Output(TypedDict): done: bool ...",
+   "target": "skills/grasping-short-axis/scripts/finalize_trajectory.py",
+   "text_sha256": "d190709bd24279e44a05fd1f49e38a5fc654a160a14781347ecf622681833c82"
   }
  ],
  "plan_id": "133a3f303397a2b21f5a30abdcdabbce7b556bd8954935af40a05a93e739dc94",
