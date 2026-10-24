@@ -2052,6 +2052,7 @@
    "text_sha256": "e69f6fed07489d0cef5eecb50684cb55cafb7ccb69f900246bfb76765a3ef634"
   },
   {
+   "commit": "a687f62a89d0e0c43e606183a83a47d319353198",
    "group": "coordinator",
    "id": "C48",
    "kind": "coordinator",
@@ -2103,6 +2104,57 @@
    "summary": "When observed geometry obstructs an approach, insertion or carried-body route, select clearance-capable motion with ...",
    "target": "memory/ors-m-v21/coordinator.md",
    "text_sha256": "ecb7b3448fbe097b7f26876b25d0b04fb585abd615848c0b7c5993f4c56a1ade"
+  },
+  {
+   "group": "coordinator",
+   "id": "C49",
+   "kind": "coordinator",
+   "lands": [
+    "verify|P_MOTION_NOT_ARRIVE|b0#L3.1",
+    "verify|UNKNOWN|b0#L3.1"
+   ],
+   "layer": "coordinator composition pattern (coarse plan)",
+   "merges": [
+    "libero_90/00@g1#r3",
+    "libero_90/28@g1#r4",
+    "libero_90/35@g1#r2",
+    "libero_90/35@g1#r4",
+    "libero_90/39@g1#r1",
+    "libero_90/39@g1#r2",
+    "libero_goal_swap/05@g1#r3",
+    "libero_goal_swap/07@g1#r2",
+    "libero_goal_swap/07@g1#r4",
+    "libero_goal_task/05@g1#r1",
+    "libero_goal_task/05@g1#r2",
+    "libero_goal_task/07@g1#r2",
+    "libero_goal_task/07@g1#r3",
+    "libero_goal_task/07@g1#r4",
+    "verify|P_MOTION_NOT_ARRIVE|b0#L2.0",
+    "verify|UNKNOWN|b0#L2.0"
+   ],
+   "record_ids": [
+    "libero_90/00@g1#r3",
+    "libero_90/28@g1#r4",
+    "libero_90/35@g1#r2",
+    "libero_90/35@g1#r4",
+    "libero_90/39@g1#r1",
+    "libero_90/39@g1#r2",
+    "libero_goal_swap/05@g1#r3",
+    "libero_goal_swap/07@g1#r2",
+    "libero_goal_swap/07@g1#r4",
+    "libero_goal_task/05@g1#r1",
+    "libero_goal_task/05@g1#r2",
+    "libero_goal_task/07@g1#r2",
+    "libero_goal_task/07@g1#r3",
+    "libero_goal_task/07@g1#r4",
+    "verify|P_MOTION_NOT_ARRIVE|b0#L2.0",
+    "verify|P_MOTION_NOT_ARRIVE|b0#L3.1",
+    "verify|UNKNOWN|b0#L2.0",
+    "verify|UNKNOWN|b0#L3.1"
+   ],
+   "summary": "When asked to push or actuate a fixture, use an interaction-specific subgraph, not transporting-objects; bind drawer ...",
+   "target": "memory/ors-m-v21/coordinator.md",
+   "text_sha256": "0b50217557390e74d148533838242e213a0888fa1c695ce8c4542bb77d3e236c"
   }
  ],
  "plan_id": "133a3f303397a2b21f5a30abdcdabbce7b556bd8954935af40a05a93e739dc94",
