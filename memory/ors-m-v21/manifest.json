@@ -242,6 +242,7 @@
    "text_sha256": "0c56d0606d2044f1c24053fe344a174ef24b45f48cd85e9ed583213de21f2d7c"
   },
   {
+   "commit": "edabc380b51f885ece3358637e45864d6061c793",
    "group": "other",
    "id": "C05",
    "kind": "section",
@@ -261,6 +262,22 @@
    "summary": "When approaching for closure, check measured fingertip pose against explicit position and orientation tolerances, ...",
    "target": "skills/grasping-short-axis/SKILL.md",
    "text_sha256": "b966285529017a264404c5008f201ccac37551d36cd47f619f05c204974312d8"
+  },
+  {
+   "group": "other",
+   "id": "C06",
+   "kind": "section",
+   "lands": [
+    "libero_90/21@g1#r4"
+   ],
+   "layer": "conditional section of an existing SKILL.md",
+   "merges": [],
+   "record_ids": [
+    "libero_90/21@g1#r4"
+   ],
+   "summary": "When clearance and grip settling suffice, omit excess approach height and idle opening dwell; done when clearance ...",
+   "target": "skills/grasping-short-axis/SKILL.md",
+   "text_sha256": "ee7ff2cb667f27d5c0ba84eb63111f667a2d077aa9288edd3d6ad037619f04af"
   }
  ],
  "plan_id": "b940c484fc74b1a2ba4fb9fccf4ba91c862d4b53e8c952b8ca96ab5afa603f63",
