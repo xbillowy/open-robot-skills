@@ -199,6 +199,7 @@
    "text_sha256": "118a603d1f40e3561f78021ba0ef52fcc2b7f29e89910c47a0e058e845f26125"
   },
   {
+   "commit": "8a4fee31c039923faf674c5672b11f7792d4ba00",
    "group": "grasp",
    "id": "C03",
    "kind": "section",
@@ -213,6 +214,22 @@
    "summary": "When a preferred projecting-handle pose is unreachable or gives insufficient engagement, retain a second ...",
    "target": "skills/grasping-short-axis/SKILL.md",
    "text_sha256": "45c7553a1098c931a18c70d7c29eda7af6e4b9702370d179b02237f3acfbdf64"
+  },
+  {
+   "group": "grasp",
+   "id": "C04",
+   "kind": "section",
+   "lands": [
+    "libero_90/21@g2#r1"
+   ],
+   "layer": "conditional section of an existing SKILL.md",
+   "merges": [],
+   "record_ids": [
+    "libero_90/21@g2#r1"
+   ],
+   "summary": "When upstream geometry already selects a distal handle region clear of its attached body, omit the additional ...",
+   "target": "skills/grasping-short-axis/SKILL.md",
+   "text_sha256": "0c56d0606d2044f1c24053fe344a174ef24b45f48cd85e9ed583213de21f2d7c"
   }
  ],
  "plan_id": "133a3f303397a2b21f5a30abdcdabbce7b556bd8954935af40a05a93e739dc94",
