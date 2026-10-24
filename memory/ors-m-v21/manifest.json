@@ -431,6 +431,7 @@
    "text_sha256": "7122a11d157763ed8815d6ca8e65f636825089954b3800e10efe3cd99484d777"
   },
   {
+   "commit": "d7424c4fa5bf6615f01ce84dece0ea0b18c5a026",
    "group": "perceive",
    "id": "C13",
    "kind": "section",
@@ -494,6 +495,63 @@
    "summary": "When a spatial qualifier distinguishes similar candidates, compare them in full-scene context with separately ...",
    "target": "skills/perceiving-objects/SKILL.md",
    "text_sha256": "e2593f4aee3f28a88d6999b99ba573338532dfd1c56ebf73b72d157039bc0ac4"
+  },
+  {
+   "group": "perceive",
+   "id": "C14",
+   "kind": "section",
+   "lands": [
+    "perceive|NP_PERC_BUDGET|b0#L3.2"
+   ],
+   "layer": "conditional section of an existing SKILL.md",
+   "merges": [
+    "libero_10_task/00@g1#r0",
+    "libero_goal_swap/02@g1#r0",
+    "libero_goal_swap/04@g1#r0",
+    "libero_goal_swap/09@g5#r0",
+    "libero_goal_task/08@g1#r0",
+    "libero_object_basket_swap/00@g1#r0",
+    "libero_object_swap/05@g1#r0",
+    "libero_object_swap/06@g1#r0",
+    "libero_object_temp_x0_2/04@g1#r0",
+    "libero_object_temp_y0_2/08@g2#r0",
+    "libero_object_temp_y0_3/06@g2#r0",
+    "libero_object_temp_y0_3/07@g1#r0",
+    "libero_object_with_yellow_book/00@g2#r0",
+    "libero_object_with_yellow_book/03@g2#r0",
+    "libero_object_with_yellow_book/09@g1#r0",
+    "libero_spatial_with_milk/05@g1#r2",
+    "perceive|NP_PERC_BUDGET|b0#L2.1",
+    "perceive|NP_PERC_BUDGET|b1#L2.1",
+    "perceive|NP_PERC_BUDGET|b2#L2.0",
+    "perceive|NP_PERC_BUDGET|b2#L2.1"
+   ],
+   "record_ids": [
+    "libero_10_task/00@g1#r0",
+    "libero_goal_swap/02@g1#r0",
+    "libero_goal_swap/04@g1#r0",
+    "libero_goal_swap/09@g5#r0",
+    "libero_goal_task/08@g1#r0",
+    "libero_object_basket_swap/00@g1#r0",
+    "libero_object_swap/05@g1#r0",
+    "libero_object_swap/06@g1#r0",
+    "libero_object_temp_x0_2/04@g1#r0",
+    "libero_object_temp_y0_2/08@g2#r0",
+    "libero_object_temp_y0_3/06@g2#r0",
+    "libero_object_temp_y0_3/07@g1#r0",
+    "libero_object_with_yellow_book/00@g2#r0",
+    "libero_object_with_yellow_book/03@g2#r0",
+    "libero_object_with_yellow_book/09@g1#r0",
+    "libero_spatial_with_milk/05@g1#r2",
+    "perceive|NP_PERC_BUDGET|b0#L2.1",
+    "perceive|NP_PERC_BUDGET|b0#L3.2",
+    "perceive|NP_PERC_BUDGET|b1#L2.1",
+    "perceive|NP_PERC_BUDGET|b2#L2.0",
+    "perceive|NP_PERC_BUDGET|b2#L2.1"
+   ],
+   "summary": "When repeated broad searches or duplicate projections would repeat work without new evidence, use bounded ...",
+   "target": "skills/perceiving-objects/SKILL.md",
+   "text_sha256": "45c09210b555466f841f772033da4315e87521ec23b10166d49a47c897e8914a"
   }
  ],
  "plan_id": "133a3f303397a2b21f5a30abdcdabbce7b556bd8954935af40a05a93e739dc94",
