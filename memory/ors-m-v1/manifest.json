@@ -171,6 +171,7 @@
    "text_sha256": "1911456a67309860c4cebfeed92465855e55ccc11acadb55b6809e72288ca0fa"
   },
   {
+   "commit": "44391d49960471331ad628efb4a1b0fba0fdf10a",
    "id": "C11",
    "kind": "section",
    "layer": "conditional section of an existing SKILL.md",
@@ -184,6 +185,22 @@
    "summary": "When target geometry overlaps a neighbor or support, reconstruct from depth belonging to the verified target mask ...",
    "target": "skills/perceiving-objects/SKILL.md",
    "text_sha256": "d8cc0d2172378227fc7dd2aec0d99d9a1a88b5eddf6ad36feacbe756baa0daf2"
+  },
+  {
+   "id": "C12",
+   "kind": "section",
+   "layer": "conditional section of an existing SKILL.md",
+   "record_ids": [
+    "L1.unified_v1.d65b1faa93b57c6b",
+    "L1.unified_v1.e037491c5c254517",
+    "L1.unified_v1.f2aecb0929919e82",
+    "L3.unified_v1.0917723b10886755",
+    "L3.unified_v1.cf951650c0259e95",
+    "L3.unified_v1.d8817883259631f4"
+   ],
+   "summary": "When the description identifies an instance by position or supporting relation, retain shared-scene context and ...",
+   "target": "skills/perceiving-objects/SKILL.md",
+   "text_sha256": "89ed9ebc152998021a4ea6da5b165e704ead95d3f60f14fa3f17a5e24215abbf"
   }
  ],
  "plan_id": "5700903823db710bf5a016de95915c864fddb0cd8fa89b5891827218ffcea9ed",
