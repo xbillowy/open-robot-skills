@@ -298,6 +298,7 @@
    "text_sha256": "d552604815bd0205c16f0ca80a15a49199e77598cee46c94b0d3e69e0b8ff0c3"
   },
   {
+   "commit": "7d2b8994ec18e8bb3cd2c16ef74cfe770ee0ef2b",
    "id": "C19",
    "kind": "section",
    "layer": "conditional section of an existing SKILL.md",
@@ -310,6 +311,29 @@
    "summary": "When placement will be followed by articulated closure, verify the entire released object clears the opening and ...",
    "target": "skills/transporting-objects/SKILL.md",
    "text_sha256": "ceb4bd32a18b26b7c0eb201d1f5e92af2b9671cda793d50cd4324d3279ce60dd"
+  },
+  {
+   "id": "C20",
+   "kind": "new_skill",
+   "layer": "new skill bundle with scripts",
+   "record_ids": [
+    "L1.unified_v1.5081a4a9c5134994",
+    "L1.unified_v1.84c63bbc7402f200",
+    "L1.unified_v1.8cb6901447be8dd1",
+    "L1.unified_v1.fb157d7b476a627b",
+    "L2.unified_v1.799e60fadbcf2f6d",
+    "L2.unified_v1.a758b4a0696517a9",
+    "L3.unified_v1.30965b3977998df7",
+    "L3.unified_v1.5dd9165c562fe317",
+    "L3.unified_v1.84812cb6b9aaaea6",
+    "L3.unified_v1.92c48d8df69ca61e",
+    "L3.unified_v1.9ce58cf4e111621e",
+    "L3.unified_v1.ecad7e3930f8fc3d",
+    "L3.unified_v1.f09e79fd5892e538"
+   ],
+   "summary": "Checks a provisional finger grasp before transport. Performs a short vertical test lift from the measured hand pose ...",
+   "target": "skills/verifying-object-retention/",
+   "text_sha256": "7b5481201fce5d14aa883d0051424e123eea2832c41ab850e7470d0b0bfa9c89"
   }
  ],
  "plan_id": "5700903823db710bf5a016de95915c864fddb0cd8fa89b5891827218ffcea9ed",

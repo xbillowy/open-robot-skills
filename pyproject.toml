@@ -42,6 +42,7 @@ grasping-direct-ik = []
 grasping-short-axis = []
 transporting-objects = []
 tracking-objects = []
+verifying-object-retention = []
 
 # Historical meta-extras: bundle deps now live in each bundle's own
 # pyproject.toml (synced via `gap skills install <name>`), so these are
