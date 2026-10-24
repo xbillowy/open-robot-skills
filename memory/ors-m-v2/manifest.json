@@ -1,0 +1,176 @@
+{
+ "accounting": {
+  "added_chars": 18272,
+  "by_kind": {
+   "coordinator": 7,
+   "new_skill": 1,
+   "script_edit": 0,
+   "section": 37
+  },
+  "by_level": {
+   "L1": {
+    "landed": 18,
+    "merged": 315,
+    "rejected": 279
+   },
+   "L2": {
+    "landed": 21,
+    "merged": 32,
+    "rejected": 37
+   },
+   "L3": {
+    "landed": 24,
+    "merged": 17,
+    "rejected": 19
+   }
+  },
+  "by_phase_layer": {
+   "articulate|coordinator_composition": {
+    "landed": 2,
+    "merged": 0,
+    "rejected": 0
+   },
+   "articulate|skill_rule": {
+    "landed": 2,
+    "merged": 1,
+    "rejected": 2
+   },
+   "articulate|skill_script": {
+    "landed": 7,
+    "merged": 25,
+    "rejected": 3
+   },
+   "grasp|coordinator_composition": {
+    "landed": 0,
+    "merged": 0,
+    "rejected": 1
+   },
+   "grasp|skill_rule": {
+    "landed": 0,
+    "merged": 0,
+    "rejected": 3
+   },
+   "grasp|skill_script": {
+    "landed": 8,
+    "merged": 42,
+    "rejected": 111
+   },
+   "other|coordinator_composition": {
+    "landed": 1,
+    "merged": 25,
+    "rejected": 3
+   },
+   "other|skill_script": {
+    "landed": 5,
+    "merged": 10,
+    "rejected": 2
+   },
+   "perceive|coordinator_composition": {
+    "landed": 2,
+    "merged": 2,
+    "rejected": 6
+   },
+   "perceive|skill_rule": {
+    "landed": 1,
+    "merged": 3,
+    "rejected": 4
+   },
+   "perceive|skill_script": {
+    "landed": 7,
+    "merged": 83,
+    "rejected": 106
+   },
+   "place|coordinator_composition": {
+    "landed": 1,
+    "merged": 3,
+    "rejected": 1
+   },
+   "place|skill_rule": {
+    "landed": 1,
+    "merged": 2,
+    "rejected": 0
+   },
+   "place|skill_script": {
+    "landed": 4,
+    "merged": 83,
+    "rejected": 58
+   },
+   "transport|coordinator_composition": {
+    "landed": 1,
+    "merged": 1,
+    "rejected": 0
+   },
+   "transport|skill_rule": {
+    "landed": 0,
+    "merged": 1,
+    "rejected": 0
+   },
+   "transport|skill_script": {
+    "landed": 7,
+    "merged": 52,
+    "rejected": 15
+   },
+   "verify|coordinator_composition": {
+    "landed": 4,
+    "merged": 4,
+    "rejected": 1
+   },
+   "verify|skill_rule": {
+    "landed": 1,
+    "merged": 1,
+    "rejected": 1
+   },
+   "verify|skill_script": {
+    "landed": 9,
+    "merged": 26,
+    "rejected": 18
+   }
+  },
+  "landed": 63,
+  "merged": 364,
+  "rejected": 335,
+  "rejected_held_out": 37,
+  "rejected_unaccounted": 0,
+  "rules": 762
+ },
+ "baseline": {
+  "commit": "c1e393debe19f91d21baf9097185a9444e28bbfe",
+  "root": "/mnt/data/home/xietao/projects/agent/recast-dev/development/ors-vlm-v5-frozen-c1e393d"
+ },
+ "changes": [
+  {
+   "group": "grasp",
+   "id": "C01",
+   "kind": "section",
+   "lands": [
+    "grasp|P_PERC_BIASED_GEOM|b0#L3.1"
+   ],
+   "layer": "conditional section of an existing SKILL.md",
+   "merges": [
+    "grasp|P_PERC_BIASED_GEOM|b0#L2.0",
+    "libero_10_swap/04@g1#r1",
+    "libero_goal_task/01@g1#r0",
+    "libero_goal_task/08@g1#r1",
+    "libero_object_task/06@g1#r1",
+    "libero_object_with_yellow_book/03@g1#r0"
+   ],
+   "record_ids": [
+    "grasp|P_PERC_BIASED_GEOM|b0#L2.0",
+    "grasp|P_PERC_BIASED_GEOM|b0#L3.1",
+    "libero_10_swap/04@g1#r1",
+    "libero_goal_task/01@g1#r0",
+    "libero_goal_task/08@g1#r1",
+    "libero_object_task/06@g1#r1",
+    "libero_object_with_yellow_book/03@g1#r0"
+   ],
+   "summary": "When observed surfaces disagree with the exterior box, derive a compact grasp-region OBB from the selected target's ...",
+   "target": "skills/grasping-direct-ik/SKILL.md",
+   "text_sha256": "1476b27054732b63e40ed74fc177aad19e01d8dbc5719050e28188040ce42740"
+  }
+ ],
+ "plan_id": "a526441b207f716ca8ba092618f7145a97b9920dce3ada618d0c2ac75b5faf09",
+ "schema": "ors_m_manifest_v1",
+ "translation_id": "1f611808feef64c5b864b407b58299a1d0758e02652971e43c539f4bdf427bda",
+ "version": "ors-m-v2",
+ "view_id": "fc66042ebf17000641400eb06dfe807f52a6f709bfa721ba0b1b3b6a93833cca"
+}
