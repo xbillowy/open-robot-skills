@@ -313,6 +313,7 @@
    "text_sha256": "ceb4bd32a18b26b7c0eb201d1f5e92af2b9671cda793d50cd4324d3279ce60dd"
   },
   {
+   "commit": "6d25117cb7ddb1e08ca32e355136b09fd280d481",
    "id": "C20",
    "kind": "new_skill",
    "layer": "new skill bundle with scripts",
@@ -334,6 +335,19 @@
    "summary": "Checks a provisional finger grasp before transport. Performs a short vertical test lift from the measured hand pose ...",
    "target": "skills/verifying-object-retention/",
    "text_sha256": "7b5481201fce5d14aa883d0051424e123eea2832c41ab850e7470d0b0bfa9c89"
+  },
+  {
+   "id": "C21",
+   "kind": "coordinator",
+   "layer": "coordinator composition pattern (coarse plan)",
+   "record_ids": [
+    "L1.unified_v1.0301062a2e2f9947",
+    "L2.unified_v1.32326e3cfb8fe683",
+    "L2.unified_v1.5174b6ebe8d4e395"
+   ],
+   "summary": "When several named objects must enter one container, unroll one identity-specific perception → grasp → retention ...",
+   "target": "memory/ors-m-v1/coordinator.md",
+   "text_sha256": "184678c3d5da81c9ecedb1ceeed8f27eb21e158362062a07a3952173fcffcf81"
   }
  ],
  "plan_id": "5700903823db710bf5a016de95915c864fddb0cd8fa89b5891827218ffcea9ed",
