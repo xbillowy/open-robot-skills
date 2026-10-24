@@ -85,6 +85,7 @@ moves the held object above the destination container and releases it.
 Follow these requirements when you write this subgraph. Each one comes from failures of earlier tasks that were repaired and confirmed by a rerun.
 
 1. When a displaced grasp makes hand alignment differ from object alignment, convert the desired object pose into a hand target using the recorded object-to-hand transform; account for lateral offset and base clearance without extra sensing if existing geometry suffices; done when the object footprint fits the destination and its base is near support.
+2. When protrusions or surrounding structure bias an available placement reference, use the supporting body, its base, and the usable destination support patch instead of whole-object centers or extents; retain existing zone geometry if adequate; done when the body's supported footprint fits the patch at the measured support height.
 
 ## Recommended subgraph state flow
 

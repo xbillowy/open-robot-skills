@@ -827,6 +827,7 @@
    "text_sha256": "0315e100959fe34b4e45a9bd754ee65ea20b72f46f900b70b2a191627580c37d"
   },
   {
+   "commit": "4f066b3eca9129b8d45cda441e6e46ae75f916a7",
    "group": "place",
    "id": "C24",
    "kind": "section",
@@ -900,6 +901,41 @@
    "summary": "When a displaced grasp makes hand alignment differ from object alignment, convert the desired object pose into a ...",
    "target": "skills/transporting-objects/SKILL.md",
    "text_sha256": "0d1687d92ac394edbc552a332ace6e414e70a723fcaf3e3b80bcbb0c80f35d38"
+  },
+  {
+   "group": "place",
+   "id": "C25",
+   "kind": "section",
+   "lands": [
+    "place|P_PERC_BIASED_GEOM|b0#L3.1"
+   ],
+   "layer": "conditional section of an existing SKILL.md",
+   "merges": [
+    "libero_10_swap/04@g1#r4",
+    "libero_10_swap/06@g1#r3",
+    "libero_90/21@g2#r2",
+    "libero_90/38@g1#r2",
+    "libero_90/43@g0#r3",
+    "libero_90/87@g0#r3",
+    "libero_goal_swap/01@g1#r2",
+    "libero_goal_swap/02@g1#r1",
+    "place|P_PERC_BIASED_GEOM|b0#L2.0"
+   ],
+   "record_ids": [
+    "libero_10_swap/04@g1#r4",
+    "libero_10_swap/06@g1#r3",
+    "libero_90/21@g2#r2",
+    "libero_90/38@g1#r2",
+    "libero_90/43@g0#r3",
+    "libero_90/87@g0#r3",
+    "libero_goal_swap/01@g1#r2",
+    "libero_goal_swap/02@g1#r1",
+    "place|P_PERC_BIASED_GEOM|b0#L2.0",
+    "place|P_PERC_BIASED_GEOM|b0#L3.1"
+   ],
+   "summary": "When protrusions or surrounding structure bias an available placement reference, use the supporting body, its base, ...",
+   "target": "skills/transporting-objects/SKILL.md",
+   "text_sha256": "eb2da59ce89e9b11de0657883d15541969e49980e34d408bdd32960c1aad02a0"
   }
  ],
  "plan_id": "a526441b207f716ca8ba092618f7145a97b9920dce3ada618d0c2ac75b5faf09",
