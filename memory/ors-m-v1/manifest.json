@@ -155,6 +155,7 @@
    "text_sha256": "d4348cc78fc20c4aa40fb11ae769c177b64180a5336f83c030d90b0468468674"
   },
   {
+   "commit": "5370c48bc3d12b356c9537e727d7e3a582a9f816",
    "id": "C10",
    "kind": "section",
    "layer": "conditional section of an existing SKILL.md",
@@ -168,6 +169,21 @@
    "summary": "When distractors or fragments could match the label, require complete-target identity verification before publishing ...",
    "target": "skills/perceiving-objects/SKILL.md",
    "text_sha256": "1911456a67309860c4cebfeed92465855e55ccc11acadb55b6809e72288ca0fa"
+  },
+  {
+   "id": "C11",
+   "kind": "section",
+   "layer": "conditional section of an existing SKILL.md",
+   "record_ids": [
+    "L1.unified_v1.81ddbf5ed1a80503",
+    "L1.unified_v1.d425ca13dc0a0150",
+    "L2.unified_v1.f1402a4ea041fa51",
+    "L3.unified_v1.209bc32f6f4fceb0",
+    "L3.unified_v1.b9cf52c8112e1ac0"
+   ],
+   "summary": "When target geometry overlaps a neighbor or support, reconstruct from depth belonging to the verified target mask ...",
+   "target": "skills/perceiving-objects/SKILL.md",
+   "text_sha256": "d8cc0d2172378227fc7dd2aec0d99d9a1a88b5eddf6ad36feacbe756baa0daf2"
   }
  ],
  "plan_id": "5700903823db710bf5a016de95915c864fddb0cd8fa89b5891827218ffcea9ed",

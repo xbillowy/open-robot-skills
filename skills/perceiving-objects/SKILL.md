@@ -98,6 +98,7 @@ measured slip-during-transport failure mode on tall bottles/cartons.
 Follow these requirements when you write this subgraph. Each one comes from failures of earlier tasks that were repaired and confirmed by a rerun.
 
 1. When distractors or fragments could match the label, require complete-target identity verification before publishing geometry; after explicit rejection, try at most two alternative candidates rather than accepting the rejected region; done when identity and isolated geometry both agree, otherwise exit not_found.
+2. When target geometry overlaps a neighbor or support, reconstruct from depth belonging to the verified target mask and reject unrelated surfaces before OBB fitting; do not preserve a merged region's height or center; done when projected geometry agrees with the selected image region and excludes adjacent objects.
 
 ## Recommended subgraph state flow
 
