@@ -319,6 +319,7 @@
    "text_sha256": "4775dd39a445a2b9e71b87f2a2b829f5cbcbd767552d10f1f494fcf514faaa4c"
   },
   {
+   "commit": "3b80eb603e2ca3d441e57024e7c9d569cd43d5cf",
    "group": "perceive",
    "id": "C09",
    "kind": "section",
@@ -338,6 +339,22 @@
    "summary": "When the requested destination is a compartment, derive its interior footprint from observed openings, enclosing ...",
    "target": "skills/perceiving-object-parts/SKILL.md",
    "text_sha256": "4a5081b579ca4818460e62687357e86f5779ca7e415a364e22f3fc134d8f4d3d"
+  },
+  {
+   "group": "perceive",
+   "id": "C10",
+   "kind": "section",
+   "lands": [
+    "libero_90/21@g2#r0"
+   ],
+   "layer": "conditional section of an existing SKILL.md",
+   "merges": [],
+   "record_ids": [
+    "libero_90/21@g2#r0"
+   ],
+   "summary": "When similar parents have nearby handles, establish the intended parent from its visible shape and dimensions before ...",
+   "target": "skills/perceiving-object-parts/SKILL.md",
+   "text_sha256": "116c03dc35ad786163db5d433b71944f923f0ff5ea1f9a9e6bafc64db9f78008"
   }
  ],
  "plan_id": "133a3f303397a2b21f5a30abdcdabbce7b556bd8954935af40a05a93e739dc94",
