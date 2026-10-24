@@ -1,0 +1,42 @@
+{
+ "accounting": {
+  "added_chars": 9678,
+  "by_kind": {
+   "coordinator": 6,
+   "drop": 5,
+   "new_skill": 1,
+   "script_edit": 0,
+   "section": 19
+  },
+  "delivered": 88,
+  "dropped": 9,
+  "unused": 140,
+  "view_records": 237
+ },
+ "baseline": {
+  "commit": "c1e393debe19f91d21baf9097185a9444e28bbfe",
+  "root": "/mnt/data/home/xietao/projects/agent/recast-dev/development/ors-vlm-v5-frozen-c1e393d"
+ },
+ "changes": [
+  {
+   "id": "C01",
+   "kind": "section",
+   "layer": "conditional section of an existing SKILL.md",
+   "record_ids": [
+    "L1.unified_v1.8cb6901447be8dd1",
+    "L1.unified_v1.96a15f9a7a85fd46",
+    "L2.unified_v1.78ae21c13130d065",
+    "L3.unified_v1.30965b3977998df7",
+    "L3.unified_v1.ecad7e3930f8fc3d"
+   ],
+   "summary": "When descending to grasp, gate close on fresh endpoint feedback transformed into the command's reference using the ...",
+   "target": "skills/grasping-direct-ik/SKILL.md",
+   "text_sha256": "a51a9ebb7f77544990e361fb44cea25ccb18024b1572d5e585e0f35b4a400bfd"
+  }
+ ],
+ "plan_id": "5700903823db710bf5a016de95915c864fddb0cd8fa89b5891827218ffcea9ed",
+ "schema": "ors_m_manifest_v1",
+ "translation_id": "ae64ab2f13552331d6a1806d01b049e13ed300c8ca567cc1b7d8314fb9a9655e",
+ "version": "ors-m-v1",
+ "view_id": "b6312aa631aad23a4b948f87d6ef4a01ad6c886f2cf7dcd7c8200e67e34d6b08"
+}

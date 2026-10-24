@@ -61,6 +61,12 @@ uncluttered scenes where planning is overkill.
 - Cluttered scenes where the arm must thread between obstacles. Prefer
   `grasping-with-planner` if available.
 
+## Requirements from confirmed experience
+
+Follow these requirements when you write this subgraph. Each one comes from failures of earlier tasks that were repaired and confirmed by a rerun.
+
+1. When descending to grasp, gate close on fresh endpoint feedback transformed into the command's reference using the configured rigid transform. Permit at most two measured-state corrections; done when configured position and orientation tolerances pass, otherwise exit failed without closing.
+
 ## Recommended subgraph state flow
 
 The subgraph state machine the agent generates should look like (6 states):
