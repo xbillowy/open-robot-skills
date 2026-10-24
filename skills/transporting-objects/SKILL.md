@@ -80,6 +80,12 @@ moves the held object above the destination container and releases it.
   other scene objects in transit. The current cuRobo v0.8 bundle does not
   advertise attached-object transport planning.
 
+## Requirements from confirmed experience
+
+Follow these requirements when you write this subgraph. Each one comes from failures of earlier tasks that were repaired and confirmed by a rerun.
+
+1. When an off-center grasp displaces the carried body from the hand, convert the desired body pose through the recorded grasp relationship, including lateral displacement and base height; do not substitute a post-lift hand pose for the grasp-time reference. Done when the body footprint aligns with the destination and its base has suitable release clearance.
+
 ## Recommended subgraph state flow
 
 Choose the flow by WHERE the object must land.
