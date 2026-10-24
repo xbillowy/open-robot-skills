@@ -1631,6 +1631,7 @@
    "text_sha256": "7dba66c266b408b16298021c2815ce3b7c2f71355eda92c28164401b91bb1aaa"
   },
   {
+   "commit": "53da363dfbea14e87bffac10763d53a2098f139c",
    "group": "coordinator",
    "id": "C42",
    "kind": "coordinator",
@@ -1647,6 +1648,25 @@
    "summary": "When a transfer crosses an articulated opening, inspect access before pickup. If blocked, use ...",
    "target": "memory/ors-m-v2/coordinator.md",
    "text_sha256": "bff94e5e924c2765ff1e6984d4b0d066a7baeac295a9d5f7d4b7d7c5538d9f61"
+  },
+  {
+   "group": "coordinator",
+   "id": "C43",
+   "kind": "coordinator",
+   "lands": [
+    "libero_goal_swap/05@g1#r2"
+   ],
+   "layer": "coordinator composition pattern (coarse plan)",
+   "merges": [
+    "libero_goal_swap/05@g3#r0"
+   ],
+   "record_ids": [
+    "libero_goal_swap/05@g1#r2",
+    "libero_goal_swap/05@g3#r0"
+   ],
+   "summary": "When pushing a supported object through clutter, inspect its intended corridor first. If obstructed, plan a separate ...",
+   "target": "memory/ors-m-v2/coordinator.md",
+   "text_sha256": "3c1c8bb17cd478d75c219b092a322834b4b536c9c6f62fb5759cdf04b3c9225b"
   }
  ],
  "plan_id": "a526441b207f716ca8ba092618f7145a97b9920dce3ada618d0c2ac75b5faf09",
