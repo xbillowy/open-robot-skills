@@ -86,6 +86,7 @@ Follow these requirements when you write this subgraph. Each one comes from fail
 
 1. When a displaced grasp makes hand alignment differ from object alignment, convert the desired object pose into a hand target using the recorded object-to-hand transform; account for lateral offset and base clearance without extra sensing if existing geometry suffices; done when the object footprint fits the destination and its base is near support.
 2. When protrusions or surrounding structure bias an available placement reference, use the supporting body, its base, and the usable destination support patch instead of whole-object centers or extents; retain existing zone geometry if adequate; done when the body's supported footprint fits the patch at the measured support height.
+3. When release geometry or separation leaves placement uncertain, override the observation ban: open, settle, clear the hand and inspect fresh resting geometry. Retry occluded checks twice; request corrective replacement for misplacement, or renewed localization and replanning for persistent uncertainty; done when the released object's required resting relation is established.
 
 ## Recommended subgraph state flow
 
