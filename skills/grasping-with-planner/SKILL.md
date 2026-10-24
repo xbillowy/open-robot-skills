@@ -113,6 +113,12 @@ See `tools/curobo/SKILL.md` for the full recipe and gotchas.
   on hollow centers and miss handles. Use `grasping-short-axis` for elongated
   handles, where the centroid is graspable but orientation is what matters.
 
+## Requirements from confirmed experience
+
+Follow these requirements when you write this subgraph. Each one comes from failures of earlier tasks that were repaired and confirmed by a rerun.
+
+1. When approach arrival is unverified, check fresh joints or compatible-reference poses before closure. Preserve the candidate during at most three corrections, then reobserve and plan another candidate if unresolved. Done when feedback establishes usable jaw alignment; do not globally tighten tolerances or reject an obstructed descent solely for endpoint error.
+
 ## Recommended subgraph state flow
 
 6 states, in order:
