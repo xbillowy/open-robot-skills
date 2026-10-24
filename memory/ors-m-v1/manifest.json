@@ -35,6 +35,7 @@
    "text_sha256": "a51a9ebb7f77544990e361fb44cea25ccb18024b1572d5e585e0f35b4a400bfd"
   },
   {
+   "commit": "fd0c622e7b7750e004404aab5c99037a91d9a3ab",
    "id": "C02",
    "kind": "section",
    "layer": "conditional section of an existing SKILL.md",
@@ -46,6 +47,21 @@
    "summary": "When nearby raised geometry makes straight-line approach unsafe, do not use this bundle merely because the grasp ...",
    "target": "skills/grasping-direct-ik/SKILL.md",
    "text_sha256": "a8747cc4caf4bad0edea6fbf5284f2e54d8da3b81572b178a0fe54db08fe2ec9"
+  },
+  {
+   "id": "C03",
+   "kind": "section",
+   "layer": "conditional section of an existing SKILL.md",
+   "record_ids": [
+    "L1.unified_v1.8cb6901447be8dd1",
+    "L1.unified_v1.96a15f9a7a85fd46",
+    "L2.unified_v1.78ae21c13130d065",
+    "L3.unified_v1.30965b3977998df7",
+    "L3.unified_v1.ecad7e3930f8fc3d"
+   ],
+   "summary": "When finalize returns, verify fresh arrival before close rather than treating trajectory execution as convergence. ...",
+   "target": "skills/grasping-short-axis/SKILL.md",
+   "text_sha256": "b5d695853df198c937e4f5119f11ccae0e666a4661b9688cd54c8b3c717ddf0c"
   }
  ],
  "plan_id": "5700903823db710bf5a016de95915c864fddb0cd8fa89b5891827218ffcea9ed",

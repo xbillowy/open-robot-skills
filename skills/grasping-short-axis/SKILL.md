@@ -188,6 +188,12 @@ uv sync --extra curobo --extra geometry   # (pip: pip install -e "open-robot-ski
 - You genuinely want multiple sampled candidates for the planner to
   choose from — use `grasping-with-planner`.
 
+## Requirements from confirmed experience
+
+Follow these requirements when you write this subgraph. Each one comes from failures of earlier tasks that were repaired and confirmed by a rerun.
+
+1. When finalize returns, verify fresh arrival before close rather than treating trajectory execution as convergence. Compare compatible joint endpoints or poses transformed with the configured rigid transform; done when configured tolerances pass after at most two corrections, otherwise exit failed.
+
 ## Recommended subgraph state flow
 
 10 states, in order:
