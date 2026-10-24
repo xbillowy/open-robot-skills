@@ -862,6 +862,7 @@
    "text_sha256": "b2c080c1aae1e7467c63d48aa38c4e0f74786bf620aec3364b136a2371bc0d72"
   },
   {
+   "commit": "371d686ee9bacbbbda8c3f127bf73611b0c30d57",
    "group": "place",
    "id": "C25",
    "kind": "section",
@@ -876,6 +877,22 @@
    "summary": "When a rim grasp leaves an open finger inside the released object's rim, use descend_release_linear with ...",
    "target": "skills/transporting-objects/SKILL.md",
    "text_sha256": "ecaf701d2e873d1e914a0d9088b2b16beea0728dd637f938e1eb13f7a6dc9ceb"
+  },
+  {
+   "group": "transport",
+   "id": "C26",
+   "kind": "section",
+   "lands": [
+    "libero_10_swap/09@g13#r3"
+   ],
+   "layer": "conditional section of an existing SKILL.md",
+   "merges": [],
+   "record_ids": [
+    "libero_10_swap/09@g13#r3"
+   ],
+   "summary": "When an overhead enclosure blocks vertical entry, deviate from the straight-Z default: derive the opening envelope ...",
+   "target": "skills/transporting-objects/SKILL.md",
+   "text_sha256": "c445e8fadc213806ebef45bdbc3755f5a1a2156d90b607c9e8fda8245414e990"
   }
  ],
  "plan_id": "133a3f303397a2b21f5a30abdcdabbce7b556bd8954935af40a05a93e739dc94",
