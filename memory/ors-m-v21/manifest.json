@@ -680,6 +680,7 @@
    "text_sha256": "1ced70cf6e638d9bb60a28b0738575cf349309371f4cff213ec819b9b4ecaa13"
   },
   {
+   "commit": "2e34006e4440a6bb3ed73fc1c24895e69658ef61",
    "group": "perceive",
    "id": "C19",
    "kind": "section",
@@ -705,6 +706,25 @@
    "summary": "When destination bounds include peripheral structures or omit the usable supporting region, isolate the broad ...",
    "target": "skills/perceiving-objects-oneshot/SKILL.md",
    "text_sha256": "4d1cf57b22c930ec77ea0455c2cb554ea1e0ad8460341694ce1802690fd34d6d"
+  },
+  {
+   "group": "perceive",
+   "id": "C20",
+   "kind": "section",
+   "lands": [
+    "libero_goal_swap/05@g3#r2"
+   ],
+   "layer": "conditional section of an existing SKILL.md",
+   "merges": [
+    "libero_90/01@g1#r4"
+   ],
+   "record_ids": [
+    "libero_90/01@g1#r4",
+    "libero_goal_swap/05@g3#r2"
+   ],
+   "summary": "When several masks are ranked for the same already resolved identity, validate geometry in descending score order ...",
+   "target": "skills/perceiving-objects-oneshot/SKILL.md",
+   "text_sha256": "ee1166e925122d827259fdf595f20c89b6e52437919d0c75373830147e088fba"
   }
  ],
  "plan_id": "b940c484fc74b1a2ba4fb9fccf4ba91c862d4b53e8c952b8ca96ab5afa603f63",
