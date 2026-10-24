@@ -89,6 +89,12 @@ to ~30% of pixels in the cropped image — within SAM3's reliable range.
 > observation source, identical to `perceiving-objects`'s `cameras`
 > input).
 
+## Requirements from confirmed experience
+
+Follow these requirements when you write this subgraph. Each one comes from failures of earlier tasks that were repaired and confirmed by a rerun.
+
+1. When the requested destination is a compartment, derive its interior footprint from observed openings, enclosing axes, and the specified viewing relation rather than the parent center. Exclude dividers, fronts, and roofs from cavity-floor geometry; reobserve ambiguous openings. Done when the selected region is the requested usable interior.
+
 ## When to use
 
 - The grasp/place affordance is a part of a larger object (pan handle,
