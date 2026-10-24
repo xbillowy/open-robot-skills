@@ -98,6 +98,7 @@ measured slip-during-transport failure mode on tall bottles/cartons.
 Follow these requirements when you write this subgraph. Each one comes from failures of earlier tasks that were repaired and confirmed by a rerun.
 
 1. When appearance distinguishes the requested entity from distractors, verify the selected region against those qualifiers and whole-object shape, not merely a label patch, color threshold or plausible cloud. Re-perceive ambiguous or contaminated regions; done when identifying evidence and measured geometry describe the same entity.
+2. When a spatial qualifier identifies the target, retain context around candidates and measure referenced entities separately. Compare distinct candidates in the specified reference frame using observed position, elevation or support; re-observe unresolved relations. Done when selected geometry satisfies the qualifier, not just appearance.
 
 ## Recommended subgraph state flow
 
