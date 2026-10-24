@@ -304,6 +304,7 @@
    "text_sha256": "a3f232f2fc5295e2d71652d09104f8380c04263d28dacb40df02d5f6470f565a"
   },
   {
+   "commit": "6b96cd62f9b0be6709419501569dae8b27cf9c80",
    "group": "grasp",
    "id": "C07",
    "kind": "section",
@@ -318,6 +319,22 @@
    "summary": "When closing after a planned handle approach, check fresh joints against the final commanded configuration after ...",
    "target": "skills/grasping-short-axis/SKILL.md",
    "text_sha256": "cfb57a55d91132f361be0caa6bb1e58cb53d99b7e3d19f21246122f7e1b06f8d"
+  },
+  {
+   "group": "verify",
+   "id": "C08",
+   "kind": "section",
+   "lands": [
+    "libero_goal_task/06@g1#r2"
+   ],
+   "layer": "conditional section of an existing SKILL.md",
+   "merges": [],
+   "record_ids": [
+    "libero_goal_task/06@g1#r2"
+   ],
+   "summary": "When hand overlap makes lift evidence ambiguous, compare target surfaces before and after lift, excluding robot and ...",
+   "target": "skills/grasping-short-axis/SKILL.md",
+   "text_sha256": "1d65cf1e2bea3a894d27cf645a59833c8b841ecc4261671502e6549a6fcbb8e5"
   }
  ],
  "plan_id": "a526441b207f716ca8ba092618f7145a97b9920dce3ada618d0c2ac75b5faf09",
