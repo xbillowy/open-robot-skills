@@ -100,6 +100,7 @@ Follow these requirements when you write this subgraph. Each one comes from fail
 1. When appearance distinguishes nearby candidates, verify the selected physical extent against all supplied appearance and shape qualifiers before publishing geometry; do not accept a label patch, surrounding surface, or plausible cloud as identity evidence. Reconsider alternatives if inconsistent; done when the accepted extent belongs to the requested entity.
 2. When a spatial qualifier distinguishes similar candidates, compare them in full-scene context with separately observed reference geometry; retain the qualifier through segmentation and use its stated reference frame, not an assumed image ordering. Reconsider inconsistent candidates; done when the selected instance satisfies the observed relation.
 3. When repeated broad searches or duplicate projections would repeat work without new evidence, use bounded target-directed queries and reuse projections only for identical images, depth, and calibration. Preserve identity and geometry checks; done when usable target geometry is available without redundant calls.
+4. When a shallow circular destination is clipped or partly hidden, prefer an unclipped exterior view and recover its footprint from measured rim arcs rather than the visible-cloud center. Ground height and any inferred thickness in local measured surfaces; reobserve if implausible. Done when center, footprint, and height agree with the observed rim and support.
 
 ## Recommended subgraph state flow
 

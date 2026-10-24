@@ -497,6 +497,7 @@
    "text_sha256": "e2593f4aee3f28a88d6999b99ba573338532dfd1c56ebf73b72d157039bc0ac4"
   },
   {
+   "commit": "e7667178e1b8aeb6ee787ecd218e3ea30df3ff39",
    "group": "perceive",
    "id": "C14",
    "kind": "section",
@@ -552,6 +553,47 @@
    "summary": "When repeated broad searches or duplicate projections would repeat work without new evidence, use bounded ...",
    "target": "skills/perceiving-objects/SKILL.md",
    "text_sha256": "45c09210b555466f841f772033da4315e87521ec23b10166d49a47c897e8914a"
+  },
+  {
+   "group": "perceive",
+   "id": "C15",
+   "kind": "section",
+   "lands": [
+    "perceive|P_PERC_BIASED_GEOM|b0#L2.0"
+   ],
+   "layer": "conditional section of an existing SKILL.md",
+   "merges": [
+    "libero_90/21@g1#r1",
+    "libero_spatial_object/00@g2#r1",
+    "libero_spatial_object/05@g1#r4",
+    "libero_spatial_object/07@g1#r1",
+    "libero_spatial_swap/08@g1#r1",
+    "libero_spatial_with_milk/03@g1#r1",
+    "libero_spatial_with_milk/05@g1#r1",
+    "libero_spatial_with_mug/01@g2#r1",
+    "libero_spatial_with_mug/06@g1#r1",
+    "libero_spatial_with_mug/09@g1#r1",
+    "perceive|P_PERC_BIASED_GEOM|b1#L2.1",
+    "perceive|P_PERC_BIASED_GEOM|b2#L3.1"
+   ],
+   "record_ids": [
+    "libero_90/21@g1#r1",
+    "libero_spatial_object/00@g2#r1",
+    "libero_spatial_object/05@g1#r4",
+    "libero_spatial_object/07@g1#r1",
+    "libero_spatial_swap/08@g1#r1",
+    "libero_spatial_with_milk/03@g1#r1",
+    "libero_spatial_with_milk/05@g1#r1",
+    "libero_spatial_with_mug/01@g2#r1",
+    "libero_spatial_with_mug/06@g1#r1",
+    "libero_spatial_with_mug/09@g1#r1",
+    "perceive|P_PERC_BIASED_GEOM|b0#L2.0",
+    "perceive|P_PERC_BIASED_GEOM|b1#L2.1",
+    "perceive|P_PERC_BIASED_GEOM|b2#L3.1"
+   ],
+   "summary": "When a shallow circular destination is clipped or partly hidden, prefer an unclipped exterior view and recover its ...",
+   "target": "skills/perceiving-objects/SKILL.md",
+   "text_sha256": "948e210f95cf2984127d72b99649cabeee22b2d7584ea12299a908a955a89ea5"
   }
  ],
  "plan_id": "133a3f303397a2b21f5a30abdcdabbce7b556bd8954935af40a05a93e739dc94",
