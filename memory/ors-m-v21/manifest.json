@@ -1960,6 +1960,7 @@
    "text_sha256": "86b2c0382c9767faac8089f0396a307aac338884b98c5ca6a95520152ed14e6f"
   },
   {
+   "commit": "387d6cf599943b3cc5cd5848f5e62f4f04712c12",
    "group": "coordinator",
    "id": "C47",
    "kind": "coordinator",
@@ -2049,6 +2050,59 @@
    "summary": "When a pose-dependent action lacks confirmed arrival, add position-and-orientation verification in a common working ...",
    "target": "memory/ors-m-v21/coordinator.md",
    "text_sha256": "e69f6fed07489d0cef5eecb50684cb55cafb7ccb69f900246bfb76765a3ef634"
+  },
+  {
+   "group": "coordinator",
+   "id": "C48",
+   "kind": "coordinator",
+   "lands": [
+    "libero_10_task/09@g2#r2",
+    "libero_spatial_with_yellow_book/04@g1#r2",
+    "transport|P_CLEARANCE_COLLISION|b0#L3.1"
+   ],
+   "layer": "coordinator composition pattern (coarse plan)",
+   "merges": [
+    "libero_10_task/00@g1#r3",
+    "libero_10_task/05@g1#r2",
+    "libero_10_task/07@g2#r0",
+    "libero_90/09@g1#r2",
+    "libero_90/21@g2#r3",
+    "libero_90/37@g1#r3",
+    "libero_goal_object/08@g1#r2",
+    "libero_goal_swap/01@g1#r3",
+    "libero_goal_swap/02@g1#r4",
+    "libero_goal_swap/04@g1#r3",
+    "libero_goal_swap/05@g1#r2",
+    "libero_goal_swap/05@g3#r0",
+    "libero_goal_swap/09@g1#r2",
+    "libero_spatial_with_yellow_book/07@g1#r3",
+    "transport|P_CLEARANCE_COLLISION|b0#L2.0",
+    "transport|P_CLEARANCE_COLLISION|b1#L2.0"
+   ],
+   "record_ids": [
+    "libero_10_task/00@g1#r3",
+    "libero_10_task/05@g1#r2",
+    "libero_10_task/07@g2#r0",
+    "libero_10_task/09@g2#r2",
+    "libero_90/09@g1#r2",
+    "libero_90/21@g2#r3",
+    "libero_90/37@g1#r3",
+    "libero_goal_object/08@g1#r2",
+    "libero_goal_swap/01@g1#r3",
+    "libero_goal_swap/02@g1#r4",
+    "libero_goal_swap/04@g1#r3",
+    "libero_goal_swap/05@g1#r2",
+    "libero_goal_swap/05@g3#r0",
+    "libero_goal_swap/09@g1#r2",
+    "libero_spatial_with_yellow_book/04@g1#r2",
+    "libero_spatial_with_yellow_book/07@g1#r3",
+    "transport|P_CLEARANCE_COLLISION|b0#L2.0",
+    "transport|P_CLEARANCE_COLLISION|b0#L3.1",
+    "transport|P_CLEARANCE_COLLISION|b1#L2.0"
+   ],
+   "summary": "When observed geometry obstructs an approach, insertion or carried-body route, select clearance-capable motion with ...",
+   "target": "memory/ors-m-v21/coordinator.md",
+   "text_sha256": "ecb7b3448fbe097b7f26876b25d0b04fb585abd615848c0b7c5993f4c56a1ade"
   }
  ],
  "plan_id": "133a3f303397a2b21f5a30abdcdabbce7b556bd8954935af40a05a93e739dc94",
