@@ -252,6 +252,7 @@
    "text_sha256": "b35508c143cc49a8a915f3898e9381b14d4e9fc81d24b2d66f22d83ee376134b"
   },
   {
+   "commit": "f0099d25bf178723fb59d612dda6024769b74e91",
    "id": "C16",
    "kind": "section",
    "layer": "conditional section of an existing SKILL.md",
@@ -267,6 +268,19 @@
    "summary": "When a peripheral grasp or visible slip changes the object's attachment, obtain current held-body geometry upstream ...",
    "target": "skills/transporting-objects/SKILL.md",
    "text_sha256": "5b1cfbed675edaeb8ab9142e6ad8a1b8c8d652ae4bcf0997c4d1c695be82ce32"
+  },
+  {
+   "id": "C17",
+   "kind": "section",
+   "layer": "conditional section of an existing SKILL.md",
+   "record_ids": [
+    "L1.unified_v1.0927727de6bf0ea6",
+    "L2.unified_v1.c74f448b6cf804fc",
+    "L3.unified_v1.901c29f19541610e"
+   ],
+   "summary": "When placing on a horizontal top of a larger fixture, target its observed support plane and footprint rather than ...",
+   "target": "skills/transporting-objects/SKILL.md",
+   "text_sha256": "3c27e9279bd4a540ce421d1b51c1c83bda5642b0bb862312674bb5ca178807c8"
   }
  ],
  "plan_id": "5700903823db710bf5a016de95915c864fddb0cd8fa89b5891827218ffcea9ed",
