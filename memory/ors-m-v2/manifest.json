@@ -769,6 +769,7 @@
    "text_sha256": "bded34db632b5a379836c9d17f54cfe720a5361e42514a6357bb1c33ac17800f"
   },
   {
+   "commit": "1d5f4065a38dd6dd22a66b71ca2bb98db72e5d8c",
    "group": "perceive",
    "id": "C22",
    "kind": "section",
@@ -802,6 +803,27 @@
    "summary": "When repeated broad identification threatens acquisition of remaining geometry, constrain detection with the ...",
    "target": "skills/perceiving-objects/SKILL.md",
    "text_sha256": "b2c130d9bab016c7fb2b5aeca29941b118977258dc41d31aa1154eb58ee06436"
+  },
+  {
+   "group": "verify",
+   "id": "C23",
+   "kind": "section",
+   "lands": [
+    "verify|P_PERC_WRONG_INSTANCE|b0#L3.1"
+   ],
+   "layer": "conditional section of an existing SKILL.md",
+   "merges": [
+    "libero_10_swap/06@g1#r5",
+    "libero_90/35@g2#r0"
+   ],
+   "record_ids": [
+    "libero_10_swap/06@g1#r5",
+    "libero_90/35@g2#r0",
+    "verify|P_PERC_WRONG_INSTANCE|b0#L3.1"
+   ],
+   "summary": "When perception supplies an action-effect check, associate evidence with the affected entity and its expected ...",
+   "target": "skills/perceiving-objects/SKILL.md",
+   "text_sha256": "0315e100959fe34b4e45a9bd754ee65ea20b72f46f900b70b2a191627580c37d"
   }
  ],
  "plan_id": "a526441b207f716ca8ba092618f7145a97b9920dce3ada618d0c2ac75b5faf09",
