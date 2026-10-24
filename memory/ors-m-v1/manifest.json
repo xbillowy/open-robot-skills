@@ -351,6 +351,7 @@
    "text_sha256": "184678c3d5da81c9ecedb1ceeed8f27eb21e158362062a07a3952173fcffcf81"
   },
   {
+   "commit": "c0ca83413a0b22317f39c0e49e4fa9e44067c1c4",
    "id": "C22",
    "kind": "coordinator",
    "layer": "coordinator composition pattern (coarse plan)",
@@ -365,6 +366,21 @@
    "summary": "When a finger grasp must lift an object before transfer, insert verifying-object-retention between grasp and ...",
    "target": "memory/ors-m-v1/coordinator.md",
    "text_sha256": "2c041a154d8f4d868359d457f1be05c673e8d960b0ffad58f56e6459bc65728f"
+  },
+  {
+   "id": "C23",
+   "kind": "coordinator",
+   "layer": "coordinator composition pattern (coarse plan)",
+   "record_ids": [
+    "L1.unified_v1.2780963cf6a2bca6",
+    "L1.unified_v1.830195498aa9c032",
+    "L2.unified_v1.66e17d373ef1eb2b",
+    "L2.unified_v1.dd700b6338b3767e",
+    "L3.unified_v1.2025d0c9a4503b72"
+   ],
+   "summary": "When transfer requires an articulated opening, first inspect usable access. Open only if clearance is absent; ...",
+   "target": "memory/ors-m-v1/coordinator.md",
+   "text_sha256": "80fb275809eabadce70378d7eeb0b7957b8e22045d7105fe9ccda08a8591e3fa"
   }
  ],
  "plan_id": "5700903823db710bf5a016de95915c864fddb0cd8fa89b5891827218ffcea9ed",
