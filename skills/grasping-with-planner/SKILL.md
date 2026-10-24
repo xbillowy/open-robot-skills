@@ -113,6 +113,12 @@ See `tools/curobo/SKILL.md` for the full recipe and gotchas.
   on hollow centers and miss handles. Use `grasping-short-axis` for elongated
   handles, where the centroid is graspable but orientation is what matters.
 
+## Requirements from confirmed experience
+
+Follow these requirements when you write this subgraph. Each one comes from failures of earlier tasks that were repaired and confirmed by a rerun.
+
+1. When observed surrounding geometry intersects the nominal swept hand volume, choose a clearance-aware orientation and approach while preserving useful finger engagement; done when fresh geometry and arrival feedback establish an unobstructed usable pinch. If unresolved, try another candidate within a bound rather than closing.
+
 ## Recommended subgraph state flow
 
 6 states, in order:

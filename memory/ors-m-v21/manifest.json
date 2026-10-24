@@ -264,6 +264,7 @@
    "text_sha256": "b966285529017a264404c5008f201ccac37551d36cd47f619f05c204974312d8"
   },
   {
+   "commit": "41ef9a3467fa896ea89518bb91080f13d614f915",
    "group": "other",
    "id": "C06",
    "kind": "section",
@@ -278,6 +279,35 @@
    "summary": "When clearance and grip settling suffice, omit excess approach height and idle opening dwell; done when clearance ...",
    "target": "skills/grasping-short-axis/SKILL.md",
    "text_sha256": "ee7ff2cb667f27d5c0ba84eb63111f667a2d077aa9288edd3d6ad037619f04af"
+  },
+  {
+   "group": "grasp",
+   "id": "C07",
+   "kind": "section",
+   "lands": [
+    "grasp|P_CLEARANCE_COLLISION|b0#L3.2"
+   ],
+   "layer": "conditional section of an existing SKILL.md",
+   "merges": [
+    "grasp|P_CLEARANCE_COLLISION|b0#L2.0",
+    "grasp|P_CLEARANCE_COLLISION|b0#L2.1",
+    "libero_90/05@g1#r3",
+    "libero_90/08@g2#r0",
+    "libero_object_temp_y0_3/01@g2#r1",
+    "libero_object_temp_y0_3/05@g1#r0"
+   ],
+   "record_ids": [
+    "grasp|P_CLEARANCE_COLLISION|b0#L2.0",
+    "grasp|P_CLEARANCE_COLLISION|b0#L2.1",
+    "grasp|P_CLEARANCE_COLLISION|b0#L3.2",
+    "libero_90/05@g1#r3",
+    "libero_90/08@g2#r0",
+    "libero_object_temp_y0_3/01@g2#r1",
+    "libero_object_temp_y0_3/05@g1#r0"
+   ],
+   "summary": "When observed surrounding geometry intersects the nominal swept hand volume, choose a clearance-aware orientation ...",
+   "target": "skills/grasping-with-planner/SKILL.md",
+   "text_sha256": "28c347da46001243a5b68544581c7eb88facaa4225633d3a86061f245a8b4891"
   }
  ],
  "plan_id": "b940c484fc74b1a2ba4fb9fccf4ba91c862d4b53e8c952b8ca96ab5afa603f63",
