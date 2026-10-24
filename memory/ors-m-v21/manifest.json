@@ -281,6 +281,7 @@
    "text_sha256": "ee7ff2cb667f27d5c0ba84eb63111f667a2d077aa9288edd3d6ad037619f04af"
   },
   {
+   "commit": "f1509e991668f078a6b0c43262e5ef6a88cdf107",
    "group": "grasp",
    "id": "C07",
    "kind": "section",
@@ -308,6 +309,22 @@
    "summary": "When observed surrounding geometry intersects the nominal swept hand volume, choose a clearance-aware orientation ...",
    "target": "skills/grasping-with-planner/SKILL.md",
    "text_sha256": "28c347da46001243a5b68544581c7eb88facaa4225633d3a86061f245a8b4891"
+  },
+  {
+   "group": "other",
+   "id": "C08",
+   "kind": "section",
+   "lands": [
+    "libero_90/30@g2#r0"
+   ],
+   "layer": "conditional section of an existing SKILL.md",
+   "merges": [],
+   "record_ids": [
+    "libero_90/30@g2#r0"
+   ],
+   "summary": "When an approach correction raises an error, remeasure fingertip pose. Accept only within explicit position and ...",
+   "target": "skills/grasping-with-planner/SKILL.md",
+   "text_sha256": "4775dd39a445a2b9e71b87f2a2b829f5cbcbd767552d10f1f494fcf514faaa4c"
   }
  ],
  "plan_id": "b940c484fc74b1a2ba4fb9fccf4ba91c862d4b53e8c952b8ca96ab5afa603f63",

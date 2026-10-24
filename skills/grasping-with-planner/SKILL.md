@@ -118,6 +118,7 @@ See `tools/curobo/SKILL.md` for the full recipe and gotchas.
 Follow these requirements when you write this subgraph. Each one comes from failures of earlier tasks that were repaired and confirmed by a rerun.
 
 1. When observed surrounding geometry intersects the nominal swept hand volume, choose a clearance-aware orientation and approach while preserving useful finger engagement; done when fresh geometry and arrival feedback establish an unobstructed usable pinch. If unresolved, try another candidate within a bound rather than closing.
+2. When an approach correction raises an error, remeasure fingertip pose. Accept only within explicit position and orientation tolerances; otherwise retry within a bound, then use the failure exit for re-perception and retry. Done when arrival is verified without changing the grasp affordance.
 
 ## Recommended subgraph state flow
 
