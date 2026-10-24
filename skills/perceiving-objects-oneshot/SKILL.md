@@ -83,6 +83,12 @@ observe → perceive → filter_obb
 - Small / cluttered targets (< 40 px wide) — prefer ``perceiving-objects``
   whose pairwise crop tournament is far more reliable in that regime.
 
+## Requirements from confirmed experience
+
+Follow these requirements when you write this subgraph. Each one comes from failures of earlier tasks that were repaired and confirmed by a rerun.
+
+1. When destination bounds include peripheral structures or omit the usable supporting region, isolate the broad measured support separately from its enclosing assembly; do not use rails, dividers, or vertical clutter as the landing surface. Reobserve if no adequate surface remains; done when the destination footprint represents usable physical support.
+
 ## Recommended subgraph state flow
 
 3 states: ``observe → perceive → filter_obb`` (mirrors ``perceiving-objects``).
