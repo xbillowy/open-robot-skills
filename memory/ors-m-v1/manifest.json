@@ -368,6 +368,7 @@
    "text_sha256": "2c041a154d8f4d868359d457f1be05c673e8d960b0ffad58f56e6459bc65728f"
   },
   {
+   "commit": "154c9fcb72813f46e81a2077936136d3b0e22527",
    "id": "C23",
    "kind": "coordinator",
    "layer": "coordinator composition pattern (coarse plan)",
@@ -381,6 +382,22 @@
    "summary": "When transfer requires an articulated opening, first inspect usable access. Open only if clearance is absent; ...",
    "target": "memory/ors-m-v1/coordinator.md",
    "text_sha256": "80fb275809eabadce70378d7eeb0b7957b8e22045d7105fe9ccda08a8591e3fa"
+  },
+  {
+   "id": "C24",
+   "kind": "coordinator",
+   "layer": "coordinator composition pattern (coarse plan)",
+   "record_ids": [
+    "L1.unified_v1.b1957f611628b5cd",
+    "L2.unified_v1.6a4af0703f371139",
+    "L2.unified_v1.7b1301aa24e6bcd6",
+    "L2.unified_v1.bf521cac95c214a8",
+    "L3.unified_v1.96d6368149995da8",
+    "L3.unified_v1.f14b7bee367c4f2c"
+   ],
+   "summary": "When a hollow object's cavity can admit both fingers, plan subpart perception of an accessible solid rim or wall and ...",
+   "target": "memory/ors-m-v1/coordinator.md",
+   "text_sha256": "31877c36c21294f79afab64ab259524258d4d5d2f4e33e8ca47cb7eb09eea787"
   }
  ],
  "plan_id": "5700903823db710bf5a016de95915c864fddb0cd8fa89b5891827218ffcea9ed",
