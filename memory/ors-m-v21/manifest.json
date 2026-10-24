@@ -888,6 +888,7 @@
    "text_sha256": "ecaf701d2e873d1e914a0d9088b2b16beea0728dd637f938e1eb13f7a6dc9ceb"
   },
   {
+   "commit": "62bfe5f9d7968d3bbdf34937363afbb648518e55",
    "group": "transport",
    "id": "C26",
    "kind": "section",
@@ -902,6 +903,29 @@
    "summary": "When an overhead enclosure blocks vertical entry, deviate from the straight-Z default: derive the opening envelope ...",
    "target": "skills/transporting-objects/SKILL.md",
    "text_sha256": "c445e8fadc213806ebef45bdbc3755f5a1a2156d90b607c9e8fda8245414e990"
+  },
+  {
+   "group": "transport",
+   "id": "C27",
+   "kind": "section",
+   "lands": [
+    "libero_90/84@g1#r1"
+   ],
+   "layer": "conditional section of an existing SKILL.md",
+   "merges": [
+    "libero_goal_task/04@g1#r2",
+    "libero_goal_with_milk/03@g1#r3",
+    "libero_spatial_with_milk/03@g1#r3"
+   ],
+   "record_ids": [
+    "libero_90/84@g1#r1",
+    "libero_goal_task/04@g1#r2",
+    "libero_goal_with_milk/03@g1#r3",
+    "libero_spatial_with_milk/03@g1#r3"
+   ],
+   "summary": "When a vertical lift at extended reach is infeasible, replace the fixed-height lift with a short inward retreat and ...",
+   "target": "skills/transporting-objects/SKILL.md",
+   "text_sha256": "559b5ff6223e7a2cc3896e290c882dc5a412d46b33fd1dd06b1656399f857ea5"
   }
  ],
  "plan_id": "b940c484fc74b1a2ba4fb9fccf4ba91c862d4b53e8c952b8ca96ab5afa603f63",
