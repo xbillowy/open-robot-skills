@@ -302,6 +302,7 @@
    "text_sha256": "28c347da46001243a5b68544581c7eb88facaa4225633d3a86061f245a8b4891"
   },
   {
+   "commit": "cc8a857b29d7733053c7586f0a24bbb325e30c2d",
    "group": "other",
    "id": "C08",
    "kind": "section",
@@ -316,6 +317,27 @@
    "summary": "When an approach correction raises an error, remeasure fingertip pose. Accept only within explicit position and ...",
    "target": "skills/grasping-with-planner/SKILL.md",
    "text_sha256": "4775dd39a445a2b9e71b87f2a2b829f5cbcbd767552d10f1f494fcf514faaa4c"
+  },
+  {
+   "group": "perceive",
+   "id": "C09",
+   "kind": "section",
+   "lands": [
+    "libero_10_swap/05@g1#r1"
+   ],
+   "layer": "conditional section of an existing SKILL.md",
+   "merges": [
+    "libero_10_task/05@g1#r1",
+    "libero_90/05@g1#r1"
+   ],
+   "record_ids": [
+    "libero_10_swap/05@g1#r1",
+    "libero_10_task/05@g1#r1",
+    "libero_90/05@g1#r1"
+   ],
+   "summary": "When the requested destination is a compartment, derive its interior footprint from observed openings, enclosing ...",
+   "target": "skills/perceiving-object-parts/SKILL.md",
+   "text_sha256": "4a5081b579ca4818460e62687357e86f5779ca7e415a364e22f3fc134d8f4d3d"
   }
  ],
  "plan_id": "133a3f303397a2b21f5a30abdcdabbce7b556bd8954935af40a05a93e739dc94",
