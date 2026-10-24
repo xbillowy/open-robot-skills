@@ -737,6 +737,7 @@
    "text_sha256": "5919b555fd1dcbcfec76f5050b9334a5ba375adfcffcc8fd8052f811d65c7571"
   },
   {
+   "commit": "b0e8dd9ae1369db098069ed7393fcc3e3ca4cfd5",
    "group": "perceive",
    "id": "C21",
    "kind": "section",
@@ -766,6 +767,41 @@
    "summary": "When visible surfaces demonstrably omit body extent, estimate the object's own local support from depth before ...",
    "target": "skills/perceiving-objects/SKILL.md",
    "text_sha256": "bded34db632b5a379836c9d17f54cfe720a5361e42514a6357bb1c33ac17800f"
+  },
+  {
+   "group": "perceive",
+   "id": "C22",
+   "kind": "section",
+   "lands": [
+    "perceive|NP_PERC_BUDGET|b0#L3.2"
+   ],
+   "layer": "conditional section of an existing SKILL.md",
+   "merges": [
+    "libero_10_task/00@g1#r0",
+    "libero_goal_swap/02@g1#r0",
+    "libero_goal_swap/04@g1#r0",
+    "libero_goal_swap/09@g5#r0",
+    "libero_goal_task/08@g1#r0",
+    "libero_goal_with_yellow_book/08@g1#r0",
+    "libero_object_with_yellow_book/03@g2#r0",
+    "perceive|NP_PERC_BUDGET|b2#L2.0",
+    "perceive|NP_PERC_BUDGET|b2#L3.3"
+   ],
+   "record_ids": [
+    "libero_10_task/00@g1#r0",
+    "libero_goal_swap/02@g1#r0",
+    "libero_goal_swap/04@g1#r0",
+    "libero_goal_swap/09@g5#r0",
+    "libero_goal_task/08@g1#r0",
+    "libero_goal_with_yellow_book/08@g1#r0",
+    "libero_object_with_yellow_book/03@g2#r0",
+    "perceive|NP_PERC_BUDGET|b0#L3.2",
+    "perceive|NP_PERC_BUDGET|b2#L2.0",
+    "perceive|NP_PERC_BUDGET|b2#L3.3"
+   ],
+   "summary": "When repeated broad identification threatens acquisition of remaining geometry, constrain detection with the ...",
+   "target": "skills/perceiving-objects/SKILL.md",
+   "text_sha256": "b2c130d9bab016c7fb2b5aeca29941b118977258dc41d31aa1154eb58ee06436"
   }
  ],
  "plan_id": "a526441b207f716ca8ba092618f7145a97b9920dce3ada618d0c2ac75b5faf09",
