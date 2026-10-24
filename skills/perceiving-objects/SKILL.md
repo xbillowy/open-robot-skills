@@ -98,6 +98,7 @@ measured slip-during-transport failure mode on tall bottles/cartons.
 Follow these requirements when you write this subgraph. Each one comes from failures of earlier tasks that were repaired and confirmed by a rerun.
 
 1. When appearance distinguishes nearby candidates, verify the selected physical extent against all supplied appearance and shape qualifiers before publishing geometry; do not accept a label patch, surrounding surface, or plausible cloud as identity evidence. Reconsider alternatives if inconsistent; done when the accepted extent belongs to the requested entity.
+2. When a spatial qualifier distinguishes similar candidates, compare them in full-scene context with separately observed reference geometry; retain the qualifier through segmentation and use its stated reference frame, not an assumed image ordering. Reconsider inconsistent candidates; done when the selected instance satisfies the observed relation.
 
 ## Recommended subgraph state flow
 
