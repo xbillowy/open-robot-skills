@@ -1271,6 +1271,7 @@
    "text_sha256": "8c672c413564b1114b07ade52e466abd44553d0c4cef5d75c87395a25bbdbbb2"
   },
   {
+   "commit": "0baf4769cb79fb471f0438a22f8605b8691aa1a7",
    "group": "verify",
    "id": "C33",
    "kind": "section",
@@ -1326,6 +1327,27 @@
    "summary": "When supported placement leaves detachment, alignment or stability unconfirmed, check arrival in a compatible ...",
    "target": "skills/transporting-objects/SKILL.md",
    "text_sha256": "69af7e267a35f6051be005da9218a2800c9752f6738cbd7d0a786a54b446ccb8"
+  },
+  {
+   "group": "verify",
+   "id": "C34",
+   "kind": "section",
+   "lands": [
+    "libero_10_task/07@g1#r5"
+   ],
+   "layer": "conditional section of an existing SKILL.md",
+   "merges": [
+    "libero_10_task/00@g1#r4",
+    "libero_goal_task/02@g1#r4"
+   ],
+   "record_ids": [
+    "libero_10_task/00@g1#r4",
+    "libero_10_task/07@g1#r5",
+    "libero_goal_task/02@g1#r4"
+   ],
+   "summary": "When containment is required and release leaves interior occupancy uncertain, open, withdraw and inspect the ...",
+   "target": "skills/transporting-objects/SKILL.md",
+   "text_sha256": "aa1fbe861e4ed661a33000d68feb3d094c333f7d4db4572f403477c54e691552"
   }
  ],
  "plan_id": "a526441b207f716ca8ba092618f7145a97b9920dce3ada618d0c2ac75b5faf09",
