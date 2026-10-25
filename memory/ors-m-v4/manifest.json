@@ -1,0 +1,110 @@
+{
+ "accounting": {
+  "clusters": [
+   "K1",
+   "K2"
+  ],
+  "kept": [
+   "K1",
+   "K2"
+  ],
+  "provenance": {
+   "K1": "v4",
+   "K2": "v4"
+  },
+  "refused": [],
+  "v3_plan_id": "daaeb51b1121ddd32cfccba413049acc1a1946358aaa8a85ff4084985fdd996e"
+ },
+ "baseline": {
+  "commit": "c1e393d",
+  "root": "/mnt/data/home/xietao/projects/agent/recast-dev/development/ors-vlm-v5-frozen-c1e393d"
+ },
+ "changes": [
+  {
+   "group": "K1",
+   "id": "C01",
+   "kind": "new_skill",
+   "layer": "new skill bundle with scripts",
+   "record_ids": [
+    "gstar:libero_10_swap/03#place_black_bowl_in_bottom_drawer",
+    "gstar:libero_10_swap/05#place_book",
+    "gstar:libero_10_swap/07#place_alphabet_soup",
+    "gstar:libero_10_task/00#place_cream_cheese",
+    "gstar:libero_90/56#place_butter_in_tray",
+    "gstar:libero_90/60#place_target",
+    "libero_10_swap/03@g1#r2",
+    "libero_10_swap/05@g1#r3",
+    "libero_10_swap/05@g2#r0",
+    "libero_10_swap/05@g2#r1",
+    "libero_10_swap/05@g3#r0",
+    "libero_10_swap/05@g3#r1",
+    "libero_10_swap/07@g1#r2",
+    "libero_10_swap/07@g1#r3",
+    "libero_10_task/00@g1#r3",
+    "libero_10_task/00@g1#r4",
+    "libero_10_task/05@g1#r2",
+    "libero_10_task/05@g1#r3",
+    "libero_10_task/07@g1#r2",
+    "libero_10_task/07@g1#r4",
+    "libero_10_task/07@g1#r5",
+    "other|P_RELEASE_PLACEMENT|b0#L2.0",
+    "other|P_RELEASE_PLACEMENT|b0#L3.1",
+    "place|P_RELEASE_PLACEMENT|b1#L2.0",
+    "place|P_RELEASE_PLACEMENT|b3#L2.0",
+    "place|P_RELEASE_PLACEMENT|b3#L3.1",
+    "place|P_RELEASE_PLACEMENT|b4#L2.1",
+    "place|P_STALE_REFERENCE|b0#L3.1",
+    "transport|P_MOTION_NOT_ARRIVE|b2#L2.0",
+    "verify|P_OCCLUSION_STACK|b0#L2.0",
+    "verify|P_OCCLUSION_STACK|b0#L3.1",
+    "verify|P_RELEASE_PLACEMENT|b0#L3.1"
+   ],
+   "summary": "K1 placing-held-objects-inside: Transport an already held object into a grounded receiving region using grasp-offset compe",
+   "target": "skills/placing-held-objects-inside/",
+   "text_sha256": "c2bd545b96f8c171b86de2138bbd86ac1d6b0beda9abf83af8108092db0fe02a"
+  },
+  {
+   "group": "K2",
+   "id": "C02",
+   "kind": "new_skill",
+   "layer": "new skill bundle with scripts",
+   "record_ids": [
+    "gstar:libero_10_object/06#place_chocolate_pudding_right_of_plate",
+    "gstar:libero_10_swap/02#place_moka_pot_on_stove",
+    "gstar:libero_10_swap/06#place_chocolate_pudding",
+    "gstar:libero_10_task/08#transport_target",
+    "gstar:libero_90/01#place_black_bowl",
+    "gstar:libero_90/89#place_book",
+    "libero_10_swap/06@g1#r4",
+    "libero_10_swap/06@g1#r5",
+    "libero_10_swap/06@g2#r2",
+    "libero_10_task/06@g1#r4",
+    "place|P_PERC_BIASED_GEOM|b0#L2.0",
+    "place|P_PERC_BIASED_GEOM|b0#L3.1",
+    "place|P_RELEASE_PLACEMENT|b1#L2.1",
+    "place|P_RELEASE_PLACEMENT|b1#L3.2",
+    "place|P_RELEASE_PLACEMENT|b3#L2.0",
+    "place|P_RELEASE_PLACEMENT|b4#L2.0",
+    "place|P_RELEASE_PLACEMENT|b4#L3.2",
+    "place|P_STALE_REFERENCE|b0#L3.1",
+    "transport|P_GRASP_CAVITY_OR_MISS|b0#L2.0",
+    "transport|P_GRASP_CAVITY_OR_MISS|b0#L3.1",
+    "transport|P_MOTION_NOT_ARRIVE|b2#L2.0",
+    "verify|P_MOTION_NOT_ARRIVE|b0#L2.0",
+    "verify|P_MOTION_NOT_ARRIVE|b0#L3.1",
+    "verify|P_OCCLUSION_STACK|b0#L2.0",
+    "verify|P_OCCLUSION_STACK|b0#L3.1",
+    "verify|P_PERC_WRONG_INSTANCE|b0#L2.0",
+    "verify|P_RELEASE_PLACEMENT|b0#L2.0"
+   ],
+   "summary": "K2 placing-carried-objects-on-supports: Place a retained object using its measured grasp offset and usable receiving surface. Sepa",
+   "target": "skills/placing-carried-objects-on-supports/",
+   "text_sha256": "7da301e807f6651b77fee5f95a8077516232d3901ff35240ed051fa339598959"
+  }
+ ],
+ "plan_id": "90d0511d9af2689f6020a1944e6cd5d822232266cbdf9ab988d65ee2a7beac96",
+ "schema": "ors_m_manifest_v1",
+ "translation_id": "f1be9d3d58d4c9fbc7fbb7ce66ea346ccc594c894a0977f2087dcc7bd4d309e5",
+ "version": "ors-m-v4",
+ "view_id": "84a61a009e31d8208d1c816ff0a46b4d846b6f0c8093e99cd1d7d5bdb475bc4b"
+}
