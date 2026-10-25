@@ -1,9 +1,9 @@
 ---
 name: placing-carried-objects-on-supports
-description: Place a retained object on an observed support while compensating the grasp offset. Lift,
-  traverse, descend using measured TCP feedback, release, withdraw, and inspect fresh destination evidence.
-  Separate strategies cover ordinary surfaces, stacking, adjacent placement, and inclined panels. Accept
-  fresh measurements only when they agree with supplied spatial references.
+description: Place a retained object using its measured grasp offset and usable receiving surface. Separate
+  strategies cover ordinary support, stacking, adjacent placement, inclined panels, and placement followed
+  by a supported slide beneath an overhang. Check TCP arrival, retention, opening, and fresh destination
+  evidence. Unresolved final visibility does not negate a measured valid release.
 license: MIT
 compatibility: requires gap>=0.1
 metadata:
@@ -24,34 +24,38 @@ gap:
 
 # placing-carried-objects-on-supports
 
-Place a retained object on an observed support while compensating the grasp offset. Lift, traverse, descend using measured TCP feedback, release, withdraw, and inspect fresh destination evidence. Separate strategies cover ordinary surfaces, stacking, adjacent placement, and inclined panels. Accept fresh measurements only when they agree with supplied spatial references.
+Place a retained object using its measured grasp offset and usable receiving surface. Separate strategies cover ordinary support, stacking, adjacent placement, inclined panels, and placement followed by a supported slide beneath an overhang. Check TCP arrival, retention, opening, and fresh destination evidence. Unresolved final visibility does not negate a measured valid release.
 
 This skill was written by the memory system from confirmed experience: earlier tasks failed at this kind of step, were repaired, and the repair was confirmed by a rerun. Honor the coordinator's contract for your sub-graph (its inputs, outputs and exit values) exactly; this skill has no fixed tool whitelist, so compose the registered tools listed below. Its exits are `completed` (success) and `failed` (on_error).
 
 ## When to use
 
-- The object is already held and upstream object, support, and grasp-time pose references are available.
-- The goal requires supported placement, stacking, or placement beside a known support.
+- The object is already held and object, destination, and grasp-time references are available.
+- The instruction requires supported placement, stacking, adjacent placement, or a supported slide beneath an overhang.
 
 ## When NOT to use
 
-- Deep insertion, articulated manipulation, or supported pushing.
+- Deep insertion or articulated manipulation; switching a control must be completed separately.
 - Transport through clutter requiring a separately established route.
 
 ## Procedure
 
-1. Wire one main script node running place_on_support with the sub-graph inputs. Route status done to success noop completed. Route failed to fail running raise_failure.py with reason, then the failed exit. Bind explicit parameters from the instruction.
-2. Reconstruct the carried object using the original object box and measured TCP displacement from grasp. Accept fresh supporting-body and receiving-region measurements only when spatially consistent with these references. Never project an old mask into fresh depth.
-3. Select the surface, stack, or inclined strategy. Adjacent placement uses the receiving rim and external-camera directions. Inclined placement fits the supplied or freshly measured panel and chooses upright or laid-down orientation from the grasp direction.
-4. Check retention, lift, and traverse. Try successively lower approach clearances if a high waypoint is unreachable. Each waypoint tries Cartesian, endpoint, and planned motion and checks measured TCP position and orientation.
-5. Require a measured valid object-relative release pose before opening. Retry opening once, withdraw, and inspect fresh destination evidence. Ambiguous or mismatched segmentation cannot override valid arrival and measured opening.
+1. Wire one main node running place_on_support with the interface inputs. Route status done to success noop completed; route failed to fail running raise_failure.py with reason, then the failed exit. Bind explicit parameters from the instruction.
+2. Reconstruct the carried object from grasp-time TCP displacement. Associate fresh body and receiving-region measurements with supplied references. Use the lower supporting body when visible; never project an old mask into fresh depth.
+3. For adjacent placement, derive a direction and receiving rim, allow sufficient object-width clearance, preserve the carried orientation, and release above the neighboring support. An inclined receiving reference can select the camera-facing direction.
+4. For centered placement, align the supporting body rather than the hand. A precise support_description can localize the usable receiving region within the supplied destination envelope.
+5. For mode under, first place at the open side at the original supporting level. Then perform at most two supported pushes using fresh object measurements. Require observed displacement and the final beneath-overhang relation; hand travel alone never establishes success.
+6. Check retention, lift, and traverse with bounded feedback corrections. Try Cartesian, endpoint, and planned alternatives plus lower approach clearances. Check object-relative release alignment before opening.
+7. Measure opening, withdraw, and inspect fresh object and destination depth. Log unavailable or inconsistent observations. Ordinary placement can finish with a visibility limitation after measured valid arrival and opening; the supported-slide branch requires observed object effects.
 
 ## Completion checks
 
-- Feedback is converted from the hand reference to TCP using its measured rotation. Object-relative lateral alignment, supporting height, and orientation are checked before release.
-- Nearly empty closure prevents loaded motion. A fresh held-body refinement must agree with the predicted carried position, original size, and supporting height; otherwise the recorded grasp relationship remains authoritative.
-- After measured opening and withdrawal, fresh destination depth or associated object geometry provides support evidence. An unresolved final view is reported as a limitation, not as evidence of failed placement.
-- All motion alternatives are caught and logged; unsuccessful plans are not executed. Lower approach alternatives address unreachable high poses. At most nine guarded perception calls are made.
+- Convert measured hand feedback to TCP using its rotation. Check release-body lateral error, base separation, and orientation before opening.
+- Reject measured empty closure before transport and descent. Accept fresh held-body refinement only when size, position, and base agree with the predicted carried object.
+- Use spatially associated receiving depth and lower-body measurements; reject unrelated or oversized measurements rather than replacing authoritative grasp references.
+- After measured opening and withdrawal, inspect associated object geometry and destination depth. An inconclusive view alone is not positive evidence that a measured valid placement failed.
+- After each supported push, withdraw and measure the object. Require measured forward displacement, an end beneath the receiving footprint, and height below the overhang.
+- Catch and log motion failures, never execute unsuccessful plans, and bound every retry. The longest branch uses at most fourteen guarded perception calls.
 
 ## Canonical scripts
 
@@ -64,15 +68,15 @@ Use them as `type: script` nodes by their path (their run() inputs and Output fi
 
 Bind an explicit parameter as a literal input of the `main` node only when the task instruction determines it; otherwise omit it (the default applies).
 
-- `mode` (default `"surface"`): Allowed values surface, stack, inclined. Ordinary 'on' or 'on top' selects surface; 'stack on' selects stack; 'on the rack' referring to an inclined receiving panel selects inclined. Stack retains the carried orientation and seats its base over the receiving rim.
-- `relation` (default `"center"`): Allowed values center, right, left. 'On' selects center; 'to the right of' selects right; 'to the left of' selects left. Side placement is relative to the external camera and beyond the measured receiving rim.
-- `object_description` (default `""`): Bind the instruction's referring phrase for the carried object, without the action or destination. Empty disables text segmentation and retains the upstream grasp relationship.
-- `support_description` (default `""`): Bind the instruction's receiving object or usable supporting region. Empty uses the upstream support box or cloud. Fresh measurements must agree spatially with that box.
-- `tcp_offset` (default `0.103`): Positive configured hand-reference-to-TCP distance in metres along local positive z; obtained from the robot configuration.
-- `clearance` (default `0.012`): Positive general support clearance and positional tolerance in metres. Retain the default unless measured shape and support resolution justify another value.
-- `approach_height` (default `0.13`): Positive initial vertical clearance above the derived release TCP in metres. The script also tries sixty and thirty percent of this clearance when high approaches are unreachable.
-- `side_gap` (default `0.04`): Positive distance in metres beyond the observed receiving rim for adjacent placement; adjust only from measured space and carried-object dimensions.
-- `association_tolerance` (default `0.04`): Positive spatial agreement tolerance in metres for associating fresh measurements with upstream references. A mismatch preserves the recorded reference rather than substituting an unrelated measurement.
+- `mode` (default `"surface"`): Allowed: surface, stack, inclined, under. Ordinary 'on' selects surface; 'stack on' selects stack; placement on an inclined panel selects inclined; 'under the shelf' selects under, including placement followed by a supported slide.
+- `relation` (default `"center"`): Allowed: center, right, left. 'On' selects center; 'to the right of' selects right; 'to the left of' selects left. Sides use external-camera directions; measured inclined receiving geometry selects its camera-facing side. Use center with mode under.
+- `object_description` (default `""`): The instruction's referring phrase for the carried object, excluding action and destination. Empty disables text measurements and preserves the recorded grasp reference. For mode under, supply the phrase so observed slide effects can be measured.
+- `support_description` (default `""`): The instruction's receiving object or usable supporting region, such as its heating surface rather than its surrounding housing. Empty uses the supplied box or cloud. Fresh points must agree with the destination envelope.
+- `tcp_offset` (default `0.103`): Configured positive hand-reference-to-TCP distance in metres along local positive z. Obtain from robot configuration, not the task wording.
+- `clearance` (default `0.012`): Positive base clearance and general spatial tolerance in metres. Keep the default unless measured dimensions and depth resolution justify a different value.
+- `approach_height` (default `0.13`): Positive initial vertical clearance above the derived release TCP in metres. Lower alternatives use sixty and thirty percent; also sets the withdrawal distance.
+- `side_gap` (default `0.04`): Positive adjacent rim clearance in metres, enlarged when the carried body requires more room. Also provides supported-slide approach and withdrawal room. Set from measured available space, not scene coordinates.
+- `association_tolerance` (default `0.04`): Positive spatial agreement tolerance in metres for associating fresh measurements with recorded references. A mismatch preserves the original reference.
 
 ## Sub-graph wiring (system)
 
