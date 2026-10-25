@@ -42,6 +42,7 @@ grasping-direct-ik = []
 grasping-short-axis = []
 transporting-objects = []
 tracking-objects = []
+placing-held-objects-inside = []
 placing-carried-objects-on-supports = []
 
 # Historical meta-extras: bundle deps now live in each bundle's own
