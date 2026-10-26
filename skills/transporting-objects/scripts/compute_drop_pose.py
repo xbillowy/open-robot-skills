@@ -102,7 +102,7 @@ def run(
     ee_z_at_grasp: float | None = None
     try:
         live = ctx.tool("robot.get_ee_pose")
-        ee_z_at_grasp = float(live["pose"]["position"]["z"])
+        ee_z_at_grasp = float(ee_pose_at_grasp["position"]["z"]) if ee_pose_at_grasp else float(live["pose"]["position"]["z"])
     except Exception:
         if ee_pose_at_grasp is not None:
             ee_z_at_grasp = float(ee_pose_at_grasp["position"]["z"])
@@ -177,7 +177,8 @@ def run(
         _yaw_only_topdown(ee_pose_at_grasp) if ee_pose_at_grasp is not None else _DOWN
     )
     drop_position: Vec3 = {
-        "x": zone_center["x"], "y": zone_center["y"], "z": tcp_z,
+        "x": zone_center["x"] + (ee_pose_at_grasp["position"]["x"] - held_obb["center"]["x"]),
+        "y": zone_center["y"] + (ee_pose_at_grasp["position"]["y"] - held_obb["center"]["y"]), "z": tcp_z,
     }
     drop_pose: Se3Pose = {"position": drop_position, "rotation": drop_rotation}
     approach_pose: Se3Pose = {
