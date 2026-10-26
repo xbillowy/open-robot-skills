@@ -1,4 +1,5 @@
-"""Loader tests for the API-backed (zero-GPU) tool bundles: vlm, gemini-er, molmo.
+"""Loader tests for the API-backed (zero-GPU) tool bundles: vlm, molmo (gemini-er is
+disabled in the toolfix catalog: tools/_disabled-gemini-er).
 
 Covers loader discovery, @tool-name agreement with the SKILL.md ``gap.tools``
 frontmatter, schema extraction, and lazy-import hygiene (importing the
@@ -17,11 +18,10 @@ from gap_core.tools._registry import _PENDING_TOOLS
 
 ROOT = Path(__file__).resolve().parents[1]
 
-API_BUNDLES = ["gemini-er", "molmo", "vlm"]
+API_BUNDLES = ["molmo", "vlm"]
 
 EXPECTED_TOOLS: dict[str, list[str]] = {
     "vlm": ["vlm.query", "vlm.query_batch", "vlm.query_yes_no"],
-    "gemini-er": ["gemini-er.detect"],
     "molmo": ["molmo.point_prompt", "molmo.query", "molmo.query_yes_no"],
 }
 
@@ -29,7 +29,6 @@ EXPECTED_INPUTS: dict[str, list[str]] = {
     "vlm.query": ["prompt", "image", "images", "provider", "model"],
     "vlm.query_batch": ["prompts", "images", "provider", "model"],
     "vlm.query_yes_no": ["prompt", "image", "images", "provider", "model"],
-    "gemini-er.detect": ["image", "query", "model"],
     "molmo.point_prompt": ["image", "query"],
     "molmo.query": ["prompt", "image"],
     "molmo.query_yes_no": ["prompt", "image"],
@@ -39,7 +38,6 @@ EXPECTED_OUTPUTS: dict[str, list[str]] = {
     "vlm.query": ["text"],
     "vlm.query_batch": ["results"],
     "vlm.query_yes_no": ["answer", "text"],
-    "gemini-er.detect": ["detections"],
     "molmo.point_prompt": ["pixel_x", "pixel_y", "found"],
     "molmo.query": ["text"],
     "molmo.query_yes_no": ["answer", "text"],
@@ -133,8 +131,6 @@ def test_schema_extraction_inputs_and_outputs(loaded):
     assert tool_registry.get("vlm.query").schema.inputs["image"].required is False
     assert tool_registry.get("molmo.query").schema.inputs["image"].required is False
     assert tool_registry.get("molmo.point_prompt").schema.inputs["image"].required is True
-    assert tool_registry.get("gemini-er.detect").schema.inputs["image"].required is True
-    assert tool_registry.get("gemini-er.detect").schema.inputs["query"].required is True
 
 
 def test_tools_dispatchable_through_registry(loaded):

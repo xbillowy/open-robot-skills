@@ -1,8 +1,7 @@
 ---
 name: curobo
 description: NVIDIA cuRobo motion planning — collision-free trajectories to
-  grasp goalsets, constrained linear moves, single-pose planning, and
-  joint-trajectory collision validation.
+  grasp goalsets, constrained linear moves, and single-pose planning.
   Use when a workflow needs
   GPU-accelerated, collision-aware arm motion plans.
 license: MIT
@@ -20,8 +19,6 @@ gap:
     - curobo.plan_directed_linear: Constrained linear motion with axis/orientation holds.
     - curobo.plan_grasp_motion: Approach + grasp + lift sequence (three trajectories).
     - curobo.plan_to_pose: Collision-aware plan to a single TCP pose.
-    - curobo.validate_joint_trajectory_robot: Collision-validate joint waypoints (robot vs world + self).
-    - curobo.validate_joint_trajectory_grasped: Same, with a grasped object attached at waypoint 0.
 ---
 
 # curobo
@@ -70,17 +67,14 @@ them per call corrupts CUDA graph state).
 - GPU access is serialised by a module lock (cuRobo is not thread-safe);
   CUDA/"graph capture" errors invalidate the cached planners automatically
   before raising `PlanningFailed`.
-- `use_cuda_graph` must stay False for the validators
-  (`check_start_state` requirement) and for varying world/start setups.
+- `use_cuda_graph` must stay False for varying world/start setups.
 - **cuRobo version**: `plan_to_grasp_poses`, `plan_grasp_motion`,
   `plan_directed_linear`, `plan_linear`, and `plan_to_pose` target curobo
   v0.8 (MotionPlanner API). The removed v0.7-only `solve_ik`,
   `batch_grasp_feasibility`, and attached-object transport APIs are
   intentionally not registered. Plan via the supported goalset/pose tools
-  instead. The validators use the v0.7 MotionGen path too.
-- `validate_joint_trajectory_grasped` always invalidates the planner cache
-  afterward so the attachment cannot leak; expect the next planning call to
-  re-create the planner.
+  instead. The joint-trajectory validators (v0.7 MotionGen path) are not
+  registered either.
 - Planning failures return `success=False` (with `failure_reason` where the
   RPC had one); infrastructure errors raise `PlanningFailed` / `ToolError`.
 - Set `debug_out_dir` on the grasp/transport planners to dump world + robot

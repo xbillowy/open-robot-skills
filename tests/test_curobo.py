@@ -16,11 +16,11 @@ EXPECTED_TOOLS = {
     "curobo.plan_directed_linear",
     "curobo.plan_grasp_motion",
     "curobo.plan_to_pose",
-    "curobo.validate_joint_trajectory_robot",
-    "curobo.validate_joint_trajectory_grasped",
 }
 
 UNSUPPORTED_V08_TOOLS = {
+    "curobo.validate_joint_trajectory_robot",
+    "curobo.validate_joint_trajectory_grasped",
     "curobo.solve_ik",
     "curobo.batch_grasp_feasibility",
     "curobo.plan_with_grasped_object",
@@ -67,19 +67,6 @@ def test_plan_to_grasp_poses_schema(tool_registry):
     assert set(schema.outputs) == {"success", "trajectory", "goalset_index"}
 
 
-def test_validate_schema(tool_registry):
-    schema = tool_registry.get("curobo.validate_joint_trajectory_grasped").schema
-    assert {"world_config", "trajectory", "object_name"} <= set(schema.inputs)
-    assert schema.inputs["link_name"].default == "attached_object"
-    assert schema.inputs["surface_sphere_radius"].default == pytest.approx(0.001)
-    assert set(schema.outputs) == {
-        "success",
-        "failure_reason",
-        "first_collision_waypoint",
-        "collision_status_detail",
-    }
-
-
 def test_trajectory_converters_roundtrip(skills_registry):
     mod = skills_registry.get("curobo").tools_module
     arr = np.arange(21, dtype=np.float64).reshape(3, 7)
@@ -114,23 +101,6 @@ def test_world_converter_builds_mesh_namespace(skills_registry):
     assert ns2.mesh[0].pose == [0, 0, 0, 1, 0, 0, 0]
 
 
-def test_empty_trajectory_rejected_without_curobo(tool_registry):
-    """Argument guards fire before the lazy cuRobo import."""
-    from gap_core.errors import ToolError
-
-    with pytest.raises(ToolError):
-        tool_registry.invoke(
-            "curobo.validate_joint_trajectory_robot",
-            world_config={"meshes": []},
-            trajectory={"waypoints": []},
-        )
-    with pytest.raises(ToolError):
-        tool_registry.invoke(
-            "curobo.validate_joint_trajectory_grasped",
-            world_config={"meshes": []},
-            trajectory={"waypoints": [{"positions": _FRANKA_HOME}]},
-            object_name="",
-        )
 @pytest.mark.gpu
 def test_plan_to_pose_gpu_smoke(tool_registry):
     torch = pytest.importorskip("torch")

@@ -3,8 +3,7 @@ name: molmo
 description: Visual pointing and Q&A via the Molmo VLM served from a
   self-hosted vLLM endpoint (OpenAI-compatible API). Use when a workflow needs
   a single pixel coordinate for a named object (point_prompt) or Molmo-grade
-  visual question answering and a vLLM server is available; for an API-only
-  zero-GPU alternative use the gemini-er bundle.
+  visual question answering and a vLLM server is available.
 license: MIT
 compatibility: requires gap>=0.1
 metadata: {category: perception, tags: [perception, pointing, molmo, vllm]}
@@ -23,8 +22,7 @@ gap:
 
 Molmo visual pointing + Q&A. The bundle itself is zero-GPU (httpx client
 only), but Molmo has **no hosted API** — you must serve it yourself with
-vLLM and point `GAP_MOLMO_BASE_URL` at it. If you can't self-host, use
-`gemini-er.detect` (hosted Gemini Robotics-ER) instead.
+vLLM and point `GAP_MOLMO_BASE_URL` at it.
 
 ## Hosting recipe (vLLM)
 

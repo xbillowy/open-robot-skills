@@ -58,8 +58,7 @@ extra first: `pip install "graph-as-policy[vertex]"`.
 
 - Semantic scene checks and checkpoint verification (`vlm.query_yes_no`).
 - Free-form scene descriptions or attribute queries (`vlm.query`).
-- Prefer `gemini-er.detect` when you need pixel-space bounding boxes, and
-  `molmo.point_prompt` when you need a single click point.
+- Prefer `molmo.point_prompt` when you need a single click point.
 
 ## Notes
 

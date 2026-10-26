@@ -25,7 +25,6 @@
         "./skills/tracking-objects",
         "./skills/transporting-objects",
         "./tools/curobo",
-        "./tools/gemini-er",
         "./tools/geometry",
         "./tools/grounding-dino",
         "./tools/molmo",
