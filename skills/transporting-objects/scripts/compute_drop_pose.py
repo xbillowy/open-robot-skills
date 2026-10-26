@@ -62,7 +62,7 @@ def _yaw_only_topdown(ee_pose: Se3Pose) -> Quaternion:
     }
 
 
-def run(
+def _run_core(
     ctx: NodeContext,
     container_obb: OrientedBoundingBox,
     container_interior_obb: OrientedBoundingBox | None = None,
@@ -102,7 +102,7 @@ def run(
     ee_z_at_grasp: float | None = None
     try:
         live = ctx.tool("robot.get_ee_pose")
-        ee_z_at_grasp = float(live["pose"]["position"]["z"])
+        ee_z_at_grasp = float(ee_pose_at_grasp["position"]["z"]) if ee_pose_at_grasp else float(live["pose"]["position"]["z"])
     except Exception:
         if ee_pose_at_grasp is not None:
             ee_z_at_grasp = float(ee_pose_at_grasp["position"]["z"])
@@ -177,7 +177,8 @@ def run(
         _yaw_only_topdown(ee_pose_at_grasp) if ee_pose_at_grasp is not None else _DOWN
     )
     drop_position: Vec3 = {
-        "x": zone_center["x"], "y": zone_center["y"], "z": tcp_z,
+        "x": zone_center["x"] + (ee_pose_at_grasp["position"]["x"] - held_obb["center"]["x"]),
+        "y": zone_center["y"] + (ee_pose_at_grasp["position"]["y"] - held_obb["center"]["y"]), "z": tcp_z,
     }
     drop_pose: Se3Pose = {"position": drop_position, "rotation": drop_rotation}
     approach_pose: Se3Pose = {
@@ -192,4 +193,99 @@ def run(
         "drop_position": drop_position,
         "drop_pose": drop_pose,
         "approach_pose": approach_pose,
+    }
+
+
+def run(
+    ctx: NodeContext,
+    container_obb: OrientedBoundingBox,
+    container_interior_obb: OrientedBoundingBox | None = None,
+    ee_pose_at_grasp: Se3Pose | None = None,
+    drop_clearance: float = 0.05,
+    approach_height: float = 0.20,
+    held_obb: OrientedBoundingBox | None = None,
+    panda_hand_to_tcp: float = 0.1029,
+) -> Output:
+    """Apply measured offsets only when both grasp inputs are available.
+
+    The preserved core uses the supplied grasp-time hand height rather
+    than substituting a later transport height. Its XY correction also
+    applies to the approach pose. Missing optional inputs retain the
+    original geometry-only or no-held-geometry behavior below.
+    """
+    if held_obb is not None and ee_pose_at_grasp is not None:
+        result = _run_core(
+            ctx,
+            container_obb,
+            container_interior_obb,
+            ee_pose_at_grasp,
+            drop_clearance,
+            approach_height,
+            held_obb,
+            panda_hand_to_tcp,
+        )
+        result["approach_pose"]["position"]["x"] = result["drop_position"]["x"]
+        result["approach_pose"]["position"]["y"] = result["drop_position"]["y"]
+        return result
+
+    container_top = container_obb["center"]["z"] + container_obb["extent"]["z"]
+    if container_interior_obb is not None:
+        zone_center = container_interior_obb["center"]
+        zone_floor = zone_center["z"] - container_interior_obb["extent"]["z"]
+        zone_ceiling = zone_center["z"] + container_interior_obb["extent"]["z"]
+    else:
+        zone_center = container_obb["center"]
+        zone_floor = container_top
+        zone_ceiling = zone_floor + 0.10
+
+    if held_obb is None:
+        # No object centroid exists from which to measure an offset.
+        # Preserve the legacy TCP release height and zone-centered XY.
+        tcp_z = container_top + drop_clearance
+    else:
+        # Compatibility for callers without a recorded grasp pose:
+        # preserve the original live-height and geometry-only branches.
+        ee_z_at_grasp = None
+        try:
+            live = ctx.tool("robot.get_ee_pose")
+            ee_z_at_grasp = float(live["pose"]["position"]["z"])
+        except Exception:
+            pass
+        if ee_z_at_grasp is not None:
+            desired_obj_z = zone_floor + max(0.03, drop_clearance) + held_obb["extent"]["z"]
+            if desired_obj_z > zone_ceiling - 0.001:
+                desired_obj_z = zone_ceiling - 0.001
+            if desired_obj_z < zone_center["z"]:
+                desired_obj_z = max(
+                    desired_obj_z, zone_floor + 0.001 + held_obb["extent"]["z"]
+                )
+            tcp_z = (
+                desired_obj_z + ee_z_at_grasp
+                - held_obb["center"]["z"] - panda_hand_to_tcp
+            )
+        else:
+            desired_obj_z = max(
+                zone_center["z"],
+                zone_floor + drop_clearance + held_obb["extent"]["z"],
+            )
+            tcp_z = desired_obj_z + held_obb["extent"]["z"] - 0.04
+
+    rotation = (
+        _yaw_only_topdown(ee_pose_at_grasp)
+        if ee_pose_at_grasp is not None else dict(_DOWN)
+    )
+    position: Vec3 = {
+        "x": zone_center["x"], "y": zone_center["y"], "z": tcp_z,
+    }
+    return {
+        "drop_position": position,
+        "drop_pose": {"position": position, "rotation": rotation},
+        "approach_pose": {
+            "position": {
+                "x": position["x"],
+                "y": position["y"],
+                "z": tcp_z + approach_height,
+            },
+            "rotation": rotation,
+        },
     }
