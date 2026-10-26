@@ -607,21 +607,21 @@ class TestTransportingObjects:
         release = _script(
             skills_registry, "transporting-objects", "descend_release_linear"
         )
+        arrived = {"pose": {"position": _vec3(0.5, -0.2, 0.2 + 0.1029),
+                            "rotation": {"w": 0.0, "x": 1.0, "y": 0.0, "z": 0.0}}}
         ctx = FakeContext({
             "robot.go_to_pose_cartesian": None,
+            "robot.get_ee_pose": arrived,
             "robot.open_gripper": {"position": 1.0},
             "robot.go_home": None,
         })
         release.run(ctx, drop_position=_vec3(0.5, -0.2, 0.2))
         order = [c.tool for c in ctx.calls]
-        # Linear descent now goes through the connector's TCP-aware cartesian
-        # tool; the cuRobo→plan_to_pose fallback lives inside the backend, so
-        # the script no longer needs an explicit go_to_pose fallback path.
-        assert order == [
-            "robot.go_to_pose_cartesian",
-            "robot.open_gripper",
-            "robot.go_home",
-        ]
+        # Apply v6: the descent goes through the connector's TCP-aware cartesian tool, its arrival is checked
+        # before the release, and the open fingers are lifted straight up before the home retract.
+        assert order[0] == "robot.go_to_pose_cartesian"
+        assert order.index("robot.open_gripper") > order.index("robot.get_ee_pose")
+        assert order[-1] == "robot.go_home"
         cart_pose = ctx.calls_to("robot.go_to_pose_cartesian")[0].kwargs["pose"]
         assert cart_pose["position"] == _vec3(0.5, -0.2, 0.2)
         assert ctx.call_count("robot.execute_trajectory") == 0
