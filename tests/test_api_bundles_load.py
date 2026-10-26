@@ -1,5 +1,5 @@
 """Loader tests for the API-backed (zero-GPU) tool bundles: vlm, molmo (gemini-er is
-disabled in the toolfix catalog: tools/_disabled-gemini-er).
+disabled in the toolfix catalog: disabled/gemini-er).
 
 Covers loader discovery, @tool-name agreement with the SKILL.md ``gap.tools``
 frontmatter, schema extraction, and lazy-import hygiene (importing the

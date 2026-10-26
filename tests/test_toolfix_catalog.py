@@ -1,7 +1,7 @@
 """Toolfix c1e393d catalog v1: tools that cannot run in the frozen pipeline are not discoverable.
 
 - gemini-er: needs GOOGLE_API_KEY / GEMINI_API_KEY (absent from the run env), calls Google directly (outside the
-  VLM route policy) and its frozen bundle venv was never provisioned -> moved to ``tools/_disabled-gemini-er``.
+  VLM route policy) and its frozen bundle venv was never provisioned -> moved to ``disabled/gemini-er``.
 - curobo.validate_joint_trajectory_robot / _grasped: v0.7-only MotionGen path (NameError TensorDeviceType under
   curobo v0.8.0) -> not registered and not advertised.
 """
@@ -34,3 +34,10 @@ def test_no_visible_text_points_at_removed_tools():
             assert name not in text, (md, name)
     src = (ROOT / "tools/curobo/tools.py").read_text(encoding="utf-8")
     assert 'name="curobo.validate_joint_trajectory' not in src
+
+
+def test_no_bundle_dir_outside_the_catalog_is_globbed():
+    """Every consumer that globs ``<kind>/*/SKILL.md`` (public catalog, packs) must not see the disabled bundle."""
+    for kind in ("skills", "tools", "policies"):
+        for md in (ROOT / kind).glob("*/SKILL.md"):
+            assert "gemini" not in md.parent.name, md

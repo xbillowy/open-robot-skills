@@ -17,7 +17,7 @@ from gap.skills import load_skills
 
 ROOT = Path(__file__).resolve().parents[1]
 
-# toolfix c1e393d catalog v1: the bundle is moved to tools/_disabled-gemini-er (hidden from discovery: no
+# toolfix c1e393d catalog v1: the bundle is moved to disabled/gemini-er (hidden from discovery: no
 # GOOGLE_API_KEY / GEMINI_API_KEY in the run env, a direct Google endpoint outside the VLM route policy, and an
 # unprovisioned bundle venv), so the whole module is skipped.
 pytestmark = pytest.mark.skip(reason="gemini-er bundle disabled (toolfix c1e393d catalog v1)")
