@@ -26,9 +26,7 @@ def test_removed_tools_are_not_discoverable():
 
 
 def test_no_visible_text_points_at_removed_tools():
-    for md in sorted(ROOT.glob("*/*/SKILL.md")):
-        if md.parent.name.startswith("_"):
-            continue
+    for md in sorted(m for kind in ("skills", "tools", "policies") for m in (ROOT / kind).glob("*/SKILL.md")):
         text = md.read_text(encoding="utf-8")
         for name in REMOVED | {"gemini-er bundle"}:
             assert name not in text, (md, name)
