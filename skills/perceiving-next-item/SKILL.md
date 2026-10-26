@@ -1,20 +1,20 @@
 ---
 name: perceiving-next-item
 description: >
-  Loop-head perception for pack-all / clean-all-items tasks. From ONE
-  observation it localizes BOTH the destination container (basket, bin, box)
-  AND the next remaining target item, using the pairwise VLM crop tournament
-  with a container-excluding description so the target is never confused with
-  the basket, then makes a clean found / none decision: an item was found
-  (grasp it) or only the container remains (all items packed — exit the loop
-  to done). Use when a workflow must pick up EVERY object and place each into a
-  container in a loop (pack-all / clean-all-items) and each pass must reliably
-  answer "is there still a graspable item, or are we done?" while also exposing
-  a fresh container OBB for the downstream place. This subgraph is
-  self-contained and takes NO inputs (inputs: {}); the container and item
-  phrases are literal strings written inside the perception nodes, never
-  subgraph parameters — do not declare item_name / container_name /
-  item_description as subgraph inputs.
+  Loop-head perception for genuinely exhaustive requests such as packing all
+  items or every item in an allowed category, with explicit exclusions.
+  Localizes the destination container and next remaining allowed item, then
+  emits found / none; actual errors emit perception_failed. For instructions
+  enumerating named objects and assigned destinations or sub-regions, prefer
+  a finite sequence using perceiving-objects: perceive each named object,
+  grasp it, perceive its assigned destination or placement region, then
+  transport and place it successfully before advancing. Open any required
+  articulated destination before perceiving its accessible placement region,
+  preferably before grasping the item. Finish after every listed placement
+  succeeds; reserve next-item discovery loops for genuinely exhaustive
+  requests. This loop-head skill takes NO inputs (inputs: {}): object_name
+  and object_description are literal strings inside perception nodes, never
+  subgraph parameters. Emits fresh item and container geometry on found.
 license: MIT
 compatibility: requires gap>=0.1
 metadata:
@@ -146,6 +146,56 @@ study). The clean loop terminator comes from the item's **container-excluding
 gate answer "no grocery item", `perceive_item` returns `found=False`, and the
 `decide` router emits `none` → the loop exits to `done`.
 
+## Flow-template example hint: enumerated placements
+
+When instructions enumerate named objects and their assigned destinations or
+sub-regions, build a finite sequence of explicit placements. Use
+`perceiving-objects` for each named target and its assigned destination. Keep
+each object paired with its own destination and any relational placement
+constraint throughout the sequence.
+
+For each listed object, in the requested order when one is specified:
+
+1. If its destination requires opening a drawer, door, or other articulated
+   part, use the appropriate articulation skill and require successful opening.
+   Prefer doing this before grasping the object so the gripper is available.
+2. Perceive the named object and pass its geometry to the grasp skill.
+3. After a successful grasp, perceive the assigned destination or the specific
+   accessible placement sub-region named in the instructions. For an
+   articulated destination, this perception must follow successful opening;
+   localize the accessible interior placement region, rather than using the
+   closed front or handle as the placement target.
+4. Transport and place the object using that destination geometry. Advance to
+   the next listed object only on successful placement. Route perception,
+   opening, grasp, or transport failures to the workflow's failure exit; a
+   missing named object does not mean the finite sequence is complete.
+5. Route to done only after every listed placement succeeds.
+
+Example flow for two listed object–destination pairs, using symbolic labels:
+
+```text
+open any required articulated destination for first pair
+  → perceive first named object → grasp first object
+  → perceive first assigned accessible placement region
+  → transport and place first object
+  → open any required articulated destination for second pair
+  → perceive second named object → grasp second object
+  → perceive second assigned accessible placement region
+  → transport and place second object → done
+```
+
+Omit an opening step when the assigned destination is already accessible.
+Use a single sequential success chain, with failures routed to failure exits.
+Do not return from a listed placement to a next-item discovery head or add a
+final discovery pass to decide whether this finite sequence is done.
+
+Reserve this skill's discovery loop for genuinely exhaustive requests, such
+as moving every remaining item in a category, including requests with explicit
+exclusions. The restricted-set perception rules below govern such exhaustive
+loops when their allowed set is restricted; they are not a recommendation to
+turn an enumerated placement list into a discovery loop. These are graph
+construction hints, not additional nodes inside this perception subgraph.
+
 ## When to use
 
 - The repeating head of a **pack-all / clean-all-items loop** (`transport`
@@ -157,6 +207,9 @@ gate answer "no grocery item", `perceive_item` returns `found=False`, and the
 
 ## When NOT to use
 
+- **Enumerated objects with assigned destinations or sub-regions.** Follow
+  the finite placement example hint above, completing each named placement
+  before advancing to the next.
 - **Single pick-and-place** (grab ONE named object). Use `perceiving-objects`
   (one target, no loop, no container co-perception).
 - **You want the container localized once, out of the loop.** If the container
@@ -246,7 +299,6 @@ At the top level, route this subgraph's `found → grasp`, `none → done`,
 - `scripts/perceive_dino_vlm.py` — the pairwise-tournament perception (shared with `perceiving-objects`).
 - `scripts/decide_next_item.py` — the unprivileged loop router: per-pass VLM
   all-packed check (primary stop) + same-target no-progress guard + perception
-  verdict; `sim.check_success` is telemetry only (`GAP_DECIDE_TRUST_ENV=1` opts
-  into trusting it on benchmarks).
+  verdict.
 - `scripts/exterior_view.py` — wrist-cam drop for a clean container OBB.
 - `prompts/vlm_pairwise.md` — the pairwise-tournament VLM prompt template.
